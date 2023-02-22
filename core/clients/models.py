@@ -1,8 +1,12 @@
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.validators import RegexValidator, EmailValidator
 
-# Create your models here.
+
+MIN_NAME_VALIDATOR = 2
+MAX_NAME_VALIDATOR = 50
+REGEX_NAME_VALIDATOR = '^[А-Я]{1}[а-яё-]{1, 49}|[A-Z]{1}[a-z-]{1, 49})$'
 
 
 class CustomUserManager(UserManager):
@@ -66,21 +70,36 @@ class User(AbstractUser):
     )
     first_name = models.TextField(
         "Имя",
-        max_length=20,
+        help_text='Введите имя',
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                    message='Имя указанo некорректно')]
+    )
+    patronymic_name = models.TextField(
+        "Отчество",
+        help_text='Введите отчество',
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                                   message='Отчество указанo некорректно')]
     )
     last_name = models.TextField(
         "Фамилия",
-        max_length=20,
+        help_text='Введите фамилию',
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                                   message='Фамилия указана некорректно')]
     )
+
     email = models.EmailField(
         "Электронная почта",
         max_length=254,
+        min_length=7,
+        validators=[EmailValidator(message='E-mail введен некорректно')],
         unique=True,
     )
     phone = models.TextField(
         "Телефон",
-        max_length=14,
-        unique=True,
+        help_text='Введите телефон в формате +7(905)1234567',
+        validators=[RegexValidator(regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
+                                   message='Телефон введен некорректно')],
+        unique=True
     )
     email_verify = models.BooleanField(
         "Подтвержден e-mail",
@@ -164,4 +183,3 @@ class TeacherStudent(models.Model):
         default=False,
     )
     comment = models.TextField()
-
