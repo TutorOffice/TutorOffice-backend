@@ -3,9 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.validators import RegexValidator, EmailValidator
 
-
-MIN_NAME_VALIDATOR = 2
-MAX_NAME_VALIDATOR = 50
+#  length of first_name, last_name, patronymic_name from 2 to 50
 REGEX_NAME_VALIDATOR = '^[А-Я]{1}[а-яё-]{1, 49}|[A-Z]{1}[a-z-]{1, 49})$'
 
 
@@ -70,45 +68,53 @@ class User(AbstractUser):
     )
     first_name = models.TextField(
         "Имя",
-        help_text='Введите имя',
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
-                    message='Имя указанo некорректно')]
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Имя указанo некорректно')],
+        min_length=2,
+        max_length=50
     )
     patronymic_name = models.TextField(
         "Отчество",
-        help_text='Введите отчество',
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
-                                   message='Отчество указанo некорректно')]
+        blank=True,
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Отчество указанo некорректно')],
+        min_length=2,
+        max_length=50
     )
     last_name = models.TextField(
         "Фамилия",
-        help_text='Введите фамилию',
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR,
-                                   message='Фамилия указана некорректно')]
-    )
-
-    email = models.EmailField(
-        "Электронная почта",
-        max_length=254,
-        min_length=7,
-        validators=[EmailValidator(message='E-mail введен некорректно')],
-        unique=True,
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Фамилия указана некорректно')],
+        min_length=2,
+        max_length=50
     )
     phone = models.TextField(
         "Телефон",
-        help_text='Введите телефон в формате +7(905)1234567',
-        validators=[RegexValidator(regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
-                                   message='Телефон введен некорректно')],
-        unique=True
+        unique=True,
+        validators=[RegexValidator(
+            regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
+            message='Телефон введен некорректно. '
+                    'Введите телефон в формате +7(905)1234567')],
     )
-    email_verify = models.BooleanField(
+    email = models.EmailField(
+        "Электронная почта",
+        unique=True,
+        validators=[EmailValidator(
+            message='E-mail введен некорректно')],
+        min_length=7,
+        max_length=254
+    )
+    is_active = models.BooleanField(
         "Подтвержден e-mail",
-        default=False,
+        default=False
     )
     photo = models.ImageField(
         "Фотография",
         upload_to='images/',
-        blank=True,
+        blank=True
     )
 
     def __str__(self):
@@ -127,23 +133,27 @@ class User(AbstractUser):
 
 class Student(models.Model):
     """Модель, расширяющая юзера, позволяя быть студентом"""
-    profile = models.OneToOneField(User,
-                                   related_name='student_profile',
-                                   on_delete=models.PROTECT)
+    profile = models.OneToOneField(
+        User,
+        related_name='student_profile',
+        on_delete=models.PROTECT)
 
 
 class Teacher(models.Model):
     """Модель, расширяющая юзера, позволяя быть репетитором"""
-    profile = models.OneToOneField(User,
-                                   related_name='teacher_profile',
-                                   on_delete=models.PROTECT)
-    students = models.ManyToManyField(Student,
-                                      related_name='teachers',
-                                      through="TeacherStudent")
-    subjects = models.ManyToManyField(Subject,
-                                      related_name='teachers',
-                                      blank=True
-                                      )
+    profile = models.OneToOneField(
+        User,
+        related_name='teacher_profile',
+        on_delete=models.PROTECT)
+    students = models.ManyToManyField(
+        Student,
+        related_name='teachers',
+        through="TeacherStudent")
+    subjects = models.ManyToManyField(
+        Subject,
+        related_name='teachers',
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'Учитель'
@@ -164,22 +174,47 @@ class TeacherStudent(models.Model):
         Student,
         related_name='teacherM2M',
         on_delete=models.PROTECT,
+        blank=True
     )
     first_name = models.TextField(
-        "Имя ученика",
-        max_length=20,
+        "Имя",
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Имя указанo некорректно')],
+        min_length=2,
+        max_length=50
+    )
+    patronymic_name = models.TextField(
+        "Отчество",
+        blank=True,
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Отчество указанo некорректно')],
+        min_length=2,
+        max_length=50
     )
     last_name = models.TextField(
-        "Фамилия ученика",
-        max_length=20,
+        "Фамилия",
+        validators=[RegexValidator(
+            regex=REGEX_NAME_VALIDATOR,
+            message='Фамилия указана некорректно')],
+        min_length=2,
+        max_length=50
+    )
+    phone = models.TextField(
+        "Телефон",
+        unique=True,
+        validators=[RegexValidator(
+            regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
+            message='Телефон введен некорректно. '
+                    'Введите телефон в формате +7(905)1234567')],
     )
     email = models.EmailField(
         "Электронная почта",
-        max_length=254,
         unique=True,
+        validators=[EmailValidator(
+            message='E-mail введен некорректно')],
+        min_length=7,
+        max_length=254
     )
-    verify = models.BooleanField(
-        "Подтверждение",
-        default=False,
-    )
-    comment = models.TextField()
+    comment = models.TextField(blank=True)
