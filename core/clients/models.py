@@ -1,10 +1,14 @@
 from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
-from django.core.validators import RegexValidator, EmailValidator
+from django.core.validators import RegexValidator, EmailValidator, MaxLengthValidator, MinLengthValidator
 
 #  length of first_name, last_name, patronymic_name from 2 to 50
 REGEX_NAME_VALIDATOR = '^[А-Я]{1}[а-яё-]{1, 49}|[A-Z]{1}[a-z-]{1, 49})$'
+NAME_MIN_LENGTH = 2
+NAME_MAX_LENGTH = 50
+EMAIL_MIN_LENGTH = 7
+EMAIL_MAX_LENGTH = 254
 
 
 class CustomUserManager(UserManager):
@@ -68,28 +72,25 @@ class User(AbstractUser):
     )
     first_name = models.TextField(
         "Имя",
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Имя указанo некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Имя указанo некорректно'}
     )
     patronymic_name = models.TextField(
         "Отчество",
         blank=True,
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Отчество указанo некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Отчество указанo некорректно'}
     )
     last_name = models.TextField(
         "Фамилия",
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Фамилия указана некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Фамилия указана некорректно'}
     )
     phone = models.TextField(
         "Телефон",
@@ -102,13 +103,14 @@ class User(AbstractUser):
     email = models.EmailField(
         "Электронная почта",
         unique=True,
-        validators=[EmailValidator(
-            message='E-mail введен некорректно')],
-        min_length=7,
-        max_length=254
+        validators=[
+            EmailValidator(),
+            MinLengthValidator(EMAIL_MIN_LENGTH),
+            MaxLengthValidator(EMAIL_MAX_LENGTH)],
+        error_messages={'invalid': 'E-mail введен некорректно!'}
     )
     is_active = models.BooleanField(
-        "Подтвержден e-mail",
+        "Подтверждение",
         default=False
     )
     photo = models.ImageField(
@@ -133,7 +135,7 @@ class User(AbstractUser):
 
 class Student(models.Model):
     """Модель, расширяющая юзера, позволяя быть студентом"""
-    profile = models.OneToOneField(
+    user = models.OneToOneField(
         User,
         related_name='student_profile',
         on_delete=models.PROTECT)
@@ -141,7 +143,7 @@ class Student(models.Model):
 
 class Teacher(models.Model):
     """Модель, расширяющая юзера, позволяя быть репетитором"""
-    profile = models.OneToOneField(
+    user = models.OneToOneField(
         User,
         related_name='teacher_profile',
         on_delete=models.PROTECT)
@@ -178,28 +180,25 @@ class TeacherStudent(models.Model):
     )
     first_name = models.TextField(
         "Имя",
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Имя указанo некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+                    MinLengthValidator(NAME_MIN_LENGTH),
+                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Имя указанo некорректно'}
     )
     patronymic_name = models.TextField(
         "Отчество",
         blank=True,
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Отчество указанo некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+                    MinLengthValidator(NAME_MIN_LENGTH),
+                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Отчество указанo некорректно'}
     )
     last_name = models.TextField(
         "Фамилия",
-        validators=[RegexValidator(
-            regex=REGEX_NAME_VALIDATOR,
-            message='Фамилия указана некорректно')],
-        min_length=2,
-        max_length=50
+        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+                    MinLengthValidator(NAME_MIN_LENGTH),
+                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        error_messages={'invalid': 'Фамилия указана некорректно'}
     )
     phone = models.TextField(
         "Телефон",
@@ -212,9 +211,14 @@ class TeacherStudent(models.Model):
     email = models.EmailField(
         "Электронная почта",
         unique=True,
-        validators=[EmailValidator(
-            message='E-mail введен некорректно')],
-        min_length=7,
-        max_length=254
+        validators=[
+            EmailValidator(),
+            MinLengthValidator(EMAIL_MIN_LENGTH),
+            MaxLengthValidator(EMAIL_MAX_LENGTH)],
+        error_messages={'invalid': 'E-mail введен некорректно!'}
+    )
+    verify = models.BooleanField(
+        "Подтверждение",
+        default=False
     )
     comment = models.TextField(blank=True)
