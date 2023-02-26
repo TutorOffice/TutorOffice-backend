@@ -1,8 +1,10 @@
+import uuid
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import AbstractUser, UserManager
+from django.contrib.auth.models import AbstractBaseUser, UserManager, AbstractUser
 from django.core.validators import (EmailValidator, MaxLengthValidator,
                                     MinLengthValidator, RegexValidator)
 from django.db import models
+from django.contrib.auth.models import PermissionsMixin
 
 #  length of first_name, last_name, patronymic_name from 2 to 50
 REGEX_NAME_VALIDATOR = '^[А-Я]{1}[а-яё-]{1, 49}|[A-Z]{1}[a-z-]{1, 49})$'
@@ -63,13 +65,14 @@ class Subject(models.Model):
         ordering = ('title',)
 
 
-class User(AbstractUser):
+class User(AbstractBaseUser, PermissionsMixin):
     """Модель для описания юзера (ученика)"""
 
     id = models.UUIDField(
         primary_key=True,
         unique=True,
         editable=False,
+        default=uuid.uuid4
     )
     first_name = models.TextField(
         "Имя",
@@ -96,6 +99,7 @@ class User(AbstractUser):
     phone = models.TextField(
         "Телефон",
         unique=True,
+        null=True,
         validators=[RegexValidator(
             regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
             message='Телефон введен некорректно. '
@@ -119,6 +123,10 @@ class User(AbstractUser):
         upload_to='images/',
         blank=True
     )
+    is_staff = models.BooleanField(
+        "Доступ к админке",
+        default=False,
+    )
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
@@ -131,7 +139,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    objects = CustomUserManager
+    objects = CustomUserManager()
 
 
 class Student(models.Model):
@@ -203,10 +211,11 @@ class TeacherStudent(models.Model):
     )
     phone = models.TextField(
         "Телефон",
+        null=True,
         unique=True,
         validators=[RegexValidator(
             regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
-            message='Телефон введен некорректно. '
+            message='Телефон введен некорректно.'
                     'Введите телефон в формате +7(905)1234567')],
     )
     email = models.EmailField(
