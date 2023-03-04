@@ -1,13 +1,20 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework.generics import RetrieveAPIView
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from .services import Email
+from rest_framework.generics import RetrieveAPIView, CreateAPIView
+from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
+from .models import User
+from .serializers import RegisterSerializer
+from .services import Email
 import jwt
+from rest_framework_simplejwt.tokens import RefreshToken
 # Create your views here.
+
+
+class RegisterView(CreateAPIView, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
 
 
 class SendEmailView(RetrieveAPIView):
@@ -39,3 +46,4 @@ class ActivateUserView(RetrieveAPIView):
         except jwt.exceptions.DecodeError as error:
             return Response({'ERROR': "Неверная ссылка!"},
                             status=status.HTTP_400_BAD_REQUEST)
+
