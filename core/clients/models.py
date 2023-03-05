@@ -7,7 +7,7 @@ from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 
 #  length of first_name, last_name, patronymic_name from 2 to 50
-REGEX_NAME_VALIDATOR = '^[А-Я]{1}[а-яё-]{1, 49}|[A-Z]{1}[a-z-]{1, 49})$'
+REGEX_NAME_VALIDATOR = '^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
 NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 50
 EMAIL_MIN_LENGTH = 7
@@ -104,9 +104,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         null=True,
         validators=[RegexValidator(
-            regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
-            message='Телефон введен некорректно. '
-                    'Введите телефон в формате +7(905)1234567')],
+            regex='^((\+7|7|8)[0-9]{10})$',
+            message='Телефон введен некорректно.'
+                    'Введите телефон в формате +79051234567')],
     )
     email = models.EmailField(
         "Электронная почта",
@@ -217,9 +217,9 @@ class TeacherStudent(models.Model):
         null=True,
         unique=True,
         validators=[RegexValidator(
-            regex='^((\+7|7|8)\([0-9]{3}\)[0-9]{7})',
+            regex='^((\+7|7|8)[0-9]{10})$',
             message='Телефон введен некорректно.'
-                    'Введите телефон в формате +7(905)1234567')],
+                    'Введите телефон в формате +79051234567')],
     )
     email = models.EmailField(
         "Электронная почта",

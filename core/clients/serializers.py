@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 
 # Сериализатор для обработки формы регистрации
 class RegisterSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(read_only=True)
     is_teacher = serializers.BooleanField(
         required=True,
         write_only=True,
@@ -28,6 +29,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
+            'id',
             'first_name',
             'patronymic_name',
             'last_name',
@@ -54,7 +56,6 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         role = validated_data.pop('is_teacher')
         password = validated_data.pop('password')
-        print(validated_data)
         user = super().create(validated_data)
         user.password = make_password(password)
         user.save()
