@@ -1,7 +1,6 @@
 from django.db import models
 from clients.models import Teacher, TeacherStudent, Subject
 
-# Create your models here.
 
 PUBLIC = 'public'
 PRIVATE = 'private'

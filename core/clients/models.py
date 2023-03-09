@@ -60,7 +60,7 @@ class Subject(models.Model):
                              db_index=True)
 
     def __str__(self):
-        return {self.title}
+        return self.title
 
     class Meta:
         verbose_name = 'Предмет'
@@ -132,12 +132,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+        return f'{self.last_name} {self.first_name}'
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('last_name', 'first_name')
+        ordering = ('last_name',)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -152,6 +152,12 @@ class Student(models.Model):
         related_name='student_profile',
         on_delete=models.PROTECT)
 
+    class Meta:
+        verbose_name = 'Студент'
+        verbose_name_plural = 'Студенты'
+
+    def __str__(self):
+        return f'{self.user.last_name} {self.user.first_name}'
 
 class Teacher(models.Model):
     """Модель, расширяющая юзера, позволяя быть репетитором"""
@@ -172,6 +178,9 @@ class Teacher(models.Model):
     class Meta:
         verbose_name = 'Учитель'
         verbose_name_plural = 'Учителя'
+
+    def __str__(self):
+        return f'{self.user.last_name} {self.user.first_name}'
 
 
 class TeacherStudent(models.Model):
