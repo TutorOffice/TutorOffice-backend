@@ -1,15 +1,19 @@
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import CreateModelMixin
-from django.shortcuts import get_object_or_404, Http404, redirect
+from django.shortcuts import Http404, get_object_or_404, redirect
 from django.urls import reverse
-from rest_framework.response import Response
-from .serializers import RegisterSerializer
 from rest_framework import status
-from .services import Email
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import RetrieveAPIView
+from rest_framework.mixins import (CreateModelMixin, RetrieveModelMixin,
+                                   UpdateModelMixin)
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import User
+from .serializers import RegisterSerializer, ProfileSerializer
+from .services import Email
+
 # Create your views here.
 
 
@@ -51,3 +55,12 @@ class ActivateUserView(RetrieveAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
         except (ValueError, TypeError, User.DoesNotExist, KeyError):
             return Http404
+
+
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user

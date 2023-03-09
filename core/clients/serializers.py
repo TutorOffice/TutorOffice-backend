@@ -64,3 +64,19 @@ class RegisterSerializer(serializers.ModelSerializer):
         else:
             Student.objects.create(user=user)
         return user
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'patronymic_name',
+            'last_name',
+            'phone',
+            'email',
+            'photo',
+        )
+        read_only_fields = ('id', 'email')
