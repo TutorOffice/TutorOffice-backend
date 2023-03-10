@@ -4,3 +4,4 @@
 *.pyc
 *.txt
 core/core/.env
+bash.exe.stackdump
