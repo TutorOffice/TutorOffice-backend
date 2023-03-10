@@ -69,8 +69,9 @@ class TeachertAdmin(admin.ModelAdmin):
 
     def show_students(self, obj):
         student_list = []
-        for student in obj.students.all():
-            student_list.append(student.last_name)
+        queryset_students = TeacherStudent.objects.filter(teacher=obj)
+        for _ in queryset_students:
+            student_list.append(f'{_.last_name} {_.first_name}')
         return '/n'.join(student_list)
     show_students.short_description = 'Студенты'
 

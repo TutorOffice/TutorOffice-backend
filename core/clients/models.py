@@ -123,7 +123,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     photo = models.ImageField(
         "Фотография",
-        upload_to='images/',
+        upload_to='static/images/',
         blank=True
     )
     is_staff = models.BooleanField(
@@ -244,3 +244,10 @@ class TeacherStudent(models.Model):
         default=False
     )
     comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'Учитель-Ученик'
+        verbose_name_plural = 'Учитель-Ученики'
+
+    def __str__(self):
+        return f'{self.teacher} {self.last_name} {self.first_name}'

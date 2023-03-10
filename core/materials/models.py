@@ -18,20 +18,28 @@ class Material(models.Model):
         (PRIVATE, 'private'),
     ]
 
-    teacher = models.ForeignKey(Teacher,
-                                related_name='materials',
-                                on_delete=models.PROTECT)
-    teacher_student = models.ManyToManyField(TeacherStudent,
-                                             related_name='materials')
-    subject = models.ForeignKey(Subject,
-                                on_delete=models.PROTECT)
-    file = models.FileField()
-    text = models.TextField()
+    teacher = models.ForeignKey(
+        Teacher,
+        related_name='materials',
+        on_delete=models.PROTECT,
+        verbose_name='Учитель')
+    teacher_student = models.ManyToManyField(
+        TeacherStudent,
+        related_name='materials')
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.PROTECT,
+        verbose_name='Предмет')
+    file = models.FileField(
+        upload_to='static/materials/',
+        verbose_name='Файл материалов')
+    text = models.TextField(
+        verbose_name='Текст материалов')
     type = models.CharField(
         max_length=10,
         choices=TYPECHOICE,
         default=PRIVATE,
-    )
+        verbose_name='Тип материалов')
 
     def __str__(self):
         return f'{self.subject} {self.text}'
