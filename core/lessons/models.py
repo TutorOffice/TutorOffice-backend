@@ -31,8 +31,10 @@ class Lesson(models.Model):
         verbose_name='Учитель')
     teacher_student = models.ForeignKey(
         TeacherStudent,
-        on_delete=models.PROTECT)
-    date = models.DateField(verbose_name='Дата')
+        on_delete=models.PROTECT,
+        verbose_name='Учитель-Ученик')
+    date = models.DateField(
+        verbose_name='Дата')
     start_time = models.TimeField(
         verbose_name='Начало урока')
     end_time = models.TimeField(
@@ -41,8 +43,13 @@ class Lesson(models.Model):
         Subject,
         on_delete=models.PROTECT,
         verbose_name='Предмет')
-    topic = models.TextField(max_length=40, blank=True)
-    comment = models.TextField(blank=True)
+    topic = models.TextField(
+        max_length=40,
+        blank=True,
+        verbose_name='Тема урока')
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Коммаентарий')
     homework = models.OneToOneField(
         Homework,
         related_name='lesson',

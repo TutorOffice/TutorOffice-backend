@@ -26,7 +26,7 @@ class UserAdmin(admin.ModelAdmin):
 
     @admin.display(boolean=True)
     def show_student(self, obj):
-        return Student.objects.filter(user = obj).exists()
+        return Student.objects.filter(user=obj).exists()
     show_student.short_description = 'Студент'
 
     @admin.display(boolean=True)
