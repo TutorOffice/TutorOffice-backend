@@ -21,10 +21,10 @@ class Email:
             email = EmailMessage(email_subject, message, to=[to_email],
                                  from_email=settings.EMAIL_HOST_USER)
             email.send()
-            return Response({"SUCCESS": "Регистрация прошла успешно! "
-                                        "Пожалуйста, подтвердите свою почту!"},
+            return Response({"INFO": "Для доступа в личный кабинет вам необходимо подтвердить почту! "
+                                     "Сообщение с вложенной ссылкой уже было отправлено вам!"},
                             status=status.HTTP_200_OK)
-        except SMTPDataError as error:
+        except SMTPDataError:
             return Response({"ERROR": "Почта не найдена! " 
                                       "Невозможно отправить сообщение для подтверждения!"},
                             status=status.HTTP_400_BAD_REQUEST)

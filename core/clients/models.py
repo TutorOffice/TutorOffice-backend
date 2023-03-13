@@ -7,7 +7,7 @@ from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 
 #  length of first_name, last_name, patronymic_name from 2 to 50
-REGEX_NAME_VALIDATOR = '^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+REGEX_NAME_VALIDATOR = '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
 NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 50
 EMAIL_MIN_LENGTH = 7
