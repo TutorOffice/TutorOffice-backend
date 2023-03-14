@@ -1,5 +1,7 @@
 from django.db import models
 from clients.models import User, TeacherStudent, Subject, Teacher
+from django.core.exceptions import ValidationError
+from datetime import date
 
 
 class Homework(models.Model):
@@ -49,17 +51,31 @@ class Lesson(models.Model):
         verbose_name='Тема урока')
     comment = models.TextField(
         blank=True,
-        verbose_name='Коммаентарий')
+        verbose_name='Комментарий')
     homework = models.OneToOneField(
         Homework,
         related_name='lesson',
         on_delete=models.CASCADE,
+        null=True,
         blank=True,
         verbose_name='Домашняя работа'
     )
 
     def __str__(self):
         return f'{self.teacher_student}'
+
+    def clean(self):
+        """Валидация даты и времени урока"""
+        errors = {}
+        if self.end_time <= self.start_time:
+            errors['end_time'] = ValidationError(
+                'Время конца урока должно быть позже времени начала урока!')
+        if self.date < date.today():
+            errors['date'] = ValidationError(
+                'Дата урока не может быть раньше текущего дня!')
+        if errors:
+            raise ValidationError(errors)
+
 
     class Meta:
         verbose_name = 'Урок'

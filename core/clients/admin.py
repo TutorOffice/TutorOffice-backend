@@ -1,10 +1,6 @@
 from django.contrib import admin
 from .models import User, Subject, Teacher, Student, TeacherStudent
 
-class TeacherStudentInLine(admin.StackedInline):
-    model = TeacherStudent
-    extra = 1
-
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
@@ -39,6 +35,8 @@ class UserAdmin(admin.ModelAdmin):
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('user', 'show_email',
                     'show_phone', 'show_is_active')
+    search_fields = ('user__last_name', 'user__email', 'user__phone')
+    search_help_text = ('Фамилия, почта или телефон')
 
     def show_email(self, obj):
         return obj.user.email
@@ -48,7 +46,7 @@ class StudentAdmin(admin.ModelAdmin):
         return obj.user.phone
     show_phone.short_description = 'Телефон'
 
-    @admin.display(boolean=True )
+    @admin.display(boolean=True)
     def show_is_active(self, obj):
         return obj.user.is_active
     show_is_active.short_description = 'Подтвержден'
@@ -57,8 +55,8 @@ class StudentAdmin(admin.ModelAdmin):
 @admin.register(Teacher)
 class TeachertAdmin(admin.ModelAdmin):
     list_display = ('user', 'show_subjects', 'show_students')
-    inlines = [TeacherStudentInLine]
-    empty_value_display = '-пусто-'
+    search_fields = ('user__last_name', 'user__email', 'user__phone')
+    search_help_text = ('Фамилия, почта или телефон учителя')
 
     def show_subjects(self, obj):
         subject_list = []
@@ -72,7 +70,7 @@ class TeachertAdmin(admin.ModelAdmin):
         queryset_students = TeacherStudent.objects.filter(teacher=obj)
         for _ in queryset_students:
             student_list.append(f'{_.last_name} {_.first_name}')
-        return '/n'.join(student_list)
+        return ', '.join(student_list)
     show_students.short_description = 'Студенты'
 
 

@@ -11,12 +11,12 @@ class LessonAdmin(admin.ModelAdmin):
 
     def show_student(self, obj):
         return f'{obj.teacher_student.last_name} {obj.teacher_student.first_name}'
-    show_student.short_description = 'Студенты'
+    show_student.short_description = 'Студент'
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "teacher_student":
-            kwargs["queryset"] = TeacherStudent.objects.filter(teacher=2)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+#    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#        if db_field.name == "teacher_student":
+#            kwargs["queryset"] = TeacherStudent.objects.filter(teacher=2)
+#       return super().formfield_for_foreignkey(db_field, request, **kwargs)
 @admin.register(Homework)
 class HomeworkAdmin(admin.ModelAdmin):
     pass

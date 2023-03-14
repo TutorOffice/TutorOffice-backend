@@ -168,11 +168,13 @@ class Teacher(models.Model):
     students = models.ManyToManyField(
         Student,
         related_name='teachers',
-        through="TeacherStudent")
+        through='TeacherStudent',
+        verbose_name='Студенты')
     subjects = models.ManyToManyField(
         Subject,
         related_name='teachers',
-        blank=True
+        blank=True,
+        verbose_name='Предметы'
     )
 
     class Meta:
@@ -192,12 +194,15 @@ class TeacherStudent(models.Model):
         Teacher,
         related_name='studentM2M',
         on_delete=models.PROTECT,
+        verbose_name='Учитель'
     )
     student = models.ForeignKey(
         Student,
         related_name='teacherM2M',
         on_delete=models.PROTECT,
-        blank=True
+        null=True,
+        blank=True,
+        verbose_name='Студент'
     )
     first_name = models.TextField(
         "Имя",
@@ -248,6 +253,7 @@ class TeacherStudent(models.Model):
     class Meta:
         verbose_name = 'Учитель-Ученик'
         verbose_name_plural = 'Учитель-Ученики'
+        ordering = ('teacher',)
 
     def __str__(self):
         return f'{self.teacher} {self.last_name} {self.first_name}'
