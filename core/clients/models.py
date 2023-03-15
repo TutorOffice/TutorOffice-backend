@@ -188,7 +188,8 @@ class TeacherStudent(models.Model):
         Student,
         related_name='teacherM2M',
         on_delete=models.PROTECT,
-        blank=True
+        blank=True,
+        null=True
     )
     first_name = models.TextField(
         "Имя",

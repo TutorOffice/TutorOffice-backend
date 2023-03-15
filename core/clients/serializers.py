@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Teacher, Student
+from .models import User, Teacher, Student, Subject
 from django.db.transaction import atomic
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -63,3 +63,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         else:
             Student.objects.create(user=user)
         return user
+
+class SubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = '__all__'

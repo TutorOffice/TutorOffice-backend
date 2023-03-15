@@ -26,8 +26,8 @@ class Material(models.Model):
                                              related_name='materials')
     subject = models.ForeignKey(Subject,
                                 on_delete=models.PROTECT)
-    file = models.FileField()
-    text = models.TextField()
+    file = models.FileField(blank=True)
+    text = models.TextField(blank=True)
     type = models.CharField(
         max_length=10,
         choices=TYPECHOICE,

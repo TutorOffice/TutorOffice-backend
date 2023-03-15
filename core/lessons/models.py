@@ -1,5 +1,6 @@
 from django.db import models
-from clients.models import User, TeacherStudent, Subject
+from clients.models import User, TeacherStudent, Subject, Teacher
+
 
 
 # Create your models here.
@@ -18,7 +19,7 @@ class Homework(models.Model):
 class Lesson(models.Model):
     """Модель для занятий"""
     teacher = models.ForeignKey(
-        User,
+        Teacher,
         on_delete=models.PROTECT,
     )
     teacher_student = models.ForeignKey(
@@ -39,6 +40,7 @@ class Lesson(models.Model):
         related_name='lesson',
         on_delete=models.CASCADE,
         blank=True,
+        null=True
     )
 
     def __str__(self):
