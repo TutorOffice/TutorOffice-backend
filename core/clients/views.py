@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from .forms import CustomPasswordResetForm
 from django.conf import settings
 from django.core.mail import send_mail
 # Create your views here.
@@ -85,6 +86,7 @@ class CustomPasswordResetView(PasswordResetView):
     """
     # Рабочая почта используется в качестве отправителя
     from_email = settings.EMAIL_HOST_USER
+    form_class = CustomPasswordResetForm
 
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
