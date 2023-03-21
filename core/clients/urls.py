@@ -37,6 +37,6 @@ urlpatterns = [
          name='subjects'),
     path('user-subjects/',
          UserSubjectViewSet.as_view({'get': 'list', 'put': 'update',
-                                     'post': 'create', 'delete': 'destroy'}),
+                                     'post': 'create'}),
          name='user_subjects'),
 ]
