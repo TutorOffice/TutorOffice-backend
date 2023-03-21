@@ -166,6 +166,7 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
+    authentication_classes = [JWTAuthentication]
 
     def get_object(self):
         return self.request.user
