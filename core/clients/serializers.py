@@ -53,17 +53,32 @@ class RegisterSerializer(serializers.ModelSerializer):
     # В случае ошибочного ввода данных НЕ сохраняет строки в БД
     @atomic
     def create(self, validated_data):
-        is_teacher = validated_data.pop('is_teacher')
+        role = validated_data.pop('is_teacher')
         password = validated_data.pop('password')
         user = super().create(validated_data)
         user.password = make_password(password)
         user.save()
-        if is_teacher:
+        if role:
             Teacher.objects.create(user=user)
         else:
             Student.objects.create(user=user)
         return user
 
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'first_name',
+            'patronymic_name',
+            'last_name',
+            'phone',
+            'email',
+            'photo',
+        )
+        read_only_fields = ('id', 'email', 'photo')
 
 class SubjectSerializer(serializers.ModelSerializer):
     """

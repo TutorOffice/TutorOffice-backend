@@ -8,19 +8,24 @@ from django.contrib.auth.views import (
     PasswordResetDoneView, PasswordResetCompleteView
 )
 
-router = routers.DefaultRouter()
-router.register('register', RegisterView, basename='register')
+register_router = routers.DefaultRouter()
+register_router.register('register', RegisterView, basename='register')
+
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', include(register_router.urls)),
     path('login/',
-         LoginView.as_view(),
+         TokenObtainPairView.as_view(),
          name='login'),
     path('refresh/',
          TokenRefreshView.as_view(),
          name='refresh'),
     path('auth/user-activate/<str:token>/',
-         ActivateUserView.as_view(), name='activate'),
+         ActivateUserView.as_view(),
+         name='activate'),
+    path('profile/',
+        ProfileViewSet.as_view({'get': 'retrieve', 'patch': 'update'}),
+        name='update-profile',),
     path('password-reset/', CustomPasswordResetView.as_view(),
          name='password_reset'),
     path('password-reset/done/',

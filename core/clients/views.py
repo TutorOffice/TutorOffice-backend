@@ -1,6 +1,6 @@
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,13 +11,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 
 from .permissions import IsTeacher
-from .serializers import RegisterSerializer, SubjectSerializer, UserSubjectSerializer
+from .serializers import RegisterSerializer, SubjectSerializer, UserSubjectSerializer, ProfileSerializer
 from .models import User, Subject, Teacher
 from .forms import CustomPasswordResetForm
 from .services import Email
@@ -118,6 +118,15 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
+
+
 class SubjectsView(ListAPIView):
     """
     Получение всех предметов,
@@ -151,3 +160,12 @@ class UserSubjectViewSet(ModelViewSet):
         if self.action == 'list':
             return SubjectSerializer
         return UserSubjectSerializer
+
+
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
