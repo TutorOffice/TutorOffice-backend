@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Teacher, Student
+from .models import User, Teacher, Student, Subject
 from django.db.transaction import atomic
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         write_only=True,
     )
 
-# Поля взяты из .models.User
+    # Поля взяты из .models.User
     class Meta:
         model = User
         fields = [
@@ -39,7 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password2',
         ]
 
-# Проверка совпадающих паролей в форме регистрации
+    # Проверка совпадающих паролей в форме регистрации
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise ValidationError({
@@ -49,8 +49,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         attrs.pop('password2')
         return attrs
 
-# Переопределение метода create.
-# В случае ошибочного ввода данных НЕ сохраняет строки в БД
+    # Переопределение метода create.
+    # В случае ошибочного ввода данных НЕ сохраняет строки в БД
     @atomic
     def create(self, validated_data):
         is_teacher = validated_data.pop('is_teacher')
@@ -63,3 +63,50 @@ class RegisterSerializer(serializers.ModelSerializer):
         else:
             Student.objects.create(user=user)
         return user
+
+
+class SubjectSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки
+    получения всех предметов
+    """
+    class Meta:
+        model = Subject
+        fields = '__all__'
+
+
+class UserSubjectSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки получения,
+    добавления и обновления предметов репетитора
+    """
+    subjects = serializers.PrimaryKeyRelatedField(
+        queryset=Subject.objects.all(),
+        many=True)
+    titles = serializers.StringRelatedField(
+        source='subjects',
+        read_only=True,
+        many=True
+    )
+
+    class Meta:
+        model = Teacher
+        fields = ('subjects', 'titles')
+
+    def create(self, validated_data):
+        subjects = validated_data.pop('subjects')
+        user = self.context['request'].user
+        teacher = Teacher.objects.get(user=user)
+        if teacher.subjects.exists():
+            raise serializers.ValidationError({
+                "subjects": "Эта функция больше недоступна! "
+                "Вы можете обновить перечень ваших предметов!"})
+        teacher.subjects.set(subjects)
+        teacher.save()
+        return teacher
+
+    def update(self, instance, validated_data):
+        subjects = validated_data['subjects']
+        instance.subjects.set(subjects)
+        instance.save()
+        return instance

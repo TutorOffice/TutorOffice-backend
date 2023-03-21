@@ -32,4 +32,11 @@ urlpatterns = [
     path('password-reset/complete/',
          PasswordResetCompleteView.as_view(),
          name='password_reset_complete'),
+    path('subjects/',
+         SubjectsView.as_view(),
+         name='subjects'),
+    path('user-subjects/',
+         UserSubjectViewSet.as_view({'get': 'list', 'put': 'update',
+                                     'post': 'create', 'delete': 'destroy'}),
+         name='user_subjects'),
 ]
