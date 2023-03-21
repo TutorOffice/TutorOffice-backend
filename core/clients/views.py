@@ -136,7 +136,6 @@ class SubjectsView(ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    authentication_classes = [JWTAuthentication]
     # добавить пермишн для учителей
 
 
@@ -147,7 +146,6 @@ class UserSubjectViewSet(ModelViewSet):
     """
     serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
-    authentication_classes = [JWTAuthentication]
     # 5) добавить пермишн для учителей
 
     def get_queryset(self):
@@ -166,7 +164,6 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
-    authentication_classes = [JWTAuthentication]
 
     def get_object(self):
         return self.request.user
