@@ -80,6 +80,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'email', 'photo')
 
+
 class SubjectSerializer(serializers.ModelSerializer):
     """
     Сериализатор для обработки
