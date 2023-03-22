@@ -1,19 +1,26 @@
 # Установка и запуск
 ```bash
-cd docker && docker-compose up -d
+ docker-compose up -d
 ```
 
-Postgresql:
+# Переменные окружения
+
+Postgres:
 - user: `postgres`
-- password: `fghjkl5678`
-- host_port: `localhost:5432`
+- password: `password`
+- host_port: `http://localhost:5432/`
+- db: `postgres`
 
 PgAdmin:
 - user: `admin@admin.ru`
 - password: `password`
 - host_port: `http://localhost:5050/`
 
+Redis:
+- port: `6379`
+
+
 # Остановка сервисов
 ```bash
-cd docker && docker-compose stop
+docker-compose stop
 ```
