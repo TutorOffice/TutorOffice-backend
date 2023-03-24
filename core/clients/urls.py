@@ -9,7 +9,7 @@ from django.contrib.auth.views import (
 )
 
 register_router = routers.DefaultRouter()
-register_router.register('register', RegisterView, basename='register')
+register_router.register('register', RegisterViewSet, basename='register')
 
 
 urlpatterns = [
@@ -41,8 +41,18 @@ urlpatterns = [
     path('subjects/',
          SubjectsView.as_view(),
          name='subjects'),
-    path('user-subjects/',
+    path('teacher/subjects/',
          UserSubjectViewSet.as_view({'get': 'list', 'put': 'update',
                                      'post': 'create'}),
-         name='user_subjects'),
+         name='teacher_subjects'),
+    path('teacher/students/',
+         TeacherStudentsViewSet.as_view({'get': 'list',
+                                        'post': 'create'}),
+         name='teacher_students',
+         ),
+    path('teacher/student/<int:pk>/',
+         TeacherStudentsViewSet.as_view({'delete': 'destroy',
+                                         'patch': 'partial_update'}),
+         name='teacher_students',
+         )
 ]

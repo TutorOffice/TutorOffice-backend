@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'lessons.apps.LessonsConfig',
     'rest_framework',
     'psycopg2',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -118,13 +118,23 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
+
+SHORT_DATE_FORMAT = 'j.m.Y'
+
+DATE_FORMAT = 'H:i'
+
+TIME_FORMAT = ['%H:%M']
+
+DATE_INPUT_FORMATS = ['%d.%m.%Y']
+
+TIME_INPUT_FORMATS = ['%H:%M']
 
 
 # Static files (CSS, JavaScript, Images)
@@ -150,7 +160,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=180),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,

@@ -1,6 +1,6 @@
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -16,15 +16,15 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
 
-from .permissions import IsTeacher
-from .serializers import RegisterSerializer, SubjectSerializer, UserSubjectSerializer, ProfileSerializer
-from .models import User, Subject, Teacher
+from .permissions import IsTeacher, IsTeacherOwner
+from .serializers import *
+from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
 from .services import Email
 # Create your views here.
 
 
-class RegisterView(CreateModelMixin, GenericViewSet):
+class RegisterViewSet(CreateModelMixin, GenericViewSet):
     """
     Регистрация пользователя и отправка
     сообщения для верификации почты
@@ -118,15 +118,6 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
-class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
-    queryset = User.objects.all()
-    serializer_class = ProfileSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_object(self):
-        return self.request.user
-
-
 class SubjectsView(ListAPIView):
     """
     Получение всех предметов,
@@ -167,3 +158,25 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
     def get_object(self):
         return self.request.user
+
+
+class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
+                             UpdateModelMixin, DestroyModelMixin,
+                             GenericViewSet):
+    queryset = TeacherStudent
+    serializer_class = TeacherStudentSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        return TeacherStudent.objects.filter(teacher=self.request.user.teacher_profile)
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            return [IsAuthenticated(), IsTeacher()]
+        return [IsAuthenticated(), IsTeacherOwner()]
+
+    def perform_create(self, serializer):
+        teacher = self.request.user.teacher_profile
+        serializer.save(teacher=teacher)
+        # добавить отправку сообщения на почту пользователю
+

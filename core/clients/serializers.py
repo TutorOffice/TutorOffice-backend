@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Teacher, Student, Subject
+from .models import User, Teacher, Student, Subject, TeacherStudent
 from django.db.transaction import atomic
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -126,3 +126,28 @@ class UserSubjectSerializer(serializers.ModelSerializer):
         instance.subjects.set(subjects)
         instance.save()
         return instance
+
+
+class TeacherStudentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TeacherStudent
+        fields = (
+            'id',
+            'first_name',
+            'patronymic_name',
+            'last_name',
+            'phone',
+            'email',
+            'comment',
+        )
+        read_only_fields = ('id',)
+
+    def validate(self, attrs):
+        if self.context['request'].method == 'PATCH':
+            email = attrs['email'] or None
+            if email:
+                raise serializers.ValidationError(
+                    {"email": "Вы не можете обновлять почту добавленных пользователей!"
+                              "Вам нужно добавить нового пользователя!"})
+        return attrs

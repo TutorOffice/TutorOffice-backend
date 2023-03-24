@@ -5,3 +5,5 @@
 *.txt
 core/core/.env
 docker/sample-docker-compose.yml
+bash.exe.stackdump
+core/static/materials/*
