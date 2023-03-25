@@ -1,19 +1,26 @@
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import CreateModelMixin
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from rest_framework.generics import RetrieveAPIView, ListAPIView
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .serializers import RegisterSerializer
 from rest_framework import status
-from .services import Email
-from .models import User
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
+
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.conf import settings
+from django.shortcuts import get_object_or_404, redirect, Http404
 from django.core.mail import send_mail
+from django.conf import settings
+from django.urls import reverse
+
+from .permissions import IsTeacher
+from .serializers import RegisterSerializer, SubjectSerializer, UserSubjectSerializer, ProfileSerializer
+from .models import User, Subject, Teacher
+from .forms import CustomPasswordResetForm
+from .services import Email
 # Create your views here.
 
 
@@ -69,6 +76,7 @@ class LoginView(TokenObtainPairView):
             user = User.objects.get(email=request.data['email'])
             if user.is_active:
                 return super().post(request, *args, **kwargs)
+                # нужен перевод исключений, если пароль не верен
             if user.check_password(request.data['password']):
                 token = RefreshToken.for_user(user)
                 return Email.send_email(request, user, token)
@@ -85,6 +93,7 @@ class CustomPasswordResetView(PasswordResetView):
     """
     # Рабочая почта используется в качестве отправителя
     from_email = settings.EMAIL_HOST_USER
+    form_class = CustomPasswordResetForm
 
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
@@ -107,3 +116,54 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
             fail_silently=False,
         )
         return response
+
+
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
+
+
+class SubjectsView(ListAPIView):
+    """
+    Получение всех предметов,
+    только для аутентифицированных
+    пользователей
+    """
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    # добавить пермишн для учителей
+
+
+class UserSubjectViewSet(ModelViewSet):
+    """
+    Получение, обновление и
+    добавление предметов репетитора
+    """
+    serializer_class = SubjectSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+    # 5) добавить пермишн для учителей
+
+    def get_queryset(self):
+        return Subject.objects.filter(teachers__user=self.request.user)
+
+    def get_object(self):
+        return Teacher.objects.get(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SubjectSerializer
+        return UserSubjectSerializer
+
+
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user
