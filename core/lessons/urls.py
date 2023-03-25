@@ -4,6 +4,6 @@ from .views import HomeworkViewSet, LessonViewSet
 
 router = DefaultRouter()
 
-router.register(r"homeworks", HomeworkViewSet, basename="homeworks")
-router.register(r"lessons", LessonViewSet, basename="lessons")
+router.register(r'homeworks', HomeworkViewSet, basename='homeworks')
+router.register(r'lessons', LessonViewSet, basename='lessons')
 urlpatterns = [path("", include(router.urls)),]

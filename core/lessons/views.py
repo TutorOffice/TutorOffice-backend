@@ -12,8 +12,8 @@ class HomeworkViewSet(ModelViewSet):
 
     serializer_class = HomeworkSerializer
     queryset = Homework.objects.all()
-    filter_backends = (SearchFilter,)
-    search_fields = ('title',)
+#    filter_backends = (SearchFilter,)
+#    search_fields = ('title',)
 #    #pagination_class = LimitOffsetPagination
 #    #permission_classes = (
 #    #    IsAuthenticatedOrReadOnly,
@@ -26,17 +26,24 @@ class LessonViewSet(ModelViewSet):
     c пагинацией и поиском ..."""
 
     serializer_class = LessonSerializer
+    queryset = Lesson.objects.all()
 #    permission_classes = (
 #        IsAuthenticatedOrReadOnly,
 #        IsAuthorOrIsStaffPermission,
 #    )
 
-    def get_queryset(self):
-        """Метод обработки запроса."""
-        teacher_id = self.kwargs.get("teacher_id")
-        teacher = get_object_or_404(Teacher, id=teacher_id)
-        return teacher.lessons.all()
+#    def get_queryset(self):
+#        """Метод обработки запроса."""
+#        teacher_id = self.request.user
+#        teacher = get_object_or_404(Teacher, id=teacher_id)
+#        return teacher.lessons.all()
 
     def perform_create(self, serializer):
         """Метод пeреопределения автора."""
         serializer.save(teacher=self.request.user)
+
+ #   def get_serializer_class(self):
+#        """Метод предопределения сериализатора в зависимости от запроса."""
+ #       if self.action in ("list", "retrieve"):
+ #           return LessonSerializer
+ #       return LessonCreateSerializer

@@ -5,7 +5,7 @@ from clients.serializers import SubjectSerializer
 from rest_framework.serializers import (
     ModelSerializer,
     SlugRelatedField,
-    ValidationError,
+    CurrentUserDefault
 )
 
 class HomeworkSerializer(serializers.ModelSerializer):
@@ -14,14 +14,16 @@ class HomeworkSerializer(serializers.ModelSerializer):
         fields = ('title', 'text', 'comment')
 
 class LessonSerializer(serializers.ModelSerializer):
-    subject = SubjectSerializer(read_only=True)
+    subject = SubjectSerializer(read_only=True, many=True)
     teacher = SlugRelatedField(
-        queryset=Teacher.objects.all(), slug_field='id'
+        default=CurrentUserDefault(),
+        read_only=True,
+        slug_field="username",
     )
     teacher_student = SlugRelatedField(
         queryset=TeacherStudent.objects.all(), slug_field='teacher'
     )
-    homework = SlugRelatedField(slug_field='title', read_only=True)
+    homework = HomeworkSerializer()
 
     class Meta:
         model = Lesson
@@ -38,4 +40,22 @@ class LessonSerializer(serializers.ModelSerializer):
         ordering = ["-id"]
 
 
+#class LessonCreateSerializer(serializers.ModelSerializer):
+#    subject = SubjectSerializer(many=True, read_only=True)
+#    teacher_student = SlugRelatedField(
+#        queryset=TeacherStudent.objects.all(), slug_field='teacher'
+#    )
+##    homework = SlugRelatedField(slug_field='title', read_only=True)
 
+  #  class Meta:
+#        model = Lesson
+  #      fields = ('teacher_student',
+  ##                 'date',
+  #                'start_time',
+  #                'end_time',
+ #                 'topic',
+#                  'comment',
+#                  'homework')
+#
+ #       ordering = ["-id"]
+#
