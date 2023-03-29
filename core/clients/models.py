@@ -123,7 +123,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     photo = models.ImageField(
         "Фотография",
-        upload_to='images/',
+        upload_to='static/images/',
         blank=True,
     )
     is_staff = models.BooleanField(
@@ -132,7 +132,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
+        return f'{self.last_name} {self.first_name}'
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -151,8 +151,16 @@ class Student(models.Model):
         User,
         related_name='student_profile',
         on_delete=models.PROTECT,
+        verbose_name='Пользователь'
     )
 
+    class Meta:
+        verbose_name = 'Студент'
+        verbose_name_plural = 'Студенты'
+        ordering = ('user',)
+
+    def __str__(self):
+        return f'{self.user.last_name} {self.user.first_name}'
 
 class Teacher(models.Model):
     """Модель, расширяющая юзера, позволяя быть репетитором"""
@@ -160,22 +168,28 @@ class Teacher(models.Model):
         User,
         related_name='teacher_profile',
         on_delete=models.PROTECT,
+        verbose_name='Пользователь'
     )
     students = models.ManyToManyField(
         Student,
         related_name='teachers',
         through="TeacherStudent",
+        verbose_name='Студенты'
     )
     subjects = models.ManyToManyField(
         Subject,
         related_name='teachers',
         blank=True,
+        verbose_name='Предметы'
     )
 
     class Meta:
         verbose_name = 'Учитель'
         verbose_name_plural = 'Учителя'
+        ordering = ('user',)
 
+    def __str__(self):
+        return f'{self.user.last_name} {self.user.first_name}'
 
 class TeacherStudent(models.Model):
     """
@@ -186,12 +200,15 @@ class TeacherStudent(models.Model):
         Teacher,
         related_name='studentM2M',
         on_delete=models.PROTECT,
+        verbose_name='Учитель'
     )
     student = models.ForeignKey(
         Student,
         related_name='teacherM2M',
         on_delete=models.PROTECT,
+        null=True,
         blank=True,
+        verbose_name='Студент'
     )
     first_name = models.TextField(
         "Имя",
@@ -238,3 +255,11 @@ class TeacherStudent(models.Model):
         default=False,
     )
     comment = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'Учитель-Ученик'
+        verbose_name_plural = 'Учитель-Ученики'
+        ordering = ('teacher',)
+
+    def __str__(self):
+        return f'{self.teacher} {self.last_name} {self.first_name}'

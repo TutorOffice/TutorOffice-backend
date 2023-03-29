@@ -6,6 +6,11 @@ from datetime import date
 
 class Homework(models.Model):
     """Модель, описывающая ДЗ к занятию"""
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.PROTECT,
+        verbose_name='Учитель',
+        related_name='homeworks')
     title = models.TextField(
         verbose_name='Заголовок'
     )
@@ -30,11 +35,13 @@ class Lesson(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.PROTECT,
-        verbose_name='Учитель')
+        verbose_name='Учитель',
+        related_name='lessons')
     teacher_student = models.ForeignKey(
         TeacherStudent,
         on_delete=models.PROTECT,
-        verbose_name='Учитель-Ученик')
+        verbose_name='Учитель-Ученик',
+        related_name='lessons')
     date = models.DateField(
         verbose_name='Дата')
     start_time = models.TimeField(
@@ -54,7 +61,7 @@ class Lesson(models.Model):
         verbose_name='Комментарий')
     homework = models.OneToOneField(
         Homework,
-        related_name='lesson',
+        related_name='lessons',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
