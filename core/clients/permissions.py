@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsTeacher(BasePermission):
@@ -21,8 +21,10 @@ class IsAdministrator(BasePermission):
 
 
 class IsTeacherOwnerOrIsStaffPermission(BasePermission):
-    """Разрешение на редактирование учителю(владельцу) и персоналу."""
+    """Разрешение на редактирование учителю(владельцу) и персоналу,
+    остальным пользователям только просмотр"""
     def has_object_permission(self, request, view, obj):
-        return (obj.teacher.user == request.user
+        return (request.method in SAFE_METHODS
+                or obj.teacher.user == request.user
                 or request.user.is_staff
                 or request.user.is_superuser)

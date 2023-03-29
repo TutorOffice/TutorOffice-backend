@@ -1,9 +1,12 @@
+from clients.models import Subject, Teacher, TeacherStudent
 from django.db import models
-from clients.models import Teacher, TeacherStudent, Subject
-
 
 PUBLIC = 'public'
 PRIVATE = 'private'
+TYPECHOICE = [
+        (PUBLIC, 'public'),
+        (PRIVATE, 'private'),
+    ]
 
 
 class Material(models.Model):
@@ -12,11 +15,6 @@ class Material(models.Model):
     между преподавателем и студентом. При этом есть
     возможность рассылки.
     """
-
-    TYPECHOICE = [
-        (PUBLIC, 'public'),
-        (PRIVATE, 'private'),
-    ]
 
     teacher = models.ForeignKey(
         Teacher,

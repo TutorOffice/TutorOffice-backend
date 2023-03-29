@@ -1,14 +1,11 @@
 from datetime import date
-from .models import Lesson, Homework
+
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
+from rest_framework.serializers import (CurrentUserDefault, ModelSerializer,
+                                        SlugRelatedField, ValidationError)
 
-from rest_framework.serializers import (
-    ModelSerializer,
-    SlugRelatedField,
-    CurrentUserDefault,
-    ValidationError
-)
+from .models import Homework, Lesson
 
 
 class HomeworkTeacherSerializer(ModelSerializer):
@@ -19,7 +16,7 @@ class HomeworkTeacherSerializer(ModelSerializer):
 
     class Meta:
         model = Homework
-        fields = ('teacher', 'title', 'text', 'comment')
+        fields = ('id', 'teacher', 'title', 'text', 'comment')
 
 
 class HomeworkStudentSerializer(ModelSerializer):
@@ -29,7 +26,7 @@ class HomeworkStudentSerializer(ModelSerializer):
 
     class Meta:
         model = Homework
-        fields = ('teacher', 'title', 'text', 'comment')
+        fields = ('id', 'teacher', 'title', 'text', 'comment')
 
 
 class SubjectSlugRelated(SlugRelatedField):
@@ -69,7 +66,8 @@ class LessonTeacherSerializer(ModelSerializer):
         """
         if data['start_time'] > data['end_time']:
             raise ValidationError(
-                'Время окончание урока должно быть позже времени начала урока!')
+                'Время окончание урока должно'
+                ' быть позже времени начала урока!')
         if data['date'] < date.today():
             raise ValidationError(
                 'Урок не может быть раньше сегодняшней даты!')

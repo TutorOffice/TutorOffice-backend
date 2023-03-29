@@ -1,16 +1,17 @@
 from django.contrib import admin
-from .models import Homework, Lesson
 
+from .models import Homework, Lesson
 
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('teacher', 'subject', 'show_student', 'start_time')
+    list_display = ('teacher', 'subject', 'date', 'show_student', 'start_time')
     date_hierarchy = 'date'
-    empty_value_display = 'нет'
 
     def show_student(self, obj):
-        return f'{obj.teacher_student.last_name} {obj.teacher_student.first_name}'
+        return (
+            f'{obj.teacher_student.last_name} {obj.teacher_student.first_name}'
+        )
     show_student.short_description = 'Студенты'
 
 #    def formfield_for_foreignkey(self, db_field, request, **kwargs):

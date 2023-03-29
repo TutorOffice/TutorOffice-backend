@@ -198,7 +198,7 @@ class TeacherStudent(models.Model):
     """
     teacher = models.ForeignKey(
         Teacher,
-        related_name='studentM2M',
+        related_name='teacherstudents',
         on_delete=models.PROTECT,
         verbose_name='Учитель'
     )

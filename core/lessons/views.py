@@ -1,25 +1,53 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.filters import SearchFilter
-from .models import Homework, Lesson
-from .serializers import HomeworkSerializer,  LessonTeacherSerializer, LessonStudentSerializer
-from clients.models import Teacher, Student, TeacherStudent
+from clients.models import Teacher
+from clients.permissions import IsTeacherOwnerOrIsStaffPermission
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+
 from .filters import LessonFilter
-from clients.permissions import IsTeacherOwnerOrIsStaffPermission
+from .models import Homework, Lesson
+from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
+                          LessonStudentSerializer, LessonTeacherSerializer)
 
 
-class HomeworkViewSet(ModelViewSet):
-    """ViewSet для эндпойнта /homeworks/
+class HomeworkTeacherViewSet(ModelViewSet):
+    """ViewSet для эндпойнта /homeworks_teachers/
     c пагинацией и поиском по полю title"""
 
-    serializer_class = HomeworkSerializer
-    queryset = Homework.objects.all()
+    serializer_class = HomeworkTeacherSerializer
+    http_method_names = ['get', 'patch', 'post', 'delete']
     filter_backends = [SearchFilter]
     search_fields = ('title',)
 #   pagination_class = LimitOffsetPagination
-    permission_classes = [IsTeacherOwnerOrIsStaffPermission]
+    permission_classes = [IsAuthenticated,
+                          IsTeacherOwnerOrIsStaffPermission]
+
+    def get_queryset(self):
+        """Получения queryset домашних заданий  учителя"""
+        teacher = get_object_or_404(Teacher,
+                                    user=self.request.user)
+        return teacher.homeworks.all()
+
+    def perform_create(self, serializer):
+        """Метод предопределения автора."""
+        teacher = get_object_or_404(Teacher,
+                                    user=self.request.user)
+        serializer.save(teacher=teacher)
+
+
+class HomeworkStudentViewSet(ReadOnlyModelViewSet):
+    """ViewSet для эндпойнта /homework_students/
+    c пагинацией"""
+
+    serializer_class = HomeworkStudentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Метод обработки запроса."""
+        return Homework.objects.filter(
+            teacher__lessons__teacherstudent__email=self.request.user.email)
 
 
 class LessonTeacherViewSet(ModelViewSet):
@@ -32,7 +60,8 @@ class LessonTeacherViewSet(ModelViewSet):
     filterset_class = LessonFilter
     search_fields = ('data',)
     #   pagination_class = LimitOffsetPagination
-    permission_classes = [IsTeacherOwnerOrIsStaffPermission]
+    permission_classes = [IsAuthenticated,
+                          IsTeacherOwnerOrIsStaffPermission]
 
     def get_queryset(self):
         """Получения queryset уроков  учителя"""
@@ -41,7 +70,7 @@ class LessonTeacherViewSet(ModelViewSet):
         return teacher.lessons.all()
 
     def perform_create(self, serializer):
-        """Метод предопределения автора."""
+        """Метод создания учителя у урока."""
         teacher = get_object_or_404(Teacher,
                                     user=self.request.user)
         serializer.save(teacher=teacher)
@@ -49,12 +78,13 @@ class LessonTeacherViewSet(ModelViewSet):
 
 class LessonStudentViewSet(ReadOnlyModelViewSet):
     """ViewSet для эндпойнта /lessons_students/
-    c пагинацией и фильтрации по дате и теме урока"""
+    c пагинацией"""
 
     serializer_class = LessonStudentSerializer
     permission_classes = [IsAuthenticated]
+#   pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         """Метод обработки запроса."""
-        #student = get_object_or_404(Student, user=self.request.user)
-        return Lesson.objects.filter(teacher_student__email=self.request.user.email)
+        return Lesson.objects.filter(
+            teacher_student__email=self.request.user.email)
