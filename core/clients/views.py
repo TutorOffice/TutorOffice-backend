@@ -8,10 +8,10 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.shortcuts import get_object_or_404, redirect, Http404
+from django.shortcuts import get_object_or_404, redirect
+from django.db.transaction import atomic
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
@@ -32,6 +32,7 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
 
+    @atomic
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         user = get_object_or_404(User, pk=response.data['id'])
@@ -51,18 +52,56 @@ class ActivateUserView(RetrieveAPIView):
             user = User.objects.get(pk=RefreshToken(token).payload['user_id'])
         except (TokenError, User.DoesNotExist):
             user = None
-        if User is None or user.is_active:
-            return Response({"ERROR": "Ссылка недействительна!"},
+        if user is None or user.is_active:
+            return Response({"error": "Ссылка недействительна!"},
                             status=status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save()
         # создание новых токенов для пользователя
-        token = RefreshToken.for_user(user)
-        # создание ответа для перенаправления и добавление токенов в заголовки
-        response = redirect(reverse('profile'))
-        response['access_token'] = str(token.access_token)
-        response['refresh_token'] = str(token)
-        return response
+        # token = RefreshToken.for_user(user)
+        # создание ответа для перенаправления
+        # добавление новых токенов в заголовки
+        # response = redirect(reverse('login'))
+        # response['Authorization'] = str(token.access_token)
+        # response['refresh_token'] = str(token)
+        return redirect(reverse('login'))
+
+
+class TokenRegisterViewSet(CreateModelMixin, GenericViewSet):
+    """Регистрация пользователя по приглашению"""
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+
+    @atomic
+    def create(self, request, token, *args, **kwargs):
+        # пытаюсь найти запись среди учеников учителей (TeacherStudent)
+        try:
+            obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
+        except (TokenError, TeacherStudent.DoesNotExist):
+            obj = None
+        # Cрок годности истёк/ссылка подделана или
+        # Если пользователь повторно использует ссылку
+        if obj is None or obj.student is not None:
+            return Response({"error": "Ссылка больше недействительна!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Если приглашённый пользователь указал аккаунт учителя
+        if request.data['is_teacher']:
+            return Response({"is_teacher": "Вы не можете зарегистрироваться как учитель!"})
+        # создание и получение пользователя
+        response = super().create(request, *args, **kwargs)
+        user = get_object_or_404(User, pk=response.data['id'])
+        # Если пользователь решил ввести другую почту, то она меняется и для преподавателя
+        if user.email != obj.email:
+            obj.email = user.email
+            token = RefreshToken.for_user(user)
+            return Email.send_email(request, user, token)
+        # Если пользователь ввел ту же почту, то она сразу подтвержается
+        user.is_active = True
+        user.save()
+        # добавляю внешний ключ на ученика в записи учителя (TeacherStudent)
+        obj.student = user.student_profile
+        obj.save()
+        return redirect(reverse('login'))
 
 
 class LoginView(TokenObtainPairView):
@@ -82,7 +121,7 @@ class LoginView(TokenObtainPairView):
                 return Email.send_email(request, user, token)
             raise User.DoesNotExist
         except User.DoesNotExist as error:
-            return Response({"ERROR": "Аккаунт с переданными учётными данными не найден!"},
+            return Response({"error": "Аккаунт с переданными учётными данными не найден!"},
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -135,7 +174,6 @@ class UserSubjectViewSet(ModelViewSet):
     Получение, обновление и
     добавление предметов репетитора
     """
-    serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
     # 5) добавить пермишн для учителей
 
@@ -163,6 +201,7 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
                              UpdateModelMixin, DestroyModelMixin,
                              GenericViewSet):
+    """Вьюха для CRUD-операций с учениками репетитора"""
     queryset = TeacherStudent
     serializer_class = TeacherStudentSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
@@ -175,8 +214,21 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
             return [IsAuthenticated(), IsTeacher()]
         return [IsAuthenticated(), IsTeacherOwner()]
 
+    @atomic
     def perform_create(self, serializer):
+        # сохраняю запись в бд, добавив внешний ключ
         teacher = self.request.user.teacher_profile
-        serializer.save(teacher=teacher)
-        # добавить отправку сообщения на почту пользователю
-
+        obj = serializer.save(teacher=teacher)
+        # проверяю наличие студента с указаной почтой в базе
+        email = obj.email
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+        if user:
+            # если пользователь есть в базе отправляю ссылку на эндпоинт входа?
+            pass
+        else:
+            # если пользователя нет в базе отправляю ссылку на эндпоинт регистрации
+            jwt_token = RefreshToken.for_user(obj)
+            Email.send_to_anonuser(self.request, email, jwt_token)

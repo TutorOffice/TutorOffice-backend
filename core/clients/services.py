@@ -21,10 +21,29 @@ class Email:
             email = EmailMessage(email_subject, message, to=[to_email],
                                  from_email=settings.EMAIL_HOST_USER)
             email.send()
-            return Response({"INFO": "Для доступа в личный кабинет вам необходимо подтвердить почту! "
+            return Response({"info": "Для доступа в личный кабинет вам необходимо подтвердить почту! "
                                      "Сообщение с вложенной ссылкой уже было отправлено вам!"},
                             status=status.HTTP_200_OK)
         except SMTPDataError:
-            return Response({"ERROR": "Почта не найдена! " 
+            return Response({"error": "Почта не найдена! " 
+                                      "Невозможно отправить сообщение для подтверждения!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def send_to_anonuser(request, email, jwt_token):
+        try:
+            domain = get_current_site(request)
+            email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
+            message = render_to_string('clients/anonuser.html',
+                                       {'domain': domain,
+                                        'token': jwt_token})
+            to_email = email
+            email = EmailMessage(email_subject, message, to=[to_email],
+                                 from_email=settings.EMAIL_HOST_USER)
+            email.send()
+            return Response({"info": "Сообщение пользователю по указанной вами почте успешно отправлено!"},
+                            status=status.HTTP_200_OK)
+        except SMTPDataError:
+            return Response({"error": "Почта не найдена! " 
                                       "Невозможно отправить сообщение для подтверждения!"},
                             status=status.HTTP_400_BAD_REQUEST)

@@ -1,4 +1,6 @@
 import uuid
+from django.db.models.functions import Cast
+from django.db.models import UUIDField
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, UserManager, AbstractUser
 from django.core.validators import (EmailValidator, MaxLengthValidator,
@@ -203,7 +205,7 @@ class TeacherStudent(models.Model):
         Student,
         related_name='teacherM2M',
         on_delete=models.PROTECT,
-        blank=True,
+        null=True,
         verbose_name='Студент',
     )
     first_name = models.TextField(

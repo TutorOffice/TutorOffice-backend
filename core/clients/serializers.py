@@ -53,7 +53,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     # В случае ошибочного ввода данных НЕ сохраняет строки в БД
     @atomic
     def create(self, validated_data):
-        role = validated_data.pop('is_teacher')
+        role = validated_data.pop('is_teacher', None)
         password = validated_data.pop('password')
         user = super().create(validated_data)
         user.password = make_password(password)
@@ -129,14 +129,17 @@ class UserSubjectSerializer(serializers.ModelSerializer):
 
 
 class TeacherStudentSerializer(serializers.ModelSerializer):
-
+    """
+    Сериализатор для обработки CRUD-операций, связанных
+    с учениками репетитора
+    """
     class Meta:
         model = TeacherStudent
         fields = (
             'id',
+            'last_name',
             'first_name',
             'patronymic_name',
-            'last_name',
             'phone',
             'email',
             'comment',
@@ -148,6 +151,8 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
             email = attrs['email'] or None
             if email:
                 raise serializers.ValidationError(
-                    {"email": "Вы не можете обновлять почту добавленных пользователей!"
+                    {"email": "Вы не можете обновлять почту добавленных пользователей! "
                               "Вам нужно добавить нового пользователя!"})
+        if attrs['email'] == self.context['request'].user.email:
+            raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
         return attrs
