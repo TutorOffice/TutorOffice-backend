@@ -14,9 +14,9 @@ class LessonAdmin(admin.ModelAdmin):
         )
     show_student.short_description = 'Студенты'
 
-#    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-#        if db_field.name == "teacher_student":
-#            kwargs["queryset"] = TeacherStudent.objects.filter(teacher=2)
+#  def formfield_for_foreignkey(self, db_field, request, **kwargs):
+#       if db_field.name == "teacher_student":
+#           kwargs["queryset"] = TeacherStudent.objects.filter(teacher=2)
 #       return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 

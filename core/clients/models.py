@@ -191,6 +191,7 @@ class Teacher(models.Model):
     def __str__(self):
         return f'{self.user.last_name} {self.user.first_name}'
 
+
 class TeacherStudent(models.Model):
     """
     Модель, связывающая преподавателя со студентом.

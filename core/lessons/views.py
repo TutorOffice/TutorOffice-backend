@@ -2,11 +2,10 @@ from clients.models import Teacher
 from clients.permissions import IsTeacherOwnerOrIsStaffPermission
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .filters import LessonFilter
+from .filters import HomeworkFilter, LessonFilter
 from .models import Homework, Lesson
 from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
                           LessonStudentSerializer, LessonTeacherSerializer)
@@ -18,9 +17,8 @@ class HomeworkTeacherViewSet(ModelViewSet):
 
     serializer_class = HomeworkTeacherSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
-    filter_backends = [SearchFilter]
-    search_fields = ('title',)
-#   pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = HomeworkFilter
     permission_classes = [IsAuthenticated,
                           IsTeacherOwnerOrIsStaffPermission]
 
@@ -43,6 +41,8 @@ class HomeworkStudentViewSet(ReadOnlyModelViewSet):
 
     serializer_class = HomeworkStudentSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = HomeworkFilter
 
     def get_queryset(self):
         """Метод обработки запроса."""
@@ -56,10 +56,8 @@ class LessonTeacherViewSet(ModelViewSet):
 
     serializer_class = LessonTeacherSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = LessonFilter
-    search_fields = ('data',)
-    #   pagination_class = LimitOffsetPagination
     permission_classes = [IsAuthenticated,
                           IsTeacherOwnerOrIsStaffPermission]
 
@@ -82,7 +80,6 @@ class LessonStudentViewSet(ReadOnlyModelViewSet):
 
     serializer_class = LessonStudentSerializer
     permission_classes = [IsAuthenticated]
-#   pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         """Метод обработки запроса."""

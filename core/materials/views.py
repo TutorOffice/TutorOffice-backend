@@ -3,7 +3,9 @@ from clients.permissions import IsTeacherOwnerOrIsStaffPermission
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
+from django_filters.rest_framework import DjangoFilterBackend
 
+from .filters import MaterialFilter
 from .serializers import MaterialSerializer
 
 
@@ -12,6 +14,8 @@ class MaterialViewSet(ModelViewSet):
 
     serializer_class = MaterialSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MaterialFilter
 #   pagination_class = LimitOffsetPagination
     permission_classes = [IsAuthenticated, IsTeacherOwnerOrIsStaffPermission]
 
