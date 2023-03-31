@@ -233,7 +233,6 @@ class TeacherStudent(models.Model):
     phone = models.TextField(
         "Телефон",
         null=True,
-        unique=True,
         validators=[RegexValidator(
             regex='^((\+7|7|8)[0-9]{10})$',
             message='Телефон введен некорректно.'
@@ -241,7 +240,6 @@ class TeacherStudent(models.Model):
     )
     email = models.EmailField(
         "Электронная почта",
-        unique=True,
         validators=[
             EmailValidator(),
             MinLengthValidator(EMAIL_MIN_LENGTH),

@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.shortcuts import get_object_or_404, redirect
 from django.db.transaction import atomic
+from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
@@ -21,6 +22,8 @@ from .serializers import *
 from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
 from .services import Email
+
+from smtplib import SMTPDataError
 # Create your views here.
 
 
@@ -37,7 +40,14 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
         response = super().create(request, *args, **kwargs)
         user = get_object_or_404(User, pk=response.data['id'])
         token = RefreshToken.for_user(user)
-        return Email.send_email(request, user, token)
+        try:
+            return Email.send_email(request, user, token)
+        except SMTPDataError:
+            # отмена сохранения записи в бд
+            transaction.set_rollback(True)
+            return Response({"error": "Почта не найдена! "
+                             "Невозможно отправить сообщение для подтверждения!"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ActivateUserView(RetrieveAPIView):
@@ -85,7 +95,7 @@ class TokenRegisterViewSet(CreateModelMixin, GenericViewSet):
             return Response({"error": "Ссылка больше недействительна!"},
                             status=status.HTTP_400_BAD_REQUEST)
         # Если приглашённый пользователь указал аккаунт учителя
-        if request.data['is_teacher']:
+        if request.data.get('is_teacher', None):
             return Response({"is_teacher": "Вы не можете зарегистрироваться как учитель!"})
         # создание и получение пользователя
         response = super().create(request, *args, **kwargs)
@@ -94,7 +104,14 @@ class TokenRegisterViewSet(CreateModelMixin, GenericViewSet):
         if user.email != obj.email:
             obj.email = user.email
             token = RefreshToken.for_user(user)
-            return Email.send_email(request, user, token)
+            try:
+                return Email.send_email(request, user, token)
+            except SMTPDataError:
+                # отмена сохранения записи в бд
+                transaction.set_rollback(True)
+                return Response({"error": "Почта не найдена! "
+                                 "Невозможно отправить сообщение для подтверждения!"},
+                                status=status.HTTP_400_BAD_REQUEST)
         # Если пользователь ввел ту же почту, то она сразу подтвержается
         user.is_active = True
         user.save()
@@ -214,21 +231,35 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
             return [IsAuthenticated(), IsTeacher()]
         return [IsAuthenticated(), IsTeacherOwner()]
 
-    @atomic
     def perform_create(self, serializer):
-        # сохраняю запись в бд, добавив внешний ключ
+        # сохраняется запись в бд, добавив учителя
         teacher = self.request.user.teacher_profile
-        obj = serializer.save(teacher=teacher)
-        # проверяю наличие студента с указаной почтой в базе
+        serializer.save(teacher=teacher)
+
+    def send_email_request(self, response):
+        obj = TeacherStudent.objects.get(pk=response.data['id'])
         email = obj.email
+        # проверяется наличие студента с указанной почтой в базе
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             user = None
+        # если пользователь есть в базе отправляю ссылку на эндпоинт входа?
         if user:
-            # если пользователь есть в базе отправляю ссылку на эндпоинт входа?
             pass
         else:
-            # если пользователя нет в базе отправляю ссылку на эндпоинт регистрации
-            jwt_token = RefreshToken.for_user(obj)
-            Email.send_to_anonuser(self.request, email, jwt_token)
+            # если пользователя нет в базе отправляю ссылку на почту для эндпоинта регистрации
+            token = RefreshToken.for_user(obj)
+            return Email.send_to_anonuser(self.request, email, token)
+
+    @atomic
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        try:
+            self.send_email_request(response)
+        except SMTPDataError:
+            transaction.set_rollback(True)
+            return Response({"error": "Почта не найдена! "
+                                      "Невозможно отправить сообщение для подтверждения!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return response

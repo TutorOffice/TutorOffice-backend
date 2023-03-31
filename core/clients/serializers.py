@@ -153,6 +153,11 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"email": "Вы не можете обновлять почту добавленных пользователей! "
                               "Вам нужно добавить нового пользователя!"})
-        if attrs['email'] == self.context['request'].user.email:
-            raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
+        else:
+            email = attrs['email']
+            teacher = self.context['request'].user.teacher_profile
+            if email == self.context['request'].user.email:
+                raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
+            if TeacherStudent.objects.filter(teacher=teacher, email=email).exists():
+                raise serializers.ValidationError({"email": "У вас уже есть ученик с такой почтой!"})
         return attrs
