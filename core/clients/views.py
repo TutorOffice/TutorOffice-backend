@@ -3,6 +3,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework import status
 
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -11,7 +12,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.shortcuts import get_object_or_404, redirect
-from django.db.transaction import atomic
 from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
@@ -41,7 +41,14 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
         user = get_object_or_404(User, pk=response.data['id'])
         token = RefreshToken.for_user(user)
         try:
-            return Email.send_email(request, user, token)
+            email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
+            template = 'clients/activate.html'
+            to_email = [user.email]
+            context = {
+                "token": token,
+                "full_name": f"{user.last_name} {user.first_name}"
+             }
+            return Email.send_email(request, email_subject, template, context, to_email)
         except SMTPDataError:
             # отмена сохранения записи в бд
             transaction.set_rollback(True)
@@ -67,13 +74,6 @@ class ActivateUserView(RetrieveAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save()
-        # создание новых токенов для пользователя
-        # token = RefreshToken.for_user(user)
-        # создание ответа для перенаправления
-        # добавление новых токенов в заголовки
-        # response = redirect(reverse('login'))
-        # response['Authorization'] = str(token.access_token)
-        # response['refresh_token'] = str(token)
         return redirect(reverse('login'))
 
 
@@ -105,12 +105,19 @@ class TokenRegisterViewSet(CreateModelMixin, GenericViewSet):
             obj.email = user.email
             token = RefreshToken.for_user(user)
             try:
-                return Email.send_email(request, user, token)
+                email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
+                template = 'clients/activate.html'
+                to_email = [user.email]
+                context = {
+                    "token": token,
+                    "full_name": f"{user.last_name} {user.first_name}"
+                }
+                return Email.send_email(request, email_subject, template, context, to_email)
             except SMTPDataError:
                 # отмена сохранения записи в бд
                 transaction.set_rollback(True)
                 return Response({"error": "Почта не найдена! "
-                                 "Невозможно отправить сообщение для подтверждения!"},
+                                          "Невозможно отправить сообщение для подтверждения!"},
                                 status=status.HTTP_400_BAD_REQUEST)
         # Если пользователь ввел ту же почту, то она сразу подтвержается
         user.is_active = True
@@ -132,10 +139,21 @@ class LoginView(TokenObtainPairView):
             user = User.objects.get(email=request.data['email'])
             if user.is_active:
                 return super().post(request, *args, **kwargs)
-                # нужен перевод исключений, если пароль не верен
             if user.check_password(request.data['password']):
                 token = RefreshToken.for_user(user)
-                return Email.send_email(request, user, token)
+                try:
+                    email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
+                    template = 'clients/activate.html'
+                    to_email = [user.email]
+                    context = {
+                        "token": token,
+                        "full_name": f"{user.last_name} {user.first_name}"
+                    }
+                    return Email.send_email(request, email_subject, template, context, to_email)
+                except SMTPDataError:
+                    return Response({"error": "Почта не найдена! "
+                                              "Невозможно отправить сообщение для подтверждения!"},
+                                    status=status.HTTP_400_BAD_REQUEST)
             raise User.DoesNotExist
         except User.DoesNotExist as error:
             return Response({"error": "Аккаунт с переданными учётными данными не найден!"},
@@ -163,12 +181,10 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         # Отправляется сообщение об успешном сбросе пароля на почту пользователя
         response = super().form_valid(form)
         send_mail(
-            'Сброс пароля - успешно',
-            'Ваш пароль был успешно сброшен!',
-            # реализовать в service, добавить кнопку-ссылку на профиль, создать токен для пользователя
-            # для редиректа на профиль
-            settings.EMAIL_HOST_USER,
-            [form.user.email],
+            subject='Сброс пароля - успешно',
+            message='Ваш пароль был успешно сброшен!',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[form.user.email],
             fail_silently=False,
         )
         return response
@@ -236,7 +252,7 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)
 
-    def send_email_request(self, response):
+    def send_add_request(self, request, response):
         obj = TeacherStudent.objects.get(pk=response.data['id'])
         email = obj.email
         # проверяется наличие студента с указанной почтой в базе
@@ -244,22 +260,50 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             user = None
-        # если пользователь есть в базе отправляю ссылку на эндпоинт входа?
+        token = RefreshToken.for_user(obj)
+        to_email = [obj.email]
+        template = 'clients/addition.html'
+        context = {
+            "token": token,
+            "teacher_name": f"{request.user.first_name} {request.user.last_name}",
+        }
+        # если пользователь есть в базе отправляю ссылку на эндпоинт входа
         if user:
-            pass
+            email_subject = 'Подтвердите запрос от репетитора!'
+            context['student_name'] = f"{user.last_name} {user.first_name}"
+            context['url_name'] = 'confirm'
+        # если пользователя нет в базе отправляю ссылку на почту для эндпоинта регистрации
         else:
-            # если пользователя нет в базе отправляю ссылку на почту для эндпоинта регистрации
-            token = RefreshToken.for_user(obj)
-            return Email.send_to_anonuser(self.request, email, token)
+            email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
+            context['url_name'] = 'register'
+        return Email.send_email(self.request, email_subject, template, context, to_email)
 
     @atomic
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         try:
-            self.send_email_request(response)
+            self.send_add_request(request, response)
         except SMTPDataError:
             transaction.set_rollback(True)
             return Response({"error": "Почта не найдена! "
                                       "Невозможно отправить сообщение для подтверждения!"},
                             status=status.HTTP_400_BAD_REQUEST)
         return response
+
+
+class ConfirmAddView(APIView):
+    def get(self, request, token):
+        try:
+            obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
+        except (TokenError, TeacherStudent.DoesNotExist):
+            obj = None
+        if obj is None or obj.student is not None:
+            return Response({"error": "Ссылка больше недействительна!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Если пользователь аутентифицирован
+        if request.user.is_authenticated:
+            if obj.email == request.user.email:
+                obj.student = request.user.student_profile
+                obj.save()
+            return redirect(reverse('profile'))
+        return redirect(reverse('login-with-token'))

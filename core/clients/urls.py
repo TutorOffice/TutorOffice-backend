@@ -58,4 +58,7 @@ urlpatterns = [
                                          'patch': 'partial_update'}),
          name='teacher-student',
          )
+    path('confirm-add-request/token/',
+         ConfirmAddView.as_view(),
+         name='confirm'),
 ]
