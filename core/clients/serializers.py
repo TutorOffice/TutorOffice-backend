@@ -147,17 +147,15 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def validate(self, attrs):
-        if self.context['request'].method == 'PATCH':
-            email = attrs['email'] or None
-            if email:
-                raise serializers.ValidationError(
-                    {"email": "Вы не можете обновлять почту добавленных пользователей! "
-                              "Вам нужно добавить нового пользователя!"})
-        else:
-            email = attrs['email']
-            teacher = self.context['request'].user.teacher_profile
-            if email == self.context['request'].user.email:
-                raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
-            if TeacherStudent.objects.filter(teacher=teacher, email=email).exists():
-                raise serializers.ValidationError({"email": "У вас уже есть ученик с такой почтой!"})
+        email = attrs['email']
+        teacher = self.context['request'].user.teacher_profile
+        if email == self.context['request'].user.email:
+            raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
+        if TeacherStudent.objects.filter(teacher=teacher, email=email).exists():
+            raise serializers.ValidationError({"email": "У вас уже есть ученик с такой почтой!"})
         return attrs
+
+    def update(self, instance, validated_data):
+        if instance.student and validated_data['email']:
+            serializers.ValidationError({"email": "Вы не можете обновить почту для привязанного пользователя!"})
+        return super().update(instance, validated_data)

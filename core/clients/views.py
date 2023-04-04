@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-
+from rest_framework_simplejwt.serializers import  TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -74,58 +74,11 @@ class ActivateUserView(RetrieveAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
         user.is_active = True
         user.save()
-        return redirect(reverse('login'))
-
-
-class TokenRegisterViewSet(CreateModelMixin, GenericViewSet):
-    """Регистрация пользователя по приглашению"""
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
-
-    @atomic
-    def create(self, request, token, *args, **kwargs):
-        # пытаюсь найти запись среди учеников учителей (TeacherStudent)
-        try:
-            obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
-        except (TokenError, TeacherStudent.DoesNotExist):
-            obj = None
-        # Cрок годности истёк/ссылка подделана или
-        # Если пользователь повторно использует ссылку
-        if obj is None or obj.student is not None:
-            return Response({"error": "Ссылка больше недействительна!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        # Если приглашённый пользователь указал аккаунт учителя
-        if request.data.get('is_teacher', None):
-            return Response({"is_teacher": "Вы не можете зарегистрироваться как учитель!"})
-        # создание и получение пользователя
-        response = super().create(request, *args, **kwargs)
-        user = get_object_or_404(User, pk=response.data['id'])
-        # Если пользователь решил ввести другую почту, то она меняется и для преподавателя
-        if user.email != obj.email:
-            obj.email = user.email
-            token = RefreshToken.for_user(user)
-            try:
-                email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
-                template = 'clients/activate.html'
-                to_email = [user.email]
-                context = {
-                    "token": token,
-                    "full_name": f"{user.last_name} {user.first_name}"
-                }
-                return Email.send_email(request, email_subject, template, context, to_email)
-            except SMTPDataError:
-                # отмена сохранения записи в бд
-                transaction.set_rollback(True)
-                return Response({"error": "Почта не найдена! "
-                                          "Невозможно отправить сообщение для подтверждения!"},
-                                status=status.HTTP_400_BAD_REQUEST)
-        # Если пользователь ввел ту же почту, то она сразу подтвержается
-        user.is_active = True
-        user.save()
-        # добавляю внешний ключ на ученика в записи учителя (TeacherStudent)
-        obj.student = user.student_profile
-        obj.save()
-        return redirect(reverse('login'))
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
 
 
 class LoginView(TokenObtainPairView):
@@ -242,68 +195,56 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
     def get_queryset(self):
         return TeacherStudent.objects.filter(teacher=self.request.user.teacher_profile)
 
-    def get_permissions(self):
-        if self.action in ('create', 'list'):
-            return [IsAuthenticated(), IsTeacher()]
-        return [IsAuthenticated(), IsTeacherOwner()]
+    # def get_permissions(self):
+    #     if self.action in ('create', 'list'):
+    #         return [IsAuthenticated(), IsTeacher()]
+    #     return [IsAuthenticated(), IsTeacherOwner()]
 
     def perform_create(self, serializer):
         # сохраняется запись в бд, добавив учителя
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)
 
-    def send_add_request(self, request, response):
-        obj = TeacherStudent.objects.get(pk=response.data['id'])
-        email = obj.email
-        # проверяется наличие студента с указанной почтой в базе
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            user = None
-        token = RefreshToken.for_user(obj)
-        to_email = [obj.email]
-        template = 'clients/addition.html'
-        context = {
-            "token": token,
-            "teacher_name": f"{request.user.first_name} {request.user.last_name}",
-        }
-        # если пользователь есть в базе отправляю ссылку на эндпоинт входа
-        if user:
-            email_subject = 'Подтвердите запрос от репетитора!'
-            context['student_name'] = f"{user.last_name} {user.first_name}"
-            context['url_name'] = 'confirm'
-        # если пользователя нет в базе отправляю ссылку на почту для эндпоинта регистрации
-        else:
-            email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
-            context['url_name'] = 'register'
-        return Email.send_email(self.request, email_subject, template, context, to_email)
-
-    @atomic
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        try:
-            self.send_add_request(request, response)
-        except SMTPDataError:
-            transaction.set_rollback(True)
-            return Response({"error": "Почта не найдена! "
-                                      "Невозможно отправить сообщение для подтверждения!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        return response
+    # def send_add_request(self, request, response):
+    #     obj = TeacherStudent.objects.get(pk=response.data['id'])
+    #     email = obj.email
+    #     # проверяется наличие студента с указанной почтой в базе
+    #     try:
+    #         user = User.objects.get(email=email)
+    #     except User.DoesNotExist:
+    #         user = None
+    #     token = RefreshToken.for_user(obj)
+    #     to_email = [obj.email]
+    #     template = 'clients/addition.html'
+    #     context = {
+    #         "token": token,
+    #         "teacher_name": f"{request.user.first_name} {request.user.last_name}",
+    #     }
+    #     # если пользователь есть в базе отправляю ссылку на эндпоинт входа
+    #     if user:
+    #         email_subject = 'Подтвердите запрос от репетитора!'
+    #         context['student_name'] = f"{user.last_name} {user.first_name}"
+    #         context['url_name'] = 'confirm'
+    #     # если пользователя нет в базе отправляю ссылку на почту для эндпоинта регистрации
+    #     else:
+    #         email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
+    #         context['url_name'] = 'register'
+    #     return Email.send_email(self.request, email_subject, template, context, to_email)
 
 
-class ConfirmAddView(APIView):
-    def get(self, request, token):
-        try:
-            obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
-        except (TokenError, TeacherStudent.DoesNotExist):
-            obj = None
-        if obj is None or obj.student is not None:
-            return Response({"error": "Ссылка больше недействительна!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        # Если пользователь аутентифицирован
-        if request.user.is_authenticated:
-            if obj.email == request.user.email:
-                obj.student = request.user.student_profile
-                obj.save()
-            return redirect(reverse('profile'))
-        return redirect(reverse('login-with-token'))
+# class ConfirmAddView(APIView):
+#     def get(self, request, token):
+#         try:
+#             obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
+#         except (TokenError, TeacherStudent.DoesNotExist):
+#             obj = None
+#         if obj is None or obj.student:
+#             return Response({"error": "Ссылка больше недействительна!"},
+#                             status=status.HTTP_400_BAD_REQUEST)
+#         # Если пользователь аутентифицирован
+#         if request.user.is_authenticated:
+#             if obj.email == request.user.email:
+#                 obj.student = request.user.student_profile
+#                 obj.save()
+#             return redirect(reverse('profile'))
+#         return redirect(reverse('login-with-token'))

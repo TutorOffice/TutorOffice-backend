@@ -246,8 +246,8 @@ class TeacherStudent(models.Model):
             MaxLengthValidator(EMAIL_MAX_LENGTH)],
         error_messages={'invalid': 'E-mail введен некорректно!'},
     )
-    verify = models.BooleanField(
-        "Подтверждение",
+    bind = models.BooleanField(
+        "Привязка",
         default=False,
     )
     comment = models.TextField(blank=True)

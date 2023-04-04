@@ -19,7 +19,6 @@ class IsTeacherOwner(BasePermission):
     этот учитель владельцем записи
     """
     def has_object_permission(self, request, view, obj):
-        print(obj.teacher.user)
         if request.user == obj.teacher.user:
             return True
         return False

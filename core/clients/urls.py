@@ -14,9 +14,6 @@ register_router.register('register', RegisterViewSet, basename='register')
 
 urlpatterns = [
     path('', include(register_router.urls)),
-    path('register/<token>/',
-         TokenRegisterViewSet.as_view({"post": 'create'}),
-         name="register-with-token"),
     path('login/',
          TokenObtainPairView.as_view(),
          name='login'),
@@ -56,9 +53,5 @@ urlpatterns = [
     path('teacher/student/<int:pk>/',
          TeacherStudentsViewSet.as_view({'delete': 'destroy',
                                          'patch': 'partial_update'}),
-         name='teacher-student',
-         )
-    path('confirm-add-request/token/',
-         ConfirmAddView.as_view(),
-         name='confirm'),
+         name='teacher-student'),
 ]
