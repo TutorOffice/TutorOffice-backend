@@ -1,8 +1,6 @@
 import uuid
-from django.db.models.functions import Cast
-from django.db.models import UUIDField
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import AbstractBaseUser, UserManager, AbstractUser
+from django.contrib.auth.models import AbstractBaseUser, UserManager
 from django.core.validators import (EmailValidator, MaxLengthValidator,
                                     MinLengthValidator, RegexValidator)
 from django.db import models
@@ -14,6 +12,10 @@ NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 50
 EMAIL_MIN_LENGTH = 7
 EMAIL_MAX_LENGTH = 254
+
+UNRELATED = 'unrelated'
+AWAITING = 'awaiting'
+RELATED = 'related'
 
 
 class CustomUserManager(UserManager):
@@ -195,6 +197,12 @@ class TeacherStudent(models.Model):
     Модель, связывающая преподавателя со студентом.
     Также предоставляет возможность создания учителю 'собственных' учеников
     """
+    TYPECHOICE = [
+        (UNRELATED, 'unrelated'),
+        (AWAITING, 'awaiting'),
+        (RELATED, 'related'),
+    ]
+
     teacher = models.ForeignKey(
         Teacher,
         related_name='studentM2M',
@@ -246,9 +254,10 @@ class TeacherStudent(models.Model):
             MaxLengthValidator(EMAIL_MAX_LENGTH)],
         error_messages={'invalid': 'E-mail введен некорректно!'},
     )
-    bind = models.BooleanField(
-        "Привязка",
-        default=False,
+    bind = models.CharField(
+        'Привязка',
+        choices=TYPECHOICE,
+        default=UNRELATED,
     )
     comment = models.TextField(blank=True)
 
