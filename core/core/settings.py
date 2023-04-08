@@ -201,7 +201,7 @@ SIMPLE_JWT = {
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', default='smtp.mail.ru')
 EMAIL_PORT = os.getenv('EMAIL_PORT', default=465)
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', default='repetitor.lk@mail.ru')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', default='xVPk2vU9JGmMRd7X6jz9')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', default='lk.repetitor@mail.ru')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', default='XWkqMRsJ93CNguuDuudf')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True

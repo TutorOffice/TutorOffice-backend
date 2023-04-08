@@ -5,4 +5,3 @@ from .models import Material
 class Material(admin.ModelAdmin):
     list_display = ('teacher', 'subject', 'file', 'type')
     list_filter = ('subject', 'type')
-

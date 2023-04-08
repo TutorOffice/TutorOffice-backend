@@ -2,9 +2,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
 from django.conf import settings
-from smtplib import SMTPDataError
-from rest_framework.response import Response
+
 from rest_framework import status
+from rest_framework.response import Response
 
 
 class Email:
@@ -20,5 +20,5 @@ class Email:
         email = EmailMessage(email_subject, message, to=[to_email],
                              from_email=settings.EMAIL_HOST_USER)
         email.send()
-        return Response({"info": "Сообщение успешно отправлено!"},
+        return Response({"success": "Сообщение успешно отправлено!"},
                         status=status.HTTP_200_OK)

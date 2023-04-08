@@ -256,6 +256,7 @@ class TeacherStudent(models.Model):
     )
     bind = models.CharField(
         'Привязка',
+        max_length=10,
         choices=TYPECHOICE,
         default=UNRELATED,
     )

@@ -11,11 +11,10 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
-from django.urls import reverse
 
 from .permissions import IsTeacher
 from .serializers import *
@@ -40,21 +39,24 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
         response = super().create(request, *args, **kwargs)
         user = get_object_or_404(User, pk=response.data['id'])
         token = RefreshToken.for_user(user)
+        template = 'clients/activate.html'
+        email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
+        to_email = user.email
+        context = {
+            "token": token,
+            "full_name": f"{user.last_name} {user.first_name}"
+         }
         try:
-            email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
-            template = 'clients/activate.html'
-            to_email = [user.email]
-            context = {
-                "token": token,
-                "full_name": f"{user.last_name} {user.first_name}"
-             }
-            return Email.send_email(request, email_subject, template, context, to_email)
-        except SMTPDataError:
+            Email.send_email(request, template, email_subject, context, to_email)
+        except SMTPDataError as e:
+            print(e)
             # отмена сохранения записи в бд
             transaction.set_rollback(True)
             return Response({"error": "Почта не найдена! "
                              "Невозможно отправить сообщение для подтверждения!"},
                             status=status.HTTP_400_BAD_REQUEST)
+        return Response({"success": "Регистрация прошла успешно! "
+                                    "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
 
 
 class ActivateUserView(RetrieveAPIView):
@@ -98,18 +100,18 @@ class LoginView(TokenObtainPairView):
                 try:
                     email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
                     template = 'clients/activate.html'
-                    to_email = [user.email]
+                    to_email = user.email
                     context = {
                         "token": token,
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
-                    return Email.send_email(request, email_subject, template, context, to_email)
+                    return Email.send_email(request, template, email_subject, context, to_email)
                 except SMTPDataError:
                     return Response({"error": "Почта не найдена! "
                                               "Невозможно отправить сообщение для подтверждения!"},
                                     status=status.HTTP_400_BAD_REQUEST)
             raise User.DoesNotExist
-        except User.DoesNotExist as error:
+        except User.DoesNotExist:
             return Response({"error": "Аккаунт с переданными учётными данными не найден!"},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -205,14 +207,14 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         serializer.save(teacher=teacher)
 
 
-@api_view(['POST', 'PATCH'])
-class SendDeleteStudentView(APIView):
+class RelateUnrelateStudentView(APIView):
     """
     Вьюха для отправки запроса на добавление
     и отвязки ученика учителем
     """
+    permission_classes = [IsAuthenticated, IsTeacher]
 
-    def post(self, request, format=None):
+    def post(self, request, pk, format=None):
         """
         Отправляет запрос на добавление ученику, если он есть в базе
         запрашивает подтверждения, если ученика нет в базе, то просто предлагает
@@ -220,37 +222,46 @@ class SendDeleteStudentView(APIView):
         """
         # получение записи из таблицы TeacherStudent по её id
         try:
-            obj = TeacherStudent.objects.get(pk=request.data['id'])
+            obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"error": "Такой записи не существует!"})
+        if obj.teacher.user != request.user:
+            return Response({"error": "У вас нет прав на осуществление этого действия!"})
+        if obj.student:
+            return Response({"error": "К данной записи ученик уже привязан!"})
         email = obj.email
         # проверка наличия пользователя с такой почтой в базе
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             user = None
-        to_email = [obj.email]
+        to_email = obj.email
         template = 'clients/addition.html'
         context = {
             "teacher_name": f"{request.user.first_name} {request.user.last_name}",
         }
         # если пользователь есть в базе, отправляется ссылка на подтверждение
         if user:
+            try:
+                student_profile = user.student_profile
+            except Student.DoesNotExist:
+                return Response({"error": "Вы не можете добавить этого пользователя, "
+                                          "так как он не является учеником!"})
             email_subject = 'Подтвердите запрос от репетитора!'
             context['student_name'] = f"{user.last_name} {user.first_name}"
             context['url_name'] = 'confirm'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
             # токен будет использоваться в ссылке, для связи записей ученика и TeacherStudent
             token = RefreshToken.for_user(obj)
-            token['student'] = user.student_profile.id
+            token['student'] = student_profile.id
             context['token'] = token
         # если пользователя нет в базе, отправляется запрос на регистрацию
         else:
             email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
-            context['url_name'] = 'register'
+            context['url_name'] = 'register-list'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
         try:
-            Email.send_email(self.request, email_subject, template, context, to_email)
+            Email.send_email(request, template, email_subject, context, to_email)
         except SMTPDataError:
             return Response({"error": "Почта не найдена! "
                             "Невозможно отправить сообщение для подтверждения!"},
@@ -260,20 +271,24 @@ class SendDeleteStudentView(APIView):
         return Response({"success": "Ваш запрос был успешно отправлен на почту пользователю!"},
                         status=status.HTTP_200_OK)
 
-    def partial_update(self, request, format=None):
-        """Метод для отвязки ученика от учителя!"""
+    def patch(self, request, pk, format=None):
+        """Метод для отвязки ученика от учителя"""
         try:
-            obj = TeacherStudent.objects.get(pk=request.data['id'])
+            obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"error": "Такой записи не существует!"})
+        if obj.teacher.user != request.user:
+            return Response({"error": "У вас нет прав на осуществление этого действия!"})
+        if not obj.student:
+            return Response({"error": "К этой записи не привязан ученик!"})
         obj.student = None
         obj.bind = 'unrelated'
         obj.save()
         return Response({"success": "Ученик был успешно отвязан от вас!"})
 
 
-@api_view(['GET'])
-class ConfirmAddView(APIView):
+class ConfirmView(APIView):
+
      def get(self, request, token):
         try:
             obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
@@ -285,6 +300,7 @@ class ConfirmAddView(APIView):
         student_id = RefreshToken(token).payload['student']
         student = Student.objects.get(pk=student_id)
         obj.student = student
+        obj.bind = 'related'
         obj.save()
         return Response({"success": "Вы были успешно добавлены к репетитору!"},
                         status=status.HTTP_200_OK)

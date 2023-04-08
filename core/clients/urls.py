@@ -54,4 +54,10 @@ urlpatterns = [
          TeacherStudentsViewSet.as_view({'delete': 'destroy',
                                          'patch': 'partial_update'}),
          name='teacher-student'),
+    path('relate/student/<int:pk>/',
+         RelateUnrelateStudentView.as_view(),
+         name='relate'),
+    path('confirm/<token>',
+         ConfirmView.as_view(),
+         name='confirm'),
 ]
