@@ -17,6 +17,12 @@ UNRELATED = 'unrelated'
 AWAITING = 'awaiting'
 RELATED = 'related'
 
+TYPECHOICE = [
+    (UNRELATED, 'unrelated'),
+    (AWAITING, 'awaiting'),
+    (RELATED, 'related'),
+]
+
 
 class CustomUserManager(UserManager):
     def _create_user(self, email, password, **extra_fields):
@@ -202,11 +208,6 @@ class TeacherStudent(models.Model):
     Модель, связывающая преподавателя со студентом.
     Также предоставляет возможность создания учителю 'собственных' учеников
     """
-    TYPECHOICE = [
-        (UNRELATED, 'unrelated'),
-        (AWAITING, 'awaiting'),
-        (RELATED, 'related'),
-    ]
 
     teacher = models.ForeignKey(
         Teacher,

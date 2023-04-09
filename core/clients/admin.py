@@ -53,7 +53,7 @@ class StudentAdmin(admin.ModelAdmin):
 
 
 @admin.register(Teacher)
-class TeachertAdmin(admin.ModelAdmin):
+class TeacherAdmin(admin.ModelAdmin):
     list_display = ('user', 'show_subjects', 'show_students')
     search_fields = ('user__last_name', 'user__email', 'user__phone')
     search_help_text = ('Фамилия, почта или телефон учителя')

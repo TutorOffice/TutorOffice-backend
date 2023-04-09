@@ -4,32 +4,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
-class Homework(models.Model):
-    """Модель, описывающая ДЗ к занятию"""
-    teacher = models.ForeignKey(
-        Teacher,
-        on_delete=models.PROTECT,
-        verbose_name='Учитель',
-        related_name='homeworks')
-    title = models.TextField(
-        verbose_name='Заголовок'
-    )
-    text = models.TextField(
-        verbose_name='Текст задания'
-    )
-    comment = models.TextField(
-        blank=True,
-        verbose_name='Комментарий к домашнему заданию')
-
-    def __str__(self):
-        return self.title
-
-    class Meta:
-        verbose_name = 'Домашнее задание'
-        verbose_name_plural = 'Домашние задания'
-        ordering = ('title',)
-
-
 class Lesson(models.Model):
     """Модель для занятий"""
     teacher = models.ForeignKey(
@@ -59,14 +33,6 @@ class Lesson(models.Model):
     comment = models.TextField(
         blank=True,
         verbose_name='Комментарий')
-    homework = models.ForeignKey(
-        Homework,
-        related_name='lessons',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name='Домашняя работа'
-    )
 
     def __str__(self):
         return f'{self.teacher_student}'
@@ -87,3 +53,32 @@ class Lesson(models.Model):
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
         ordering = ('teacher', 'date', 'subject', 'start_time')
+
+
+class Homework(models.Model):
+    """Модель, описывающая ДЗ к занятию"""
+    title = models.TextField(
+        verbose_name='Заголовок'
+    )
+    text = models.TextField(
+        verbose_name='Текст задания'
+    )
+    comment = models.TextField(
+        blank=True,
+        verbose_name='Комментарий к домашнему заданию')
+    lesson = models.OneToOneField(
+        Lesson,
+        related_name='homework',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name='Урок'
+    )
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Домашнее задание'
+        verbose_name_plural = 'Домашние задания'
+        ordering = ('title',)
