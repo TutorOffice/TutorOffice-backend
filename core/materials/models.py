@@ -3,6 +3,9 @@ from clients.models import Teacher, TeacherStudent, Subject
 
 # Create your models here.
 
+PUBLIC = 'public'
+PRIVATE = 'private'
+
 TYPECHOICE = [
         (PUBLIC, 'public'),
         (PRIVATE, 'private'),
@@ -16,8 +19,8 @@ class Material(models.Model):
     возможность рассылки.
     """
 
-
-    teacher = models.ForeignKey(Teacher,
+    teacher = models.ForeignKey(
+        Teacher,
         related_name='materials',
         on_delete=models.PROTECT,
         verbose_name='Учитель')
@@ -27,7 +30,7 @@ class Material(models.Model):
         verbose_name='Учитель-Ученик',)
     subject = models.ForeignKey(
         Subject,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
         verbose_name='Предмет')
     file = models.FileField(
         upload_to='static/materials/',

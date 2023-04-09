@@ -23,6 +23,7 @@ class IsTeacherOwner(BasePermission):
             return True
         return False
 
+
 class IsAdministrator(BasePermission):
     """Разрешения для пользователя с ролью
      администратор или суперпользователь."""

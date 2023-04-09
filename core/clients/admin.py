@@ -76,7 +76,7 @@ class TeachertAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherStudent)
 class TeacherStudentAdmin(admin.ModelAdmin):
-    list_display = ('teacher', 'show_student', 'email', 'verify')
+    list_display = ('teacher', 'show_student', 'email', 'bind')
 
     def show_student(self, obj):
         return f'{obj.last_name} {obj.first_name}'

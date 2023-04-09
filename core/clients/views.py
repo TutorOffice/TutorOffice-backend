@@ -302,8 +302,8 @@ class RelateUnrelateStudentView(APIView):
 
 
 class ConfirmView(APIView):
-
-     def get(self, request, token):
+    """Подтверждение учеником привязки к репетитору"""
+    def get(self, request, token):
         try:
             obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
         except (TokenError, TeacherStudent.DoesNotExist):
@@ -316,6 +316,7 @@ class ConfirmView(APIView):
         obj.student = student
         obj.bind = 'related'
         obj.save()
+        # Отправка уведомления учителю о добавлении
         send_mail(
             subject='Ученик подтвердил запрос на добавление!',
             message=(f'Пользователь {obj.last_name} {obj.first_name} подтвердил'

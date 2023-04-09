@@ -13,6 +13,7 @@ psycopg2 = "^2.9.5"
 python-dotenv = "^0.21.1"
 pillow = "^9.4.0"
 celery = {extras = ["redis"], version = "^5.2.7"}
+django-filter = "^23.1"
 
 
 [build-system]
