@@ -1,11 +1,17 @@
-from django.db import models
-from clients.models import User, TeacherStudent, Subject, Teacher
-from django.core.exceptions import ValidationError
 from datetime import date
+
+from clients.models import Subject, Teacher, TeacherStudent
+from django.core.exceptions import ValidationError
+from django.db import models
 
 
 class Homework(models.Model):
     """Модель, описывающая ДЗ к занятию"""
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.PROTECT,
+        verbose_name='Учитель',
+        related_name='homeworks')
     title = models.TextField(
         verbose_name='Заголовок'
     )
@@ -30,11 +36,13 @@ class Lesson(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.PROTECT,
-        verbose_name='Учитель')
+        verbose_name='Учитель',
+        related_name='lessons')
     teacher_student = models.ForeignKey(
         TeacherStudent,
         on_delete=models.PROTECT,
-        verbose_name='Учитель-Ученик')
+        verbose_name='Учитель-Ученик',
+        related_name='lessons')
     date = models.DateField(
         verbose_name='Дата')
     start_time = models.TimeField(
@@ -52,9 +60,9 @@ class Lesson(models.Model):
     comment = models.TextField(
         blank=True,
         verbose_name='Комментарий')
-    homework = models.OneToOneField(
+    homework = models.ForeignKey(
         Homework,
-        related_name='lesson',
+        related_name='lessons',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -76,8 +84,7 @@ class Lesson(models.Model):
         if errors:
             raise ValidationError(errors)
 
-
     class Meta:
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
-        ordering = ('teacher', 'subject', 'start_time')
+        ordering = ('teacher', 'date', 'subject', 'start_time')

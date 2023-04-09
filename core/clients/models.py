@@ -141,7 +141,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('last_name',)
+        ordering = ('last_name', 'first_name')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -155,15 +155,16 @@ class Student(models.Model):
         User,
         related_name='student_profile',
         on_delete=models.PROTECT,
+        verbose_name='Пользователь'
     )
 
     class Meta:
         verbose_name = 'Студент'
         verbose_name_plural = 'Студенты'
+        ordering = ('user',)
 
     def __str__(self):
         return f'{self.user.last_name} {self.user.first_name}'
-
 
 class Teacher(models.Model):
     """Модель, расширяющая юзера, позволяя быть репетитором"""
@@ -171,22 +172,25 @@ class Teacher(models.Model):
         User,
         related_name='teacher_profile',
         on_delete=models.PROTECT,
+        verbose_name='Пользователь'
     )
     students = models.ManyToManyField(
         Student,
         related_name='teachers',
-        through='TeacherStudent',
-        verbose_name='Студенты',)
+        through="TeacherStudent",
+        verbose_name='Студенты'
+    )
     subjects = models.ManyToManyField(
         Subject,
         related_name='teachers',
         blank=True,
-        verbose_name='Предметы',
+        verbose_name='Предметы'
     )
 
     class Meta:
         verbose_name = 'Учитель'
         verbose_name_plural = 'Учителя'
+        ordering = ('user',)
 
     def __str__(self):
         return f'{self.user.last_name} {self.user.first_name}'
