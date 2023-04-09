@@ -2,7 +2,6 @@ from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -77,10 +76,16 @@ class ActivateUserView(RetrieveAPIView):
         user.is_active = True
         user.save()
         refresh = RefreshToken.for_user(user)
+        # добавляется тип пользователя, нужно для фронта
+        try:
+            if user.teacher_profile.exists():
+                role = 'teacher'
+        except Teacher.DoesNotExist:
+            role = 'student'
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-
+            'role': role
         }, status=status.HTTP_200_OK)
 
 
@@ -94,7 +99,16 @@ class LoginView(TokenObtainPairView):
         try:
             user = User.objects.get(email=request.data['email'])
             if user.is_active:
-                return super().post(request, *args, **kwargs)
+                response = super().post(request, *args, **kwargs)
+                # Если пользователь авторизовался успешно
+                if response.get('access', None):
+                    # добавляется тип пользователя, нужно для фронта
+                    try:
+                        if user.teacher_profile.exists():
+                            response['role'] = 'teacher'
+                    except Teacher.DoesNotExist:
+                        response['role'] = 'student'
+                return response
             if user.check_password(request.data['password']):
                 token = RefreshToken.for_user(user)
                 try:
@@ -302,5 +316,13 @@ class ConfirmView(APIView):
         obj.student = student
         obj.bind = 'related'
         obj.save()
+        send_mail(
+            subject='Ученик подтвердил запрос на добавление!',
+            message=(f'Пользователь {obj.last_name} {obj.first_name} подтвердил'
+                     f'запрос на его добавление в качестве ученика!'),
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[obj.teacher.user.email],
+            fail_silently=False,
+        )
         return Response({"success": "Вы были успешно добавлены к репетитору!"},
                         status=status.HTTP_200_OK)
