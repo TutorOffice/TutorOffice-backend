@@ -10,6 +10,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.core.mail import send_mail
@@ -42,20 +43,19 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
         email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
         to_email = user.email
         context = {
-            "token": token,
+            "token": str(token),
             "full_name": f"{user.last_name} {user.first_name}"
          }
-        try:
-            Email.send_email(request, template, email_subject, context, to_email)
-        except SMTPDataError as e:
-            print(e)
-            # отмена сохранения записи в бд
-            transaction.set_rollback(True)
-            return Response({"error": "Почта не найдена! "
-                             "Невозможно отправить сообщение для подтверждения!"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        return Response({"success": "Регистрация прошла успешно! "
-                                    "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
+        domain = str(get_current_site(request))
+        print('work')
+        result = Email.send_email_task.delay(domain, template, email_subject, context, to_email)
+        if result.successful():
+            return Response({"success": "Регистрация прошла успешно! "
+                                        "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
+        transaction.set_rollback(True)
+        return Response({"error": "Почта не найдена! "
+                         "Невозможно отправить сообщение для подтверждения!"},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class ActivateUserView(RetrieveAPIView):
@@ -119,7 +119,7 @@ class LoginView(TokenObtainPairView):
                         "token": token,
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
-                    return Email.send_email(request, template, email_subject, context, to_email)
+                    return Email.send_email_task.delay(request, template, email_subject, context, to_email)
                 except SMTPDataError:
                     return Response({"error": "Почта не найдена! "
                                               "Невозможно отправить сообщение для подтверждения!"},
@@ -275,7 +275,7 @@ class RelateUnrelateStudentView(APIView):
             context['url_name'] = 'register-list'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
         try:
-            Email.send_email(request, template, email_subject, context, to_email)
+            Email.send_email_task.delay(request, template, email_subject, context, to_email)
         except SMTPDataError:
             return Response({"error": "Почта не найдена! "
                             "Невозможно отправить сообщение для подтверждения!"},

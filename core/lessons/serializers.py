@@ -2,8 +2,11 @@ from datetime import date
 
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
-from rest_framework.serializers import (CurrentUserDefault, ModelSerializer,
-                                        SlugRelatedField, ValidationError)
+from rest_framework.serializers import (
+    CurrentUserDefault, ModelSerializer,
+    SerializerMethodField, SlugRelatedField,
+    ValidationError, StringRelatedField,
+    PrimaryKeyRelatedField, BooleanField)
 
 from .models import Homework, Lesson
 
@@ -29,7 +32,7 @@ class HomeworkStudentSerializer(ModelSerializer):
         fields = ('id', 'teacher', 'title', 'text', 'comment')
 
 
-class SubjectSlugRelated(SlugRelatedField):
+class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
     """Возможность при создании урока выбора
      предмета урока только из предметов учителя"""
     def get_queryset(self):
@@ -38,13 +41,13 @@ class SubjectSlugRelated(SlugRelatedField):
         return teacher.subjects.all()
 
 
-class TeacherStudentSlugRelated(SlugRelatedField):
+class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
     """Возможность при создании урока выбора
     студента только из студентов учителя"""
     def get_queryset(self):
         request = self.context.get('request', None)
         teacher = get_object_or_404(Teacher, user=request.user)
-        return teacher.teacherstudents.all()
+        return teacher.studentM2M.all()
 
 
 class HomeworkSlugRelated(SlugRelatedField):
@@ -56,8 +59,16 @@ class HomeworkSlugRelated(SlugRelatedField):
         return teacher.homeworks.all()
 
 
-class LessonTeacherSerializer(ModelSerializer):
+class LessonSerializer(ModelSerializer):
     """Сериализатор для представления уроков для учителя"""
+    subject = SubjectPrimaryKeyRelated(write_only=True)
+    subject_title = StringRelatedField(source='subject',
+                                       read_only=True)
+    student = TeacherStudentPrimaryKeyRelated(write_only=True)
+    teacher = StringRelatedField(read_only=True)
+    student_full_name = SerializerMethodField()
+    homework = BooleanField(read_only=True)
+
     def validate(self, data):
         """
         Валидация даты и времени урока
@@ -73,19 +84,17 @@ class LessonTeacherSerializer(ModelSerializer):
                 'Урок не может быть раньше сегодняшней даты!')
         return data
 
-    subject = SubjectSlugRelated(slug_field='title')
-    teacher = SlugRelatedField(slug_field='pk',
-                               default=CurrentUserDefault(),
-                               read_only=True)
-    teacher_student = TeacherStudentSlugRelated(slug_field='last_name')
-    homework = HomeworkSlugRelated(slug_field='title')
+    def get_student_full_name(self, obj):
+        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
         model = Lesson
         fields = ('id',
                   'teacher',
-                  'teacher_student',
+                  'student',
+                  'student_full_name',
                   'subject',
+                  'subject_title',
                   'date',
                   'start_time',
                   'end_time',
@@ -95,26 +104,9 @@ class LessonTeacherSerializer(ModelSerializer):
 
         ordering = ['date', 'start_time']
 
-
-class LessonStudentSerializer(ModelSerializer):
-    """Сериализатор для представления уроков для студента"""
-    subject = SlugRelatedField(slug_field='title', read_only=True)
-    teacher = SlugRelatedField(slug_field='pk',
-                               read_only=True)
-    teacher_student = SlugRelatedField(slug_field='last_name', read_only=True)
-    homework = HomeworkStudentSerializer(read_only=True)
-
-    class Meta:
-        model = Lesson
-        fields = ('id',
-                  'teacher',
-                  'teacher_student',
-                  'subject',
-                  'date',
-                  'start_time',
-                  'end_time',
-                  'topic',
-                  'comment',
-                  'homework')
-
-        ordering = ["teacher_student"]
+    def update(self, instance, validated_data):
+        teacher = validated_data.get('teacher', None)
+        student = validated_data.get('student', None)
+        if teacher or student:
+            raise ValidationError("Нельзя изменить участников урока!")
+        return super().update(instance, validated_data)

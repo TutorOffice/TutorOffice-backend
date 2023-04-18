@@ -22,21 +22,3 @@ class IsTeacherOwner(BasePermission):
         if request.user == obj.teacher.user:
             return True
         return False
-
-
-class IsAdministrator(BasePermission):
-    """Разрешения для пользователя с ролью
-     администратор или суперпользователь."""
-    def has_permission(self, request, view):
-        return (request.user.is_superuser
-                or request.user.is_staff)
-
-
-class IsTeacherOwnerOrIsStaffPermission(BasePermission):
-    """Разрешение на редактирование учителю(владельцу) и персоналу,
-    остальным пользователям только просмотр"""
-    def has_object_permission(self, request, view, obj):
-        return (request.method in SAFE_METHODS
-                or obj.teacher.user == request.user
-                or request.user.is_staff
-                or request.user.is_superuser)

@@ -1,5 +1,5 @@
 from clients.models import Teacher
-from clients.permissions import IsTeacherOwnerOrIsStaffPermission
+from clients.permissions import IsTeacherOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
@@ -17,7 +17,7 @@ class MaterialViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = MaterialFilter
 #   pagination_class = LimitOffsetPagination
-    permission_classes = [IsAuthenticated, IsTeacherOwnerOrIsStaffPermission]
+    permission_classes = [IsAuthenticated, IsTeacherOwner]
 
     def get_queryset(self):
         """Получения queryset материалов  учителя"""

@@ -157,7 +157,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
 }
 
 SIMPLE_JWT = {
@@ -206,3 +208,10 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', default='lk.repetitor@mail.ru')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', default='XWkqMRsJ93CNguuDuudf')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
+
+CELERY_BROKER_URL = 'redis://172.17.0.2:6379/0'
+CELERY_RESULT_BACKEND = 'redis://172.17.0.2:6379/0'
+CELERY_ACCEPT_CONTENT = {'application/json'}
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Moscow'

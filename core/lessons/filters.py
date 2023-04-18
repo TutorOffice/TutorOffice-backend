@@ -9,36 +9,38 @@ from .models import Homework, Lesson
 
 class LessonFilter(FilterSet):
     """Фильтры по всем полям модели Lesson"""
-
-    teacher_student = CharFilter(field_name='teacher_student__last_name',
-                                 lookup_expr='exact',
-                                 label='Студент')
-    date = DateFromToRangeFilter(field_name='date',
-                                 label='Дата')
-    subject = CharFilter(field_name='subject__title',
-                         lookup_expr='iexact',
-                         label='Предмет')
-    homework = CharFilter(field_name='homework__title',
-                          lookup_expr='icontains',
-                          label='Домашняя работа')
+    teacher = CharFilter(
+        lookup_expr='exact',
+        label='Репетитор')
+    teacher_student = CharFilter(
+        field_name='teacher_student__last_name',
+        lookup_expr='exact',
+        label='Студент')
+    date = DateFromToRangeFilter(
+        field_name='date',
+        label='Дата')
+    subject = CharFilter(
+        field_name='subject__title',
+        lookup_expr='iexact',
+        label='Предмет')
 
     class Meta:
         model = Lesson
-        fields = ('teacher_student', 'date', 'subject', 'homework')
+        fields = ('teacher', 'teacher_student', 'date', 'subject')
 
 
-class HomeworkFilter(FilterSet):
-    """Фильтры по полям title и text модели Homework"""
-
-    title = CharFilter(field_name='title',
-                       lookup_expr='icontains',
-                       label='Заголовок')
-
-    text = CharFilter(field_name='text',
-                      lookup_expr='icontains',
-                      label='Поиск в тексте')
-
-    class Meta:
-        model = Homework
-        fields = ('title', 'text')
+# class HomeworkFilter(FilterSet):
+#     """Фильтры по полям title и text модели Homework"""
+#
+#     title = CharFilter(field_name='title',
+#                        lookup_expr='icontains',
+#                        label='Заголовок')
+#
+#     text = CharFilter(field_name='text',
+#                       lookup_expr='icontains',
+#                       label='Поиск в тексте')
+#
+#     class Meta:
+#         model = Homework
+#         fields = ('title', 'text')
 
