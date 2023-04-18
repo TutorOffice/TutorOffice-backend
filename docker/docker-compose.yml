@@ -1,7 +1,11 @@
 version: "3.9"
 
 services:
-
+  web-app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
   postgres:
     container_name: postgres
     image: postgres:15
