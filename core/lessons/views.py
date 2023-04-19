@@ -1,13 +1,19 @@
 from clients.models import Teacher
 from clients.permissions import IsTeacherOwner, IsTeacher
+
+from django.db.models import Count, F, Value, CharField
+from django.db.models.functions import Concat
+
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, GenericViewSet
+from rest_framework.mixins import ListModelMixin
+from rest_framework.response import Response
 
 from .filters import LessonFilter # HomeworkFilter,
 from .models import Homework, Lesson
 from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
-                          LessonSerializer)
+                          LessonSerializer, AggregateLessonSerializer)
 
 
 # class HomeworkTeacherViewSet(ModelViewSet):
@@ -47,6 +53,54 @@ from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
 #         """Метод обработки запроса."""
 #         return Homework.objects.filter(
 #             teacher__lessons__teacherstudent__email=self.request.user.email)
+
+
+class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
+    """
+    Вьюсет для возврата агрегированных данных по урокам
+    с возможностью фильтрации
+    """
+    filterset_class = LessonFilter
+    permission_classes = [IsAuthenticated]
+    serializer_class = AggregateLessonSerializer
+
+    def get_queryset(self):
+        try:
+            profile = self.request.user.teacher_profile
+        except Teacher.DoesNotExist:
+            profile = None
+        if profile:
+            teacher = get_object_or_404(Teacher,
+                                        user=self.request.user)
+            return teacher.lessons.all()
+        return Lesson.objects.filter(
+            teacher_student__email=self.request.user.email)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        response = super().list(request, *args, **kwargs)
+        group_by = request.query_params.get('group_by', None)
+        match group_by:
+            # добавить поле status в values
+            case 'subject':
+                lessons = queryset.values(title=F('subject__title')).annotate(count=Count('id'))
+            case 'teacher':
+                lessons = queryset.values(
+                    full_name=Concat(
+                        F('teacher__user__last_name'),
+                        Value(' '),
+                        F('teacher__user__first_name'),
+                        output_field=CharField())).annotate(count=Count('id'))
+            case 'student':
+                lessons = queryset.values(
+                    full_name=Concat(
+                        F('teacher_student__last_name'),
+                        Value(' '),
+                        F('teacher_student__first_name'),
+                        output_field=CharField())).annotate(count=Count('id'))
+            case _:
+                lessons = queryset.values('date').annotate(count=Count('id'))
+        return Response({'lessons': lessons})
 
 
 class TeacherLessonViewSet(ModelViewSet):
