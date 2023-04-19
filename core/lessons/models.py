@@ -3,6 +3,16 @@ from clients.models import Subject, Teacher, TeacherStudent
 from django.core.exceptions import ValidationError
 from django.db import models
 
+PLANNED = 'planned'
+CANCELED = 'canceled'
+DONE = 'done'
+
+STATUSCHOICE = [
+    (PLANNED, 'planned'),
+    (CANCELED, 'canceled'),
+    (DONE, 'done'),
+    ]
+
 
 class Lesson(models.Model):
     """Модель для занятий"""
@@ -33,6 +43,12 @@ class Lesson(models.Model):
     comment = models.TextField(
         blank=True,
         verbose_name='Комментарий')
+    status = models.CharField(
+        choices=STATUSCHOICE,
+        default=PLANNED,
+        verbose_name='Статус',
+        max_length=10,
+    )
 
     def __str__(self):
         return f'{self.teacher_student}'

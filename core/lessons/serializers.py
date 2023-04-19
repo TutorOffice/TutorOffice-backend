@@ -6,7 +6,8 @@ from rest_framework.serializers import (
     CurrentUserDefault, ModelSerializer,
     SerializerMethodField, SlugRelatedField,
     ValidationError, StringRelatedField,
-    PrimaryKeyRelatedField, BooleanField)
+    PrimaryKeyRelatedField, BooleanField,
+    ReadOnlyField)
 
 from .models import Homework, Lesson
 
@@ -64,10 +65,12 @@ class LessonSerializer(ModelSerializer):
     subject = SubjectPrimaryKeyRelated(write_only=True)
     subject_title = StringRelatedField(source='subject',
                                        read_only=True)
-    student = TeacherStudentPrimaryKeyRelated(write_only=True)
+    student = TeacherStudentPrimaryKeyRelated(source='teacher_student',
+                                              write_only=True)
     teacher = StringRelatedField(read_only=True)
-    student_full_name = SerializerMethodField()
+    student_full_name = SerializerMethodField(read_only=True)
     homework = BooleanField(read_only=True)
+    status = ReadOnlyField()
 
     def validate(self, data):
         """
@@ -98,6 +101,7 @@ class LessonSerializer(ModelSerializer):
                   'date',
                   'start_time',
                   'end_time',
+                  'status',
                   'topic',
                   'comment',
                   'homework')
