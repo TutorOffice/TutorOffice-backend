@@ -1,3 +1,4 @@
+from .tasks import Email
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import *
@@ -12,7 +13,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
-from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
 
@@ -20,7 +20,6 @@ from .permissions import IsTeacher
 from .serializers import *
 from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
-from .services import Email
 
 from smtplib import SMTPDataError
 # Create your views here.
@@ -47,15 +46,10 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
             "full_name": f"{user.last_name} {user.first_name}"
          }
         domain = str(get_current_site(request))
-        print('work')
-        result = Email.send_email_task.delay(domain, template, email_subject, context, to_email)
-        if result.successful():
-            return Response({"success": "Регистрация прошла успешно! "
-                                        "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
-        transaction.set_rollback(True)
-        return Response({"error": "Почта не найдена! "
-                         "Невозможно отправить сообщение для подтверждения!"},
-                        status=status.HTTP_400_BAD_REQUEST)
+        Email.send_email_task.delay(domain, template, email_subject, context, to_email)
+        raise ValidationError("ok!")
+        # return Response({"success": "Регистрация прошла успешно! "
+        #                            "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
 
 
 class ActivateUserView(RetrieveAPIView):
