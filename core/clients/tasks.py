@@ -19,8 +19,6 @@ class Email:
             })
         email = EmailMessage(email_subject, message, to=[to_email],
                              from_email=settings.EMAIL_HOST_USER)
-        print('work')
         email.send()
-        print('excellent')
         return Response({"success": "Сообщение успешно отправлено!"},
                         status=status.HTTP_200_OK)
