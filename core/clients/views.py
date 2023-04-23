@@ -1,4 +1,3 @@
-from .tasks import Email
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import *
@@ -6,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -20,9 +20,9 @@ from .permissions import IsTeacher
 from .serializers import *
 from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
+from .tasks import Email
 
 from smtplib import SMTPDataError
-# Create your views here.
 
 
 class RegisterViewSet(CreateModelMixin, GenericViewSet):
@@ -47,9 +47,8 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
          }
         domain = str(get_current_site(request))
         Email.send_email_task.delay(domain, template, email_subject, context, to_email)
-        raise ValidationError("ok!")
-        # return Response({"success": "Регистрация прошла успешно! "
-        #                            "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
+        return Response({"success": "Регистрация прошла успешно! "
+                         "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
 
 
 class ActivateUserView(RetrieveAPIView):
@@ -106,14 +105,15 @@ class LoginView(TokenObtainPairView):
             if user.check_password(request.data['password']):
                 token = RefreshToken.for_user(user)
                 try:
-                    email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
                     template = 'clients/activate.html'
+                    email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
                     to_email = user.email
                     context = {
-                        "token": token,
+                        "token": str(token),
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
-                    return Email.send_email_task.delay(request, template, email_subject, context, to_email)
+                    domain = str(get_current_site(request))
+                    return Email.send_email_task.delay(domain, template, email_subject, context, to_email)
                 except SMTPDataError:
                     return Response({"error": "Почта не найдена! "
                                               "Невозможно отправить сообщение для подтверждения!"},
@@ -248,6 +248,7 @@ class RelateUnrelateStudentView(APIView):
         context = {
             "teacher_name": f"{request.user.first_name} {request.user.last_name}",
         }
+        domain = str(get_current_site(request))
         # если пользователь есть в базе, отправляется ссылка на подтверждение
         if user:
             try:
@@ -262,14 +263,14 @@ class RelateUnrelateStudentView(APIView):
             # токен будет использоваться в ссылке, для связи записей ученика и TeacherStudent
             token = RefreshToken.for_user(obj)
             token['student'] = student_profile.id
-            context['token'] = token
+            context['token'] = str(token)
         # если пользователя нет в базе, отправляется запрос на регистрацию
         else:
             email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
             context['url_name'] = 'register-list'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
         try:
-            Email.send_email_task.delay(request, template, email_subject, context, to_email)
+            Email.send_email_task.delay(domain, template, email_subject, context, to_email)
         except SMTPDataError:
             return Response({"error": "Почта не найдена! "
                             "Невозможно отправить сообщение для подтверждения!"},

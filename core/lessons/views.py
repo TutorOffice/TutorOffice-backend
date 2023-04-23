@@ -3,8 +3,8 @@ from clients.permissions import IsTeacherOwner, IsTeacher
 
 from django.db.models import Count, F, Value, CharField
 from django.db.models.functions import Concat
-
 from django.shortcuts import get_object_or_404
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, GenericViewSet
 from rest_framework.mixins import ListModelMixin
@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from .filters import LessonFilter # HomeworkFilter,
 from .models import Homework, Lesson
 from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
-                          LessonSerializer, AggregateLessonSerializer)
+                          LessonSerializer)
 
 
 # class HomeworkTeacherViewSet(ModelViewSet):
@@ -57,14 +57,19 @@ from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
 
 class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
     """
-    Вьюсет для возврата агрегированных данных по урокам
-    с возможностью фильтрации
+    Вьюсет для возврата количества уроков
+    с возможностью выбора параметров для
+    фильтрации и группировки данных.
     """
     filterset_class = LessonFilter
     permission_classes = [IsAuthenticated]
-    serializer_class = AggregateLessonSerializer
 
     def get_queryset(self):
+        """
+        Возвращаются все уроки для учителя и ученика,
+        в зависимости от типа профиля это осуществляется по-разному,
+        т.к. ученик напрямую не связан с уроками
+        """
         try:
             profile = self.request.user.teacher_profile
         except Teacher.DoesNotExist:
@@ -75,10 +80,15 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
             return teacher.lessons.all()
         return Lesson.objects.filter(
             teacher_student__email=self.request.user.email)
+        # student.teacherM2M.lessons.all()
 
     def list(self, request, *args, **kwargs):
+        """
+        Отфильтрованные данные группируются по выбранному параметру,
+        по умолчанию это дата, но также имеется возможность по
+        предметам, учителям для учеников и ученикам для учителей.
+        """
         queryset = self.filter_queryset(self.get_queryset())
-        response = super().list(request, *args, **kwargs)
         group_by = request.query_params.get('group_by', None)
         match group_by:
             # добавить поле status в values

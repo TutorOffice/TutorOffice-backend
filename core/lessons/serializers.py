@@ -60,23 +60,6 @@ class HomeworkSlugRelated(SlugRelatedField):
         return teacher.homeworks.all()
 
 
-class AggregateLessonSerializer(ModelSerializer):
-    teacher = StringRelatedField(read_only=True)
-    student = SerializerMethodField(read_only=True)
-    subject = StringRelatedField(read_only=True)
-
-    def get_student(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
-
-    class Meta:
-        model = Lesson
-        fields = ('id',
-                  'teacher',
-                  'student',
-                  'subject',
-                  'date')
-
-
 class LessonSerializer(ModelSerializer):
     """Сериализатор для представления уроков для учителя"""
     subject = SubjectPrimaryKeyRelated(write_only=True)
