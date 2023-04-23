@@ -60,57 +60,66 @@ class HomeworkSlugRelated(SlugRelatedField):
         return teacher.homeworks.all()
 
 
-class LessonSerializer(ModelSerializer):
-    """Сериализатор для представления уроков для учителя"""
-    subject = SubjectPrimaryKeyRelated(write_only=True)
-    subject_title = StringRelatedField(source='subject',
-                                       read_only=True)
-    student = TeacherStudentPrimaryKeyRelated(source='teacher_student',
-                                              write_only=True)
-    teacher = StringRelatedField(read_only=True)
-    student_full_name = SerializerMethodField(read_only=True)
-    homework = BooleanField(read_only=True)
+class AbstractLessonSerializer(ModelSerializer):
     status = ReadOnlyField()
 
-    def validate(self, data):
-        """
-        Валидация даты и времени урока
-        (проверка время окончание урока позже времени начала урока,
-         дата урока не раньше сегодня)
-        """
-        if data['start_time'] > data['end_time']:
-            raise ValidationError(
-                'Время окончание урока должно'
-                ' быть позже времени начала урока!')
-        if data['date'] < date.today():
-            raise ValidationError(
-                'Урок не может быть раньше сегодняшней даты!')
-        return data
+    class Meta:
+        model = Lesson
+        fields = ['id',
+                  'date',
+                  'start_time',
+                  'end_time',
+                  'status',
+                  ]
+        ordering = ['date', 'start_time']
+
+
+class TeacherListLessonSerializer(AbstractLessonSerializer):
+    """Сериализатор для представления списка уроков для учителя"""
+    student = TeacherStudentPrimaryKeyRelated(source='teacher_student',
+                                              write_only=True)
+    student_full_name = SerializerMethodField(read_only=True)
 
     def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
         model = Lesson
-        fields = ('id',
-                  'teacher',
-                  'student',
-                  'student_full_name',
-                  'subject',
-                  'subject_title',
-                  'date',
-                  'start_time',
-                  'end_time',
-                  'status',
-                  'topic',
-                  'comment',
-                  'homework')
+        fields = AbstractLessonSerializer.Meta.fields + ['student', 'student_full_name']
 
-        ordering = ['date', 'start_time']
 
-    def update(self, instance, validated_data):
-        teacher = validated_data.get('teacher', None)
-        student = validated_data.get('student', None)
-        if teacher or student:
-            raise ValidationError("Нельзя изменить участников урока!")
-        return super().update(instance, validated_data)
+class StudentListLessonSerializer(AbstractLessonSerializer):
+    """Сериализатор для представления списка уроков для ученика"""
+    teacher = StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Lesson
+        fields = fields = AbstractLessonSerializer.Meta.fields + ['teacher']
+
+
+    # def update(self, instance, validated_data):
+    #     teacher = validated_data.get('teacher', None)
+    #     student = validated_data.get('student', None)
+    #     if teacher or student:
+    #         raise ValidationError("Нельзя изменить участников урока!")
+    #     return super().update(instance, validated_data)
+
+    # def validate(self, data):
+    #     """
+    #     Валидация даты и времени урока
+    #     (проверка время окончание урока позже времени начала урока,
+    #      дата урока не раньше сегодня)
+    #     """
+    #     if data['start_time'] > data['end_time']:
+    #         raise ValidationError(
+    #             'Время окончание урока должно'
+    #             ' быть позже времени начала урока!')
+    #     if data['date'] < date.today():
+    #         raise ValidationError(
+    #             'Урок не может быть раньше сегодняшней даты!')
+    #     return data
+
+    # subject_title = StringRelatedField(source='subject',
+    #                                    read_only=True)
+
+    # homework = BooleanField(read_only=True)

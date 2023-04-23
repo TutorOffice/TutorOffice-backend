@@ -1,4 +1,5 @@
-from clients.models import Teacher
+from clients.models import Teacher, Student
+from clients.services import get_user_type
 from clients.permissions import IsTeacherOwner, IsTeacher
 
 from django.db.models import Count, F, Value, CharField
@@ -13,7 +14,7 @@ from rest_framework.response import Response
 from .filters import LessonFilter # HomeworkFilter,
 from .models import Homework, Lesson
 from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
-                          LessonSerializer)
+                          TeacherListLessonSerializer, StudentListLessonSerializer)
 
 
 # class HomeworkTeacherViewSet(ModelViewSet):
@@ -70,17 +71,14 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         в зависимости от типа профиля это осуществляется по-разному,
         т.к. ученик напрямую не связан с уроками
         """
-        try:
-            profile = self.request.user.teacher_profile
-        except Teacher.DoesNotExist:
-            profile = None
-        if profile:
+        request = self.request
+        profile = get_user_type(request)
+        if profile == 'teacher':
             teacher = get_object_or_404(Teacher,
                                         user=self.request.user)
             return teacher.lessons.all()
         return Lesson.objects.filter(
             teacher_student__email=self.request.user.email)
-        # student.teacherM2M.lessons.all()
 
     def list(self, request, *args, **kwargs):
         """
@@ -114,17 +112,18 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
 
 
 class TeacherLessonViewSet(ModelViewSet):
+    # SingleLessonViewSet with permissions
     """
     ViewSet для эндпойнта /lessons_teachers/
     c пагинацией и кастомной фильтрацией
     """
 
-    serializer_class = LessonSerializer
+    # serializer_class = LessonSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
     filterset_class = LessonFilter
 
     def get_permissions(self):
-        if self.action in ('get', 'patch', 'delete'):
+        if self.action in ('retrieve', 'partial_update', 'delete'):
             return [IsAuthenticated(), IsTeacherOwner()]
         return [IsTeacher()]
 
@@ -141,14 +140,29 @@ class TeacherLessonViewSet(ModelViewSet):
         serializer.save(teacher=teacher)
 
 
-class StudentLessonViewSet(ReadOnlyModelViewSet):
-    """ViewSet для эндпойнта /lessons_students/
-    c пагинацией"""
+class ListLessonViewSet(ListModelMixin, GenericViewSet):
+    """
+    Возвращает список уроков с фильтрацией и
+    возможностью пагинации
+    """
 
-    serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated]
+    filterset_class = LessonFilter
+
+    def get_serializer_class(self):
+        request = self.request
+        profile = get_user_type(request)
+        if profile == 'teacher':
+            return TeacherListLessonSerializer
+        return StudentListLessonSerializer
 
     def get_queryset(self):
-        """Метод обработки запроса."""
-        return Lesson.objects.filter(
-            teacher_student__email=self.request.user.email)
+        request = self.request
+        profile = get_user_type(request)
+        if profile == 'teacher':
+            teacher = get_object_or_404(Teacher,
+                                        user=self.request.user)
+            return teacher.lessons.all()
+        student = get_object_or_404(Student,
+                                    user=self.request.user)
+        return student.teacherM2M.lessons.all()
