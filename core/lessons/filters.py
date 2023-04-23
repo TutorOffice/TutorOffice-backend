@@ -12,7 +12,7 @@ class LessonFilter(FilterSet):
     teacher = CharFilter(
         lookup_expr='exact',
         label='Репетитор')
-    teacher_student = CharFilter(
+    student = CharFilter(
         field_name='teacher_student__last_name',
         lookup_expr='exact',
         label='Студент')
@@ -26,21 +26,21 @@ class LessonFilter(FilterSet):
 
     class Meta:
         model = Lesson
-        fields = ('teacher', 'teacher_student', 'date', 'subject')
+        fields = ('teacher', 'student', 'date', 'subject')
 
 
-# class HomeworkFilter(FilterSet):
-#     """Фильтры по полям title и text модели Homework"""
-#
-#     title = CharFilter(field_name='title',
-#                        lookup_expr='icontains',
-#                        label='Заголовок')
-#
-#     text = CharFilter(field_name='text',
-#                       lookup_expr='icontains',
-#                       label='Поиск в тексте')
-#
-#     class Meta:
-#         model = Homework
-#         fields = ('title', 'text')
+class HomeworkFilter(FilterSet):
+    """Фильтры по полям title и text модели Homework"""
+
+    title = CharFilter(field_name='title',
+                       lookup_expr='icontains',
+                       label='Заголовок')
+
+    text = CharFilter(field_name='text',
+                      lookup_expr='icontains',
+                      label='Поиск в тексте')
+
+    class Meta:
+        model = Homework
+        fields = ('title', 'text')
 
