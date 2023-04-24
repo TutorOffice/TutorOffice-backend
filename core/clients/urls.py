@@ -15,7 +15,7 @@ register_router.register('register', RegisterViewSet, basename='register')
 urlpatterns = [
     path('', include(register_router.urls)),
     path('login/',
-         TokenObtainPairView.as_view(),
+         LoginView.as_view(),
          name='login'),
     path('refresh/',
          TokenRefreshView.as_view(),

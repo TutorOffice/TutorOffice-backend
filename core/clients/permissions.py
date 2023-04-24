@@ -30,8 +30,6 @@ class IsStudentOwner(BasePermission):
     этот ученик к записи
     """
     def has_object_permission(self, request, view, obj):
-        print(request.user.student_profile)
-        print(obj.teacher_student.student)
         if request.user.student_profile == obj.teacher_student.student:
             return True
         return False

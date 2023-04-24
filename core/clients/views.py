@@ -90,6 +90,7 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         try:
+            password = request.data['password']
             user = User.objects.get(email=request.data['email'])
             if user.is_active:
                 response = super().post(request, *args, **kwargs)

@@ -12,12 +12,12 @@ router = DefaultRouter()
 # router.register(r'homeworks_teachers',
 #                 HomeworkTeacherViewSet,
 #                 basename='homeworks_teachers')
-router.register(r'user/lessons/number',
+router.register(r'user/lesson/number',
                 AggregateLessonsViewSet,
-                basename='lessons_number')
-router.register(r'user/lessons/list',
+                basename='lesson_number')
+router.register(r'user/lesson/list',
                 ListLessonViewSet,
-                basename='lessons')
+                basename='lesson')
 router.register(r'teacher/lesson',
                 DetailTeacherLessonViewSet,
                 basename='teacher_lesson')

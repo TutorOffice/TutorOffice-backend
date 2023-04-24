@@ -7,7 +7,7 @@ from rest_framework.serializers import (
     SerializerMethodField, SlugRelatedField,
     ValidationError, StringRelatedField,
     PrimaryKeyRelatedField, BooleanField,
-    ReadOnlyField)
+    ReadOnlyField, CharField)
 
 from .models import Homework, Lesson
 
@@ -86,6 +86,21 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
     def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
+    def validate(self, data):
+        """
+        Валидация даты и времени урока
+        (проверка время окончание урока позже времени начала урока,
+         дата урока не раньше сегодня)
+        """
+        if data['start_time'] > data['end_time']:
+            raise ValidationError(
+                'Время окончание урока должно'
+                ' быть позже времени начала урока!')
+        if data['date'] < date.today():
+            raise ValidationError(
+                'Урок не может быть раньше сегодняшней даты!')
+        return data
+
     class Meta(AbstractLessonSerializer.Meta):
         fields = AbstractLessonSerializer.Meta.fields + ['student_full_name', 'student', 'subject']
 
@@ -103,12 +118,11 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
     Сериализатор для представления конкретного урока учителю,
     он имеет возможность также удалять и редактировать урок
     """
-    student = TeacherStudentPrimaryKeyRelated(source='teacher_student',
-                                              write_only=True)
     student_full_name = SerializerMethodField(read_only=True)
     subject = SubjectPrimaryKeyRelated(write_only=True)
     subject_title = StringRelatedField(source='subject',
                                        read_only=True)
+    status = CharField()
 
     def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
@@ -127,13 +141,6 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
             raise ValidationError(
                 'Урок не может быть раньше сегодняшней даты!')
         return data
-
-    def update(self, instance, validated_data):
-        teacher = validated_data.get('teacher', None)
-        student = validated_data.get('student', None)
-        if teacher or student:
-            raise ValidationError("Нельзя изменить участников урока!")
-        return super().update(instance, validated_data)
 
     class Meta(AbstractLessonSerializer.Meta):
         fields = AbstractLessonSerializer.Meta.fields + ['student', 'student_full_name',

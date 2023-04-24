@@ -1,6 +1,6 @@
 from clients.models import Teacher, Student
 from clients.services import get_user_type
-from clients.permissions import IsTeacherOwner, IsStudentOwner
+from clients.permissions import IsTeacherOwner, IsStudentOwner, IsTeacher
 
 from django.db.models import Count, F, Value, CharField
 from django.db.models.functions import Concat
@@ -76,8 +76,9 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
             teacher = get_object_or_404(Teacher,
                                         user=self.request.user)
             return teacher.lessons.all()
-        return Lesson.objects.filter(
-            teacher_student__email=self.request.user.email)
+        student = get_object_or_404(Student,
+                                    user=self.request.user)
+        return Lesson.objects.filter(teacher_student__student=student)
 
     def list(self, request, *args, **kwargs):
         """
@@ -119,6 +120,11 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]
     filterset_class = LessonFilter
 
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated(), IsTeacher()]
+        return [IsAuthenticated()]
+
     def get_serializer_class(self):
         request = self.request
         profile = get_user_type(request)
@@ -135,7 +141,7 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
             return teacher.lessons.all()
         student = get_object_or_404(Student,
                                     user=self.request.user)
-        return student.teacherM2M.lessons.all()
+        return Lesson.objects.filter(teacher_student__student=student)
 
     def perform_create(self, serializer):
         """Метод создания учителя у урока."""
