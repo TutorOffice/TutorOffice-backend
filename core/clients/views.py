@@ -1,4 +1,4 @@
-from rest_framework.generics import RetrieveAPIView, ListAPIView
+from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
@@ -18,6 +18,7 @@ from django.conf import settings
 
 from .permissions import IsTeacher
 from .serializers import *
+from .services import get_user_type
 from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
 from .tasks import Email
@@ -46,40 +47,47 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
             "full_name": f"{user.last_name} {user.first_name}"
          }
         domain = str(get_current_site(request))
-        Email.send_email_task.delay(domain, template, email_subject, context, to_email)
-        return Response({"success": "Регистрация прошла успешно! "
-                         "Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!"})
+        Email.send_email_task.delay(domain, template,
+                                    email_subject, context,
+                                    to_email)
+        return Response(
+            {
+                "success": "Регистрация прошла успешно! "
+                           "Вам было отправлено письмо "
+                           "с подтверждением на почту!"
+            },
+            status=status.HTTP_201_CREATED
+        )
 
 
-class ActivateUserView(RetrieveAPIView):
-    """
-    Подтверждение верификации и
-    перенаправление на профиль
-    """
+class ActivateUserView(APIView):
+    """Верификация почты"""
 
-    def get(self, request, token, *args, **kwargs):
+    def post(self, request, token, *args, **kwargs):
         try:
-            # по refresh-токену проверяет валидность(срок) и идентифицирует пользователя
+            # по refresh-токену проверяет валидность(срок) и идентифицируется пользователя
             user = User.objects.get(pk=RefreshToken(token).payload['user_id'])
         except (TokenError, User.DoesNotExist):
             user = None
         if user is None or user.is_active:
-            return Response({"error": "Ссылка недействительна!"},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Ссылка недействительна"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         user.is_active = True
         user.save()
         refresh = RefreshToken.for_user(user)
         # добавляется тип пользователя, нужно для фронта
-        try:
-            if user.teacher_profile.exists():
-                role = 'teacher'
-        except Teacher.DoesNotExist:
-            role = 'student'
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'role': role
-        }, status=status.HTTP_200_OK)
+        request.user = user
+        role = get_user_type(request)
+        return Response(
+            {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'role': role
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class LoginView(TokenObtainPairView):
@@ -89,23 +97,20 @@ class LoginView(TokenObtainPairView):
     """
 
     def post(self, request, *args, **kwargs):
-        try:
-            password = request.data['password']
-            user = User.objects.get(email=request.data['email'])
-            if user.is_active:
-                response = super().post(request, *args, **kwargs)
-                # Если пользователь авторизовался успешно
-                if response.get('access', None):
+        email = request.data.get('email', None)
+        password = request.data.get('password', None)
+        if email and password:
+            try:
+                user = User.objects.get(email=request.data['email'])
+                if user.is_active:
+                    response = super().post(request, *args, **kwargs)
                     # добавляется тип пользователя, нужно для фронта
-                    try:
-                        if user.teacher_profile.exists():
-                            response['role'] = 'teacher'
-                    except Teacher.DoesNotExist:
-                        response['role'] = 'student'
-                return response
-            if user.check_password(request.data['password']):
-                token = RefreshToken.for_user(user)
-                try:
+                    request.user = user
+                    role = get_user_type(request)
+                    response.data['role'] = role
+                    return response
+                if user.check_password(password):
+                    token = RefreshToken.for_user(user)
                     template = 'clients/activate.html'
                     email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
                     to_email = user.email
@@ -114,15 +119,15 @@ class LoginView(TokenObtainPairView):
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
                     domain = str(get_current_site(request))
-                    return Email.send_email_task.delay(domain, template, email_subject, context, to_email)
-                except SMTPDataError:
-                    return Response({"error": "Почта не найдена! "
-                                              "Невозможно отправить сообщение для подтверждения!"},
-                                    status=status.HTTP_400_BAD_REQUEST)
-            raise User.DoesNotExist
-        except User.DoesNotExist:
-            return Response({"error": "Аккаунт с переданными учётными данными не найден!"},
-                            status=status.HTTP_400_BAD_REQUEST)
+                    Email.send_email_task.delay(domain, template, email_subject, context, to_email)
+                    return Response({"detail": "Ваша почта не подтверждена! "
+                                               "На неё было отправлено новое письмо с подтверждением!"},
+                                    status=status.HTTP_401_UNAUTHORIZED)
+                raise User.DoesNotExist
+            except User.DoesNotExist:
+                return Response({"detail": "Не найдено активной учетной записи с указанными данными"},
+                                status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Все поля должны быть заполнены!"})
 
 
 class CustomPasswordResetView(PasswordResetView):
@@ -245,7 +250,7 @@ class RelateUnrelateStudentView(APIView):
         except User.DoesNotExist:
             user = None
         to_email = obj.email
-        template = 'clients/addition.html'
+        template = 'clients/relation.html'
         context = {
             "teacher_name": f"{request.user.first_name} {request.user.last_name}",
         }

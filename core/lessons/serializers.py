@@ -61,6 +61,10 @@ class HomeworkSlugRelated(SlugRelatedField):
 
 
 class AbstractLessonSerializer(ModelSerializer):
+    """
+    Сериализатор, содержащий общие данные по урокам,
+    для наследования другими сериализаторами
+    """
     status = ReadOnlyField()
     homework = BooleanField(read_only=True)
 
@@ -143,7 +147,7 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
         return data
 
     class Meta(AbstractLessonSerializer.Meta):
-        fields = AbstractLessonSerializer.Meta.fields + ['student', 'student_full_name',
+        fields = AbstractLessonSerializer.Meta.fields + ['student_full_name',
                                                          'subject', 'subject_title',
                                                          'topic', 'comment']
 

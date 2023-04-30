@@ -15,6 +15,7 @@ pillow = "^9.4.0"
 celery = {extras = ["redis"], version = "^5.2.7"}
 django-filter = "^23.1"
 eventlet = "^0.33.3"
+drf-yasg = "^1.21.5"
 
 
 [build-system]

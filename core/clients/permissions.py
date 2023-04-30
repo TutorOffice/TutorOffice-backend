@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission
 
 
 class IsTeacher(BasePermission):
@@ -29,6 +29,12 @@ class IsStudentOwner(BasePermission):
     Ограничение проверяет, относится ли
     этот ученик к записи
     """
+    def has_permission(self, request, view):
+        try:
+            return request.user.teacher_profile is not None
+        except AttributeError:
+            return False
+
     def has_object_permission(self, request, view, obj):
         if request.user.student_profile == obj.teacher_student.student:
             return True

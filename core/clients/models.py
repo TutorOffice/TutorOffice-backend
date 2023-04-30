@@ -12,6 +12,8 @@ NAME_MIN_LENGTH = 2
 NAME_MAX_LENGTH = 50
 EMAIL_MIN_LENGTH = 7
 EMAIL_MAX_LENGTH = 254
+PHONE_MIN_LENGTH = 11
+PHONE_MAX_LENGTH = 13
 
 UNRELATED = 'unrelated'
 AWAITING = 'awaiting'
@@ -32,9 +34,6 @@ class CustomUserManager(UserManager):
         if not email:
             raise ValueError("The given email must be set")
         email = self.normalize_email(email)
-        # Lookup the real model class from the global app registry so this
-        # manager method can be used in migrations. This is fine because
-        # managers are by definition working on the real model.
         user = self.model(email=email, **extra_fields)
         user.password = make_password(password)
         user.save(using=self._db)
@@ -62,8 +61,7 @@ class CustomUserManager(UserManager):
 
 class Subject(models.Model):
     """
-    Модель для категорий предметов,
-    по которым будут распределяться учителя
+    Предметы, связаны только с учителями через М2М
     """
     title = models.TextField(max_length=30,
                              unique=True,
@@ -79,7 +77,7 @@ class Subject(models.Model):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Модель для описания юзера (ученика)"""
+    """Пользователи"""
 
     id = models.UUIDField(
         primary_key=True,
@@ -89,7 +87,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     first_name = models.TextField(
         "Имя",
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Имя указано некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
             MinLengthValidator(NAME_MIN_LENGTH),
             MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Имя указанo некорректно'},
@@ -97,14 +101,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     patronymic_name = models.TextField(
         "Отчество",
         blank=True,
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Отчество указано некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
             MinLengthValidator(NAME_MIN_LENGTH),
             MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Отчество указанo некорректно'},
     )
     last_name = models.TextField(
         "Фамилия",
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Фамилия указана некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
             MinLengthValidator(NAME_MIN_LENGTH),
             MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Фамилия указана некорректно'},
@@ -113,10 +129,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         "Телефон",
         unique=True,
         null=True,
-        validators=[RegexValidator(
-            regex='^((\+7|7|8)[0-9]{10})$',
-            message='Телефон введен некорректно.'
-                    'Введите телефон в формате +79051234567')],
+        validators=[
+            RegexValidator(regex='^((\+7|7|8)[0-9]{10,12})$',
+                           message='Телефон введен некорректно.'
+                                   'От 11 до 13 символов.'
+                                   'Введите в формате: 89051234567'),
+            MinLengthValidator(PHONE_MIN_LENGTH),
+            MaxLengthValidator(PHONE_MAX_LENGTH),
+        ],
     )
     email = models.EmailField(
         "Электронная почта",
@@ -205,8 +225,9 @@ class Teacher(models.Model):
 
 class TeacherStudent(models.Model):
     """
-    Модель, связывающая преподавателя со студентом.
-    Также предоставляет возможность создания учителю 'собственных' учеников
+    Модель, связывающая репетитора со студентом.
+    Также предоставляет возможность создания учителю собственных
+    непривязанных учеников
     """
 
     teacher = models.ForeignKey(
@@ -224,33 +245,56 @@ class TeacherStudent(models.Model):
     )
     first_name = models.TextField(
         "Имя",
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
-                    MinLengthValidator(NAME_MIN_LENGTH),
-                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Имя указано некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Имя указанo некорректно'},
     )
     patronymic_name = models.TextField(
         "Отчество",
         blank=True,
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
-                    MinLengthValidator(NAME_MIN_LENGTH),
-                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Отчество указано некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Отчество указанo некорректно'},
     )
     last_name = models.TextField(
         "Фамилия",
-        validators=[RegexValidator(regex=REGEX_NAME_VALIDATOR),
-                    MinLengthValidator(NAME_MIN_LENGTH),
-                    MaxLengthValidator(NAME_MAX_LENGTH)],
+        validators=[
+            RegexValidator(regex=REGEX_NAME_VALIDATOR,
+                           message='Фамилия указана некорректно.'
+                                   'Только латинские или '
+                                   'только русские символы, '
+                                   'первая буква заглавная, '
+                                   'от 2 до 50 символов'),
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH)],
         error_messages={'invalid': 'Фамилия указана некорректно'},
     )
     phone = models.TextField(
         "Телефон",
+        unique=True,
         null=True,
-        validators=[RegexValidator(
-            regex='^((\+7|7|8)[0-9]{10})$',
-            message='Телефон введен некорректно.'
-                    'Введите телефон в формате +79051234567')],
+        validators=[
+            RegexValidator(regex='^((\+7|7|8)[0-9]{10,12})$',
+                           message='Телефон введен некорректно.'
+                                   'От 11 до 13 символов.'
+                                   'Введите в формате: 89051234567'),
+            MinLengthValidator(PHONE_MIN_LENGTH),
+            MaxLengthValidator(PHONE_MAX_LENGTH),
+        ],
     )
     email = models.EmailField(
         "Электронная почта",
@@ -266,7 +310,8 @@ class TeacherStudent(models.Model):
         choices=TYPECHOICE,
         default=UNRELATED,
     )
-    comment = models.TextField(blank=True)
+    comment = models.TextField(blank=True,
+                               max_length=256)
 
     class Meta:
         verbose_name = 'Учитель-Ученик'

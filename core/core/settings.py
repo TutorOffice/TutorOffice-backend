@@ -43,12 +43,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'clients.apps.ClientsConfig',
-    'materials.apps.MaterialsConfig',
     'lessons.apps.LessonsConfig',
+    'materials.apps.MaterialsConfig',
     'rest_framework',
     'django_filters',
     'psycopg2',
     'rest_framework_simplejwt',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
