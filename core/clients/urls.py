@@ -8,12 +8,17 @@ from django.contrib.auth.views import (
     PasswordResetDoneView, PasswordResetCompleteView
 )
 
-register_router = routers.DefaultRouter()
-register_router.register('register', RegisterViewSet, basename='register')
+router = routers.DefaultRouter()
+router.register('register',
+                RegisterViewSet,
+                basename='register')
+router.register('student/teachers',
+                StudentTeachersViewSet,
+                basename='student_teachers')
 
 
 urlpatterns = [
-    path('', include(register_router.urls)),
+    path('', include(router.urls)),
     path('login/',
          LoginView.as_view(),
          name='login'),
@@ -47,12 +52,13 @@ urlpatterns = [
          name='teacher_subjects'),
     path('teacher/students/',
          TeacherStudentsViewSet.as_view({'get': 'list',
-                                        'post': 'create'}),
+                                         'post': 'create'}),
          name='teacher_students',
          ),
     path('teacher/student/<int:pk>/',
-         TeacherStudentsViewSet.as_view({'delete': 'destroy',
-                                         'patch': 'partial_update'}),
+         TeacherStudentsDetailViewSet.as_view({'get': 'retrieve',
+                                               'delete': 'destroy',
+                                               'patch': 'partial_update'}),
          name='teacher_student'),
     path('relate/student/<int:pk>/',
          RelateUnrelateStudentView.as_view(),

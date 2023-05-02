@@ -1,5 +1,5 @@
 from rest_framework.generics import ListAPIView
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -15,7 +15,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 
-from .permissions import IsTeacher
+from .permissions import IsTeacher, IsTeacherOwner, IsStudentOwner, IsStud
 from .serializers import *
 from .services import get_user_type
 from .models import User, Subject, Teacher, TeacherStudent
@@ -32,6 +32,7 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
     """
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+    http_method_names = ('post',)
 
     @atomic
     def create(self, request, *args, **kwargs):
@@ -64,8 +65,10 @@ class ActivateUserView(APIView):
 
     def post(self, request, token, *args, **kwargs):
         try:
-            # по refresh-токену проверяет валидность(срок) и идентифицируется пользователя
-            user = User.objects.get(pk=RefreshToken(token).payload['user_id'])
+            # по refresh-токену проверяет валидность(срок)
+            # и идентифицируется пользователь
+            user = User.objects.get(
+                pk=RefreshToken(token).payload['user_id'])
         except (TokenError, User.DoesNotExist):
             user = None
         if user is None or user.is_active:
@@ -118,7 +121,9 @@ class LoginView(TokenObtainPairView):
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
                     domain = str(get_current_site(request))
-                    Email.send_email_task.delay(domain, template, email_subject, context, to_email)
+                    Email.send_email_task.delay(domain, template,
+                                                email_subject,
+                                                context, to_email)
                     return Response({"detail": "Ваша почта не подтверждена! "
                                                "На неё было отправлено новое письмо с подтверждением!"},
                                     status=status.HTTP_401_UNAUTHORIZED)
@@ -166,7 +171,7 @@ class SubjectsView(ListAPIView):
     """
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
-    permission_classes = [IsAuthenticated, IsTeacher]
+    permission_classes = (IsAuthenticated, IsTeacher)
     # добавить пермишн для учителей
 
 
@@ -176,12 +181,19 @@ class UserSubjectViewSet(ModelViewSet):
     добавление предметов репетитора
     """
     permission_classes = [IsAuthenticated, IsTeacher]
+    http_method_names = ('get', 'put', 'post',)
     # 5) добавить пермишн для учителей
 
     def get_queryset(self):
-        return Subject.objects.filter(teachers__user=self.request.user)
+        """Получение всех предметов преподавателя"""
+        return Subject.objects.filter(
+            teachers__user=self.request.user)
 
     def get_object(self):
+        """
+        Получение профиля преподавателя
+        для обновления перечня его предметов
+        """
         return Teacher.objects.get(user=self.request.user)
 
     def get_serializer_class(self):
@@ -190,25 +202,27 @@ class UserSubjectViewSet(ModelViewSet):
         return UserSubjectSerializer
 
 
-class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
+                     GenericViewSet):
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
+    http_method_names = ('get', 'patch')
 
     def get_object(self):
         return self.request.user
 
 
 class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
-                             UpdateModelMixin, DestroyModelMixin,
                              GenericViewSet):
-    """Вьюха для CRUD-операций с учениками репетитора"""
-    queryset = TeacherStudent
+    """Просмотр списка учеников и создание ученика репетитора"""
     serializer_class = TeacherStudentSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
+    http_method_names = ('get', 'post',)
 
     def get_queryset(self):
-        return TeacherStudent.objects.filter(teacher=self.request.user.teacher_profile)
+        return TeacherStudent.objects.filter(
+            teacher=self.request.user.teacher_profile)
 
     def perform_create(self, serializer):
         """
@@ -217,6 +231,18 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         """
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)
+
+
+class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
+                                   DestroyModelMixin, GenericViewSet):
+    """
+    Просмотр отдельно взятого ученика,
+    его обновление и удаление
+    """
+    queryset = TeacherStudent
+    serializer_class = TeacherStudentDetailSerializer
+    permission_classes = [IsAuthenticated, IsTeacherOwner]
+    http_method_names = ('get', 'patch', 'delete',)
 
 
 class RelateUnrelateStudentView(APIView):
@@ -325,3 +351,9 @@ class ConfirmView(APIView):
         )
         return Response({"success": "Вы были успешно добавлены к репетитору!"},
                         status=status.HTTP_200_OK)
+
+
+class StudentTeachersViewSet(ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated, IsStud]
+    serializer_class = StudentTeacherSerializer
+    queryset = TeacherStudent.objects.all()

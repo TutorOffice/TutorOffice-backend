@@ -28,7 +28,7 @@ class IsTeacherOwner(BasePermission):
 class IsStudentOwner(BasePermission):
     """
     Ограничение проверяет, относится ли
-    этот ученик к записи
+    этот ученик к записи урока
     """
     def has_permission(self, request, view):
         profile = get_user_type(request)
@@ -38,5 +38,22 @@ class IsStudentOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         if request.user.student_profile == obj.teacher_student.student:
+            return True
+        return False
+
+
+class IsStud(BasePermission):
+    """
+    Ограничение проверяет, относится ли
+    этот ученик к записи ученика репетитора
+    """
+    def has_permission(self, request, view):
+        profile = get_user_type(request)
+        if profile == 'student':
+            return True
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.student_profile == obj.student:
             return True
         return False

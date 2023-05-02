@@ -154,7 +154,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     photo = models.ImageField(
         "Фотография",
         upload_to='static/images/',
-        blank=True,
+        null=True,
     )
     is_staff = models.BooleanField(
         "Доступ к админке",

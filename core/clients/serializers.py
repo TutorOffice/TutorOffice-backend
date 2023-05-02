@@ -78,7 +78,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'email',
             'photo',
         )
-        read_only_fields = ('id', 'email', 'photo')
+        read_only_fields = ('id', 'email',)
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -130,8 +130,8 @@ class UserSubjectSerializer(serializers.ModelSerializer):
 
 class TeacherStudentSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для обработки CRUD-операций, связанных
-    с учениками репетитора
+    Сериализатор для обработки просмотра списка учеников
+    репетитора и создания нового ученика
     """
     class Meta:
         model = TeacherStudent
@@ -142,10 +142,8 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
             'patronymic_name',
             'phone',
             'email',
-            'comment',
-            'bind',
         )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', )
 
     def validate(self, attrs):
         email = attrs.get('email', None)
@@ -157,7 +155,42 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"email": "У вас уже есть ученик с такой почтой!"})
         return attrs
 
+
+class TeacherStudentDetailSerializer(TeacherStudentSerializer):
+    """
+    Сериализатор для обработки получения,
+    обновления и удаления ученика репетитора
+    """
+
+    class Meta(TeacherStudentSerializer.Meta):
+        fields = TeacherStudentSerializer.Meta.fields + ('comment',
+                                                         'bind',)
+        read_only_fields = ('id', 'bind', )
+
     def update(self, instance, validated_data):
-        if instance.student and validated_data['email']:
-            serializers.ValidationError({"email": "Вы не можете обновить почту для привязанного пользователя!"})
+        if instance.student and validated_data.get('email', None):
+            serializers.ValidationError({"email": "Вы не можете обновить почту "
+                                                  "для привязанного пользователя!"})
         return super().update(instance, validated_data)
+
+
+class StudentTeacherSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки получения
+    репетитора(-ов) ученика
+    """
+    teacher = serializers.SerializerMethodField()
+
+    def get_teacher(self, obj):
+        return {
+            "id": obj.teacher.user.id,
+            "first_name": obj.teacher.user.first_name,
+            "last_name": obj.teacher.user.last_name,
+            "paytonymic_name": obj.teacher.user.patronymic_name,
+            "phone": obj.teacher.user.phone,
+            "email": obj.teacher.user.email,
+                }
+
+    class Meta:
+        model = TeacherStudent
+        fields = ('teacher',)
