@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from .services import get_user_type
 
 
 class IsTeacher(BasePermission):
@@ -7,10 +8,10 @@ class IsTeacher(BasePermission):
     является ли пользователь учителем (имеет профиль)
     """
     def has_permission(self, request, view):
-        try:
-            return request.user.teacher_profile is not None
-        except AttributeError:
-            return False
+        profile = get_user_type(request)
+        if profile == 'teacher':
+            return True
+        return False
 
 
 class IsTeacherOwner(BasePermission):
@@ -30,10 +31,10 @@ class IsStudentOwner(BasePermission):
     этот ученик к записи
     """
     def has_permission(self, request, view):
-        try:
-            return request.user.teacher_profile is not None
-        except AttributeError:
-            return False
+        profile = get_user_type(request)
+        if profile == 'student':
+            return True
+        return False
 
     def has_object_permission(self, request, view, obj):
         if request.user.student_profile == obj.teacher_student.student:

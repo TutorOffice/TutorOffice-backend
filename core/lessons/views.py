@@ -92,6 +92,8 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
             # добавить поле status в values
             case 'subject':
                 lessons = queryset.values(title=F('subject__title')).annotate(count=Count('id'))
+            case 'status':
+                lessons = queryset.values('status').annotate(count=Count('id'))
             case 'teacher':
                 lessons = queryset.values(
                     full_name=Concat(
