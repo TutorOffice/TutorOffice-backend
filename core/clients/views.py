@@ -13,7 +13,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
-from django.core.mail import send_mail
 from django.conf import settings
 
 from .permissions import IsTeacher
@@ -150,12 +149,11 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     def form_valid(self, form):
         # Отправляется сообщение об успешном сбросе пароля на почту пользователя
         response = super().form_valid(form)
-        send_mail(
-            subject='Сброс пароля - успешно',
+        Email.send_email_task.delay(
+            email_subject='Сброс пароля - успешно',
             message='Ваш пароль был успешно сброшен!',
             from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[form.user.email],
-            fail_silently=False,
+            to_email=form.user.email,
         )
         return response
 
@@ -318,13 +316,12 @@ class ConfirmView(APIView):
         obj.bind = 'related'
         obj.save()
         # Отправка уведомления учителю о добавлении
-        send_mail(
-            subject='Ученик подтвердил запрос на добавление!',
+        Email.send_email_task.delay(
+            email_subject='Ученик подтвердил запрос на добавление!',
             message=(f'Пользователь {obj.last_name} {obj.first_name} подтвердил'
                      f'запрос на его добавление в качестве ученика!'),
             from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[obj.teacher.user.email],
-            fail_silently=False,
+            to_email=obj.teacher.user.email,
         )
         return Response({"success": "Вы были успешно добавлены к репетитору!"},
                         status=status.HTTP_200_OK)
