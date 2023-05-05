@@ -134,6 +134,14 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
     репетитора и создания нового ученика
     """
     comment = serializers.CharField(write_only=True)
+    photo = serializers.SerializerMethodField(allow_null=True)
+
+    def get_photo(self, obj):
+        try:
+            photo = obj.student.user.photo
+            return photo or None
+        except AttributeError:
+            return None
 
     class Meta:
         model = TeacherStudent
@@ -145,8 +153,9 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'comment',
+            'photo',
         )
-        read_only_fields = ('id', )
+        read_only_fields = ('id', 'photo')
 
     def validate(self, attrs):
         email = attrs.get('email', None)
@@ -169,7 +178,7 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
     class Meta(TeacherStudentSerializer.Meta):
         fields = TeacherStudentSerializer.Meta.fields + ('comment',
                                                          'bind',)
-        read_only_fields = ('id', 'bind', )
+        read_only_fields = ('id', 'photo', 'bind',)
 
     def update(self, instance, validated_data):
         if instance.student and validated_data.get('email', None):

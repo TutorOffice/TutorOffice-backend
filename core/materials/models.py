@@ -33,7 +33,7 @@ class Material(models.Model):
         on_delete=models.PROTECT,
         verbose_name='Предмет')
     file = models.FileField(
-        upload_to='static/materials/',
+        upload_to=f'backend_media/materials/%Y/%m/%d',
         blank=True,
         verbose_name='Файл материалов')
     text = models.TextField(

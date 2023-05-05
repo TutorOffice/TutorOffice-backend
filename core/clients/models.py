@@ -153,7 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     photo = models.ImageField(
         "Фотография",
-        upload_to='static/images/',
+        upload_to=f'backend_media/profiles/%Y/%m/%d',
         null=True,
     )
     is_staff = models.BooleanField(
