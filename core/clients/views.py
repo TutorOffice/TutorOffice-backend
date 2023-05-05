@@ -15,7 +15,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 
-from .permissions import IsTeacher, IsTeacherOwner, IsStudentOwner, IsStud
+from .permissions import IsTeacher, IsTeacherOwner, IsStudent
 from .serializers import *
 from .services import get_user_type
 from .models import User, Subject, Teacher, TeacherStudent
@@ -181,7 +181,7 @@ class UserSubjectViewSet(ModelViewSet):
     добавление предметов репетитора
     """
     permission_classes = [IsAuthenticated, IsTeacher]
-    http_method_names = ('get', 'put', 'post',)
+    http_method_names = ('get', 'patch', 'post',)
     # 5) добавить пермишн для учителей
 
     def get_queryset(self):
@@ -204,6 +204,7 @@ class UserSubjectViewSet(ModelViewSet):
 
 class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
                      GenericViewSet):
+    """Получение и обновление профиля пользователя"""
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
@@ -215,7 +216,10 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
 
 class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
                              GenericViewSet):
-    """Просмотр списка учеников и создание ученика репетитора"""
+    """
+    Просмотр списка псведоучеников и
+    создание псведоученика репетитора
+    """
     serializer_class = TeacherStudentSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
     http_method_names = ('get', 'post',)
@@ -236,7 +240,7 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
 class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
                                    DestroyModelMixin, GenericViewSet):
     """
-    Просмотр отдельно взятого ученика,
+    Просмотр отдельно взятого псведоученика,
     его обновление и удаление
     """
     queryset = TeacherStudent
@@ -247,8 +251,9 @@ class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
 
 class RelateUnrelateStudentView(APIView):
     """
-    Вьюха для отправки запроса на добавление
-    и отвязки ученика учителем
+    Вьюха для отправки запросов
+    на добавление (привзяку к псевдоученику)
+    и отвязки ученика учителем от псевдоученика
     """
     permission_classes = [IsAuthenticated, IsTeacher]
 
@@ -311,7 +316,10 @@ class RelateUnrelateStudentView(APIView):
                         status=status.HTTP_200_OK)
 
     def patch(self, request, pk, format=None):
-        """Метод для отвязки ученика от учителя"""
+        """
+        Метод для отвязки ученика от
+        псевдоученика учителя
+        """
         try:
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
@@ -327,7 +335,9 @@ class RelateUnrelateStudentView(APIView):
 
 
 class ConfirmView(APIView):
-    """Подтверждение учеником привязки к репетитору"""
+    """
+    Подтверждение учеником привязки к репетитору
+    """
     def get(self, request, token):
         try:
             obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
@@ -354,6 +364,9 @@ class ConfirmView(APIView):
 
 
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
-    permission_classes = [IsAuthenticated, IsStud]
+    """Просмотр списка и отдельно взятого репетитора ученика"""
+    permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = StudentTeacherSerializer
-    queryset = TeacherStudent.objects.all()
+
+    def get_queryset(self):
+        return User.objects.filter(teacher_profile__studentM2M__student=self.request.user.student_profile)

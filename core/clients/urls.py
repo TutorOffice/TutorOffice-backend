@@ -1,9 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 from .views import *
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView, TokenRefreshView
-)
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth.views import (
     PasswordResetDoneView, PasswordResetCompleteView
 )
@@ -47,7 +45,7 @@ urlpatterns = [
          SubjectsView.as_view(),
          name='subjects'),
     path('teacher/subjects/',
-         UserSubjectViewSet.as_view({'get': 'list', 'put': 'update',
+         UserSubjectViewSet.as_view({'get': 'list', 'patch': 'update',
                                      'post': 'create'}),
          name='teacher_subjects'),
     path('teacher/students/',

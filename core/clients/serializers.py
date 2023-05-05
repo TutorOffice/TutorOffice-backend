@@ -133,6 +133,8 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
     Сериализатор для обработки просмотра списка учеников
     репетитора и создания нового ученика
     """
+    comment = serializers.CharField(write_only=True)
+
     class Meta:
         model = TeacherStudent
         fields = (
@@ -142,6 +144,7 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
             'patronymic_name',
             'phone',
             'email',
+            'comment',
         )
         read_only_fields = ('id', )
 
@@ -161,6 +164,7 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
     Сериализатор для обработки получения,
     обновления и удаления ученика репетитора
     """
+    comment = serializers.CharField()
 
     class Meta(TeacherStudentSerializer.Meta):
         fields = TeacherStudentSerializer.Meta.fields + ('comment',
@@ -179,18 +183,13 @@ class StudentTeacherSerializer(serializers.ModelSerializer):
     Сериализатор для обработки получения
     репетитора(-ов) ученика
     """
-    teacher = serializers.SerializerMethodField()
-
-    def get_teacher(self, obj):
-        return {
-            "id": obj.teacher.user.id,
-            "first_name": obj.teacher.user.first_name,
-            "last_name": obj.teacher.user.last_name,
-            "paytonymic_name": obj.teacher.user.patronymic_name,
-            "phone": obj.teacher.user.phone,
-            "email": obj.teacher.user.email,
-                }
 
     class Meta:
-        model = TeacherStudent
-        fields = ('teacher',)
+        model = User
+        fields = ('id',
+                  'first_name',
+                  'last_name',
+                  'patronymic_name',
+                  'email',
+                  'phone',
+                  'photo',)
