@@ -217,21 +217,24 @@ class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
 class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
                              GenericViewSet):
     """
-    Просмотр списка псведоучеников и
-    создание псведоученика репетитора
+    Просмотр списка фиктивных учеников и
+    создание фиктивного ученика
     """
     serializer_class = TeacherStudentSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
     http_method_names = ('get', 'post',)
 
     def get_queryset(self):
+        """
+        Получение записей для текущего пользователя
+        """
         return TeacherStudent.objects.filter(
             teacher=self.request.user.teacher_profile)
 
     def perform_create(self, serializer):
         """
-        Сохраняет запись в бд, добавив внешний
-        ключ на учителя
+        Сохраняет запись в бд, добавив
+        внешний ключ на учителя
         """
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)
@@ -240,13 +243,21 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
 class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
                                    DestroyModelMixin, GenericViewSet):
     """
-    Просмотр отдельно взятого псведоученика,
+    Просмотр отдельно взятого фиктивного ученика,
     его обновление и удаление
     """
     queryset = TeacherStudent
     serializer_class = TeacherStudentDetailSerializer
     permission_classes = [IsAuthenticated, IsTeacherOwner]
     http_method_names = ('get', 'patch', 'delete',)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Удаление ученика вместе с назначенными для него уроками
+        """
+        obj = self.get_object()
+        obj.lessons.all().delete()
+        return super().destroy(request, *args, **kwargs)
 
 
 class RelateUnrelateStudentView(APIView):
@@ -267,11 +278,11 @@ class RelateUnrelateStudentView(APIView):
         try:
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
-            return Response({"error": "Такой записи не существует!"})
+            return Response({"detail": "Такой записи не существует!"})
         if obj.teacher.user != request.user:
-            return Response({"error": "У вас нет прав на осуществление этого действия!"})
+            return Response({"detail": "У вас нет прав на осуществление этого действия!"})
         if obj.student:
-            return Response({"error": "К данной записи ученик уже привязан!"})
+            return Response({"detail": "К данной записи ученик уже привязан!"})
         email = obj.email
         # проверка наличия пользователя с такой почтой в базе
         try:
@@ -289,8 +300,8 @@ class RelateUnrelateStudentView(APIView):
             try:
                 student_profile = user.student_profile
             except Student.DoesNotExist:
-                return Response({"error": "Вы не можете добавить этого пользователя, "
-                                          "так как он не является учеником!"})
+                return Response({"detail": "Вы не можете добавить этого пользователя, "
+                                           "так как он не является учеником!"})
             email_subject = 'Подтвердите запрос от репетитора!'
             context['student_name'] = f"{user.last_name} {user.first_name}"
             context['url_name'] = 'confirm'
@@ -304,12 +315,7 @@ class RelateUnrelateStudentView(APIView):
             email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
             context['url_name'] = 'register-list'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
-        try:
-            Email.send_email_task.delay(domain, template, email_subject, context, to_email)
-        except SMTPDataError:
-            return Response({"error": "Почта не найдена! "
-                            "Невозможно отправить сообщение для подтверждения!"},
-                            status=status.HTTP_400_BAD_REQUEST)
+        Email.send_email_task.delay(domain, template, email_subject, context, to_email)
         obj.bind = 'awaiting'
         obj.save()
         return Response({"success": "Ваш запрос был успешно отправлен на почту пользователю!"},
@@ -323,11 +329,11 @@ class RelateUnrelateStudentView(APIView):
         try:
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
-            return Response({"error": "Такой записи не существует!"})
+            return Response({"detail": "Такой записи не существует!"})
         if obj.teacher.user != request.user:
-            return Response({"error": "У вас нет прав на осуществление этого действия!"})
+            return Response({"detail": "У вас нет прав на осуществление этого действия!"})
         if not obj.student:
-            return Response({"error": "К этой записи не привязан ученик!"})
+            return Response({"detail": "К этой записи не привязан ученик!"})
         obj.student = None
         obj.bind = 'unrelated'
         obj.save()
@@ -338,13 +344,13 @@ class ConfirmView(APIView):
     """
     Подтверждение учеником привязки к репетитору
     """
-    def get(self, request, token):
+    def post(self, request, token):
         try:
             obj = TeacherStudent.objects.get(pk=RefreshToken(token).payload['user_id'])
         except (TokenError, TeacherStudent.DoesNotExist):
             obj = None
         if obj is None or obj.student:
-            return Response({"error": "Ссылка больше недействительна!"},
+            return Response({"detail": "Ссылка больше недействительна!"},
                             status=status.HTTP_400_BAD_REQUEST)
         student_id = RefreshToken(token).payload['student']
         student = Student.objects.get(pk=student_id)
@@ -364,7 +370,10 @@ class ConfirmView(APIView):
 
 
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
-    """Просмотр списка и отдельно взятого репетитора ученика"""
+    """
+    Просмотр списка рпетиторов ученика
+    и отдельно взятого репетитора ученика
+    """
     permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = StudentTeacherSerializer
 

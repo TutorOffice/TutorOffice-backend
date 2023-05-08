@@ -61,7 +61,7 @@ urlpatterns = [
     path('relate/student/<int:pk>/',
          RelateUnrelateStudentView.as_view(),
          name='relate'),
-    path('confirm/<token>',
+    path('confirm/<token>/',
          ConfirmView.as_view(),
          name='confirm'),
 ]
