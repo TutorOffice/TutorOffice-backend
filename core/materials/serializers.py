@@ -1,8 +1,11 @@
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
-from rest_framework.serializers import (ChoiceField, CurrentUserDefault,
-                                        ModelSerializer, PrimaryKeyRelatedField,
-                                        DateField, StringRelatedField, SerializerMethodField)
+from rest_framework.serializers import (
+    ChoiceField, CurrentUserDefault,
+    ModelSerializer, PrimaryKeyRelatedField,
+    DateField, StringRelatedField, SerializerMethodField,
+    ValidationError
+)
 from .models import TYPECHOICE, Material
 
 
@@ -34,7 +37,8 @@ class TeacherMaterialSerializer(ModelSerializer):
     """
     teacher = PrimaryKeyRelatedField(
         default=CurrentUserDefault(),
-        read_only=True,
+        write_only=True,
+        queryset=Teacher.objects.all()
     )
     subject = SubjectPrimaryKeyRelated(
         write_only=True,
@@ -76,3 +80,10 @@ class TeacherMaterialSerializer(ModelSerializer):
                   'type',
                   'date',
                   )
+
+    def update(self, instance, validated_data):
+        kind = validated_data.get('type', None)
+        file = validated_data.get('file', None)
+        if file or kind:
+            raise ValidationError({"detail": "Нельзя изменять тип и содержимое материала"})
+        return super().update(instance, validated_data)
