@@ -33,7 +33,7 @@ class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
 
 class TeacherMaterialSerializer(ModelSerializer):
     """
-    Сериализатор для материалов
+    Сериализатор для материалов репетитора
     """
     teacher = PrimaryKeyRelatedField(
         default=CurrentUserDefault(),
@@ -87,3 +87,22 @@ class TeacherMaterialSerializer(ModelSerializer):
         if file or kind:
             raise ValidationError({"detail": "Нельзя изменять тип и содержимое материала"})
         return super().update(instance, validated_data)
+
+
+class StudentMaterialSerializer(ModelSerializer):
+    """
+    Сериализатор для материалов ученика
+    """
+    subject = StringRelatedField()
+    teacher = StringRelatedField()
+
+    class Meta:
+        model = Material
+        fields = ('id',
+                  'teacher',
+                  'subject',
+                  'file',
+                  'text',
+                  'type',
+                  'date',
+                  )

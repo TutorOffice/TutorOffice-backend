@@ -2,10 +2,17 @@ from clients.models import Teacher, Student
 from clients.permissions import IsTeacherOwner, IsStudentOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (
+    ModelViewSet,
+    ReadOnlyModelViewSet
+)
 
+from .models import Material
 from .filters import MaterialFilter
-from .serializers import TeacherMaterialSerializer
+from .serializers import (
+    TeacherMaterialSerializer,
+    StudentMaterialSerializer,
+)
 
 
 class TeacherMaterialViewSet(ModelViewSet):
@@ -33,19 +40,19 @@ class TeacherMaterialViewSet(ModelViewSet):
         serializer.save(teacher=teacher)
 
 
-# class StudentMaterialViewSet(ReadOnlyModelViewSet):
-#     """
-#     ViewSet для работы с материалами ученика.
-#     Ученик может только просматривать материалы.
-#     """
-#
-#     serializer_class = MaterialSerializer
-#     http_method_names = ['get']
-#     filterset_class = MaterialFilter
-#     serializer_class = (IsAuthenticated, IsStudentOwner)
-#
-#     def get_queryset(self):
-#         """Получения queryset материалов  учителя"""
-#         student = get_object_or_404(Student,
-#                                     user=self.request.user)
-#         return student.teacherM2M.materials.all()
+class StudentMaterialViewSet(ReadOnlyModelViewSet):
+    """
+    ViewSet для работы с материалами ученика.
+    Ученик может только просматривать материалы.
+    """
+
+    serializer_class = StudentMaterialSerializer
+    http_method_names = ['get']
+    filterset_class = MaterialFilter
+    permission_classes = (IsAuthenticated, IsStudentOwner,)
+
+    def get_queryset(self):
+        """Получения queryset материалов  учителя"""
+        student = get_object_or_404(Student,
+                                    user=self.request.user)
+        return Material.objects.filter(teacher_student__student=student)
