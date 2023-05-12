@@ -1,46 +1,78 @@
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (ChoiceField, CurrentUserDefault,
-                                        ModelSerializer, SlugRelatedField)
-
+                                        ModelSerializer, PrimaryKeyRelatedField,
+                                        DateField, StringRelatedField, SerializerMethodField)
 from .models import TYPECHOICE, Material
 
 
-class SubjectSlugRelated(SlugRelatedField):
-    """Возможность при создании урока выбора
-     предмета только из предметов учителя"""
+class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
+    """
+    Возможность при создании урока выбора
+    предмета только из предметов учителя
+    """
     def get_queryset(self):
         request = self.context.get('request', None)
         teacher = get_object_or_404(Teacher, user=request.user)
         return teacher.subjects.all()
 
 
-class TeacherStudentSlugRelated(SlugRelatedField):
-    """Возможность при создании урока выбора
-    студента только из студентов учителя"""
+class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
+    """
+    Возможность при создании урока выбора
+    студента только из студентов учителя
+    """
     def get_queryset(self):
         request = self.context.get('request', None)
         teacher = get_object_or_404(Teacher, user=request.user)
-        return teacher.teacherstudents.all()
+        return teacher.studentM2M.all()
 
 
-class MaterialSerializer(ModelSerializer):
-    """Сериализатор для представления материалов"""
-    teacher = SlugRelatedField(slug_field='pk',
-                               default=CurrentUserDefault(),
-                               read_only=True)
-    subject = SubjectSlugRelated(slug_field='title')
+class TeacherMaterialSerializer(ModelSerializer):
+    """
+    Сериализатор для материалов
+    """
+    teacher = PrimaryKeyRelatedField(
+        default=CurrentUserDefault(),
+        read_only=True,
+    )
+    subject = SubjectPrimaryKeyRelated(
+        write_only=True,
+        allow_null=True,
+    )
+    subject_title = StringRelatedField(
+        source='subject'
+    )
+    student = TeacherStudentPrimaryKeyRelated(
+        source='teacher_student',
+        write_only=True,
+        many=True,
+    )
+    student_full_name = SerializerMethodField(
+        read_only=True,
+    )
+    type = ChoiceField(
+        choices=TYPECHOICE,
+        default='private',
+    )
+    date = DateField(
+        read_only=True
+    )
 
-    teacher_student = TeacherStudentSlugRelated(
-        slug_field='last_name', many=True)
-    type = ChoiceField(choices=TYPECHOICE, default='private')
+    def get_student_full_name(self, obj):
+        students = obj.teacher_student.all()
+        return [f"{student.last_name} {student.first_name}" for student in students]
 
     class Meta:
         model = Material
         fields = ('id',
                   'teacher',
-                  'teacher_student',
+                  'student',
+                  'student_full_name',
                   'subject',
+                  'subject_title',
                   'file',
                   'text',
-                  'type')
+                  'type',
+                  'date',
+                  )

@@ -371,7 +371,7 @@ class ConfirmView(APIView):
 
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
     """
-    Просмотр списка рпетиторов ученика
+    Просмотр списка репетиторов ученика
     и отдельно взятого репетитора ученика
     """
     permission_classes = [IsAuthenticated, IsStudent]

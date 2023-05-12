@@ -183,8 +183,8 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
 
     def update(self, instance, validated_data):
         if instance.student and validated_data.get('email', None):
-            serializers.ValidationError({"email": "Вы не можете обновить почту "
-                                                  "для привязанного пользователя!"})
+            raise serializers.ValidationError({"email": "Вы не можете обновить почту "
+                                               "для привязанного пользователя!"})
         return super().update(instance, validated_data)
 
 

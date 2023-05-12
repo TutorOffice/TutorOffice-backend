@@ -86,6 +86,8 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
     student = TeacherStudentPrimaryKeyRelated(source='teacher_student',
                                               write_only=True)
     subject = SubjectPrimaryKeyRelated(write_only=True)
+    topic = CharField(write_only=True)
+    comment = CharField(write_only=True)
 
     def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
@@ -106,7 +108,9 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
         return data
 
     class Meta(AbstractLessonSerializer.Meta):
-        fields = AbstractLessonSerializer.Meta.fields + ['student_full_name', 'student', 'subject']
+        fields = AbstractLessonSerializer.Meta.fields + ['student_full_name',
+                                                         'student', 'subject',
+                                                         'topic', 'comment']
 
 
 class StudentListLessonSerializer(AbstractLessonSerializer):

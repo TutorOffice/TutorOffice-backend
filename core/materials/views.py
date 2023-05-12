@@ -1,23 +1,24 @@
-from clients.models import Teacher
-from clients.permissions import IsTeacherOwner
+from clients.models import Teacher, Student
+from clients.permissions import IsTeacherOwner, IsStudentOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from .filters import MaterialFilter
-from .serializers import MaterialSerializer
+from .serializers import TeacherMaterialSerializer
 
 
-class MaterialViewSet(ModelViewSet):
-    """ViewSet для эндпойнта /materials/"""
+class TeacherMaterialViewSet(ModelViewSet):
+    """
+    ViewSet для работы с материалами репетитора.
+    Репетитор имеет возможность создания,
+    обновления и удаления материалов.
+    """
 
-    serializer_class = MaterialSerializer
+    serializer_class = TeacherMaterialSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
-    filter_backends = [DjangoFilterBackend]
     filterset_class = MaterialFilter
-#   pagination_class = LimitOffsetPagination
-    permission_classes = [IsAuthenticated, IsTeacherOwner]
+    permission_classes = (IsAuthenticated, IsTeacherOwner)
 
     def get_queryset(self):
         """Получения queryset материалов  учителя"""
@@ -30,3 +31,21 @@ class MaterialViewSet(ModelViewSet):
         teacher = get_object_or_404(Teacher,
                                     user=self.request.user)
         serializer.save(teacher=teacher)
+
+
+# class StudentMaterialViewSet(ReadOnlyModelViewSet):
+#     """
+#     ViewSet для работы с материалами ученика.
+#     Ученик может только просматривать материалы.
+#     """
+#
+#     serializer_class = MaterialSerializer
+#     http_method_names = ['get']
+#     filterset_class = MaterialFilter
+#     serializer_class = (IsAuthenticated, IsStudentOwner)
+#
+#     def get_queryset(self):
+#         """Получения queryset материалов  учителя"""
+#         student = get_object_or_404(Student,
+#                                     user=self.request.user)
+#         return student.teacherM2M.materials.all()

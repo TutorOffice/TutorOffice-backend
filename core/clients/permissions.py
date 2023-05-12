@@ -40,7 +40,7 @@ class IsStudent(BasePermission):
 class IsStudentOwner(BasePermission):
     """
     Ограничение проверяет, относится ли
-    этот ученик к записи урока
+    этот ученик к уроку или материалу
     """
     def has_permission(self, request, view):
         profile = get_user_type(request)

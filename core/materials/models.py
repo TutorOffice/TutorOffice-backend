@@ -27,14 +27,17 @@ class Material(models.Model):
     teacher_student = models.ManyToManyField(
         TeacherStudent,
         related_name='materials',
-        verbose_name='Учитель-Ученик',)
+        verbose_name='Учитель-Ученик',
+        blank=True,
+    )
     subject = models.ForeignKey(
         Subject,
         on_delete=models.PROTECT,
-        verbose_name='Предмет')
+        verbose_name='Предмет',
+        null=True
+    )
     file = models.FileField(
         upload_to=f'backend_media/materials/%Y/%m/%d',
-        blank=True,
         verbose_name='Файл материалов')
     text = models.TextField(
         verbose_name='Текст к материалу',
@@ -44,6 +47,8 @@ class Material(models.Model):
         choices=TYPECHOICE,
         default=PRIVATE,
         verbose_name='Тип материалов')
+    date = models.DateField(verbose_name='дата',
+                            auto_now=True)
 
     def __str__(self):
         return f'{self.subject}'

@@ -6,16 +6,31 @@ from django.db.models import Count, F, Value, CharField
 from django.db.models.functions import Concat
 from django.shortcuts import get_object_or_404
 
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet, GenericViewSet, ReadOnlyModelViewSet
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, RetrieveModelMixin
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import (
+    ModelViewSet,
+    GenericViewSet,
+    ReadOnlyModelViewSet
+)
+from rest_framework.mixins import (
+    ListModelMixin,
+    CreateModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+    UpdateModelMixin
+)
 
 from .filters import LessonFilter, HomeworkFilter
 from .models import Homework, Lesson
-from .serializers import (HomeworkStudentSerializer, HomeworkTeacherSerializer,
-                          TeacherListLessonSerializer, StudentListLessonSerializer,
-                          TeacherDetailLessonSerializer, StudentDetailLessonSerializer)
+from .serializers import (
+    HomeworkStudentSerializer,
+    HomeworkTeacherSerializer,
+    TeacherListLessonSerializer,
+    StudentListLessonSerializer,
+    TeacherDetailLessonSerializer,
+    StudentDetailLessonSerializer
+)
 
 
 class HomeworkTeacherViewSet(ModelViewSet):
@@ -113,13 +128,15 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         return Response({'lessons': lessons})
 
 
-class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
+class ListLessonViewSet(ListModelMixin,
+                        CreateModelMixin,
+                        GenericViewSet):
     """
-    Возвращает список уроков с пагинацией и
-    возможностью фильтрации
+    Возвращает список уроков с
+    возможностью фильтрации.
+    Позволяет создать урок учителю
     """
 
-    permission_classes = [IsAuthenticated]
     filterset_class = LessonFilter
 
     def get_permissions(self):
@@ -152,11 +169,14 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
         serializer.save(teacher=teacher)
 
 
-class DetailTeacherLessonViewSet(ModelViewSet):
+class DetailTeacherLessonViewSet(RetrieveModelMixin,
+                                 UpdateModelMixin,
+                                 DestroyModelMixin,
+                                 GenericViewSet):
     """
     Возвращает конкретный урок
     как для учителей, только учитель имеет право
-    создавать, редактировать и удалять урок
+    редактировать и удалять урок
     """
 
     http_method_names = ['get', 'patch', 'delete']
@@ -165,7 +185,8 @@ class DetailTeacherLessonViewSet(ModelViewSet):
     queryset = Lesson.objects.all()
 
 
-class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
+class DetailStudentLessonViewSet(RetrieveModelMixin,
+                                 GenericViewSet):
     """
     Возвращает конкретный урок для ученика,
     имеется только возможность чтения
