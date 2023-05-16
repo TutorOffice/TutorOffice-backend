@@ -18,6 +18,17 @@ services:
       - postgres
     restart: unless-stopped
 
+  web:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - web:/project/core
+    depends_on:
+      - postgres
+      - redis
+
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4:6.20
@@ -51,3 +62,4 @@ volumes:
   postgres:
   pgadmin:
   redis:
+  web:
