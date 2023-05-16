@@ -4,62 +4,57 @@ services:
   postgres:
     container_name: postgres
     image: postgres:15
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_HOST: ${DB_HOST:-127.0.0.1}
-      PGDATA: /data/postgres
     volumes:
-       - postgres:/data/postgres
-    ports:
-      - "${DB_PORT:-5432}:5432"
-    networks:
-      - postgres
+       - postgres:/var/lib/postgresql/data
+    env_file:
+      - .env
     restart: unless-stopped
 
   web:
     build:
-      context: .
+      context: ../
+    container_name: web
     ports:
       - "8000:8000"
-    volumes:
-      - web:/project/core
     depends_on:
       - postgres
       - redis
+    restart: always
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
 
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4:6.20
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.ru}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-password}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
        - pgadmin:/var/lib/pgadmin
-
+    env_file:
+      - .env
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    networks:
-      - postgres
+      - "5050:80"
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine3.17
     container_name: redis
     restart: always
-    ports:
-      - '${REDIS_PORT:-6379}:6379'
     volumes:
-      - redis:/var/lib/redis
+      - redis:/data
 
-networks:
-  postgres:
-    driver: bridge
+  celery:
+    build:
+      context: ../
+    container_name: celery
+    depends_on:
+      - web
+    restart:
+      always
+    command: celery -A core worker -l INFO
+
+# networks:
+#  postgres:
+#    driver: bridge
 
 volumes:
   postgres:
   pgadmin:
   redis:
-  web:

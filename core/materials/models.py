@@ -37,7 +37,7 @@ class Material(models.Model):
         null=True
     )
     file = models.FileField(
-        upload_to=f'backend_media/materials/%Y/%m/%d',
+        upload_to='materials/',
         verbose_name='Файл материалов')
     text = models.TextField(
         verbose_name='Текст к материалу',
