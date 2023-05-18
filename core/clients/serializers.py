@@ -98,11 +98,12 @@ class UserSubjectSerializer(serializers.ModelSerializer):
     """
     subjects = serializers.PrimaryKeyRelatedField(
         queryset=Subject.objects.all(),
-        many=True)
+        many=True,
+    )
     titles = serializers.StringRelatedField(
         source='subjects',
         read_only=True,
-        many=True
+        many=True,
     )
 
     class Meta:

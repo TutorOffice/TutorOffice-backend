@@ -67,6 +67,23 @@ class TeacherMaterialSerializer(ModelSerializer):
         students = obj.teacher_student.all()
         return [f"{student.last_name} {student.first_name}" for student in students]
 
+    def validate(self, attrs):
+        print(attrs)
+        student = attrs.get('teacher_student', None)
+        kind = attrs.get('type', None)
+        print(kind)
+        if student and kind == 'public':
+            raise ValidationError({
+                "detail": "Нельзя указать ученика "
+                          "для публичного материала!"
+            })
+        elif student is None and kind == 'private':
+            raise ValidationError({
+                "detail": "Нельзя создать приватный материал "
+                          "без указания ученика!"
+            })
+        return attrs
+
     class Meta:
         model = Material
         fields = ('id',
@@ -80,13 +97,6 @@ class TeacherMaterialSerializer(ModelSerializer):
                   'type',
                   'date',
                   )
-
-    def update(self, instance, validated_data):
-        kind = validated_data.get('type', None)
-        file = validated_data.get('file', None)
-        if file or kind:
-            raise ValidationError({"detail": "Нельзя изменять тип и содержимое материала"})
-        return super().update(instance, validated_data)
 
 
 class StudentMaterialSerializer(ModelSerializer):
@@ -103,6 +113,5 @@ class StudentMaterialSerializer(ModelSerializer):
                   'subject',
                   'file',
                   'text',
-                  'type',
                   'date',
                   )

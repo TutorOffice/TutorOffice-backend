@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3.3"
 
 services:
   postgres:
@@ -11,8 +11,9 @@ services:
     restart: unless-stopped
 
   web:
-    build:
-      context: ../
+    image: orbins/tutoroffice:1.0.1
+#    build:
+#      context: ../
     container_name: web
     ports:
       - "8000:8000"
@@ -41,18 +42,15 @@ services:
       - redis:/data
 
   celery:
-    build:
-      context: ../
+    image: orbins/tutoroffice:1.0.1
+    # build:
+    #  context: ../
     container_name: celery
     depends_on:
       - web
     restart:
       always
     command: celery -A core worker -l INFO
-
-# networks:
-#  postgres:
-#    driver: bridge
 
 volumes:
   postgres:

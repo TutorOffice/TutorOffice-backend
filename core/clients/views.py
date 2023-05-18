@@ -22,8 +22,6 @@ from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
 from .tasks import Email
 
-from smtplib import SMTPDataError
-
 
 class RegisterViewSet(CreateModelMixin, GenericViewSet):
     """

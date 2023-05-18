@@ -66,7 +66,13 @@ class AbstractLessonSerializer(ModelSerializer):
     для наследования другими сериализаторами
     """
     status = ReadOnlyField()
-    homework = BooleanField(read_only=True)
+    homework = SerializerMethodField(allow_null=True)
+
+    def get_homework(self, obj):
+        try:
+            return obj.homework.id
+        except AttributeError:
+            return
 
     class Meta:
         model = Lesson
