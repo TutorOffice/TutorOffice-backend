@@ -89,10 +89,10 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         profile = get_user_type(request)
         if profile == 'teacher':
             teacher = get_object_or_404(Teacher,
-                                        user=self.request.user)
+                                        user=request.user)
             return teacher.lessons.all()
         student = get_object_or_404(Student,
-                                    user=self.request.user)
+                                    user=request.user)
         return Lesson.objects.filter(teacher_student__student=student)
 
     def list(self, request, *args, **kwargs):
@@ -106,25 +106,15 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         match group_by:
             # добавить поле status в values
             case 'subject':
-                lessons = queryset.values(title=F('subject__title')).annotate(count=Count('id'))
+                lessons = queryset.count_by_subjects()
             case 'status':
-                lessons = queryset.values('status').annotate(count=Count('id'))
+                lessons = queryset.count_by_status()
             case 'teacher':
-                lessons = queryset.values(
-                    full_name=Concat(
-                        F('teacher__user__last_name'),
-                        Value(' '),
-                        F('teacher__user__first_name'),
-                        output_field=CharField())).annotate(count=Count('id'))
+                lessons = queryset.count_by_teachers()
             case 'student':
-                lessons = queryset.values(
-                    full_name=Concat(
-                        F('teacher_student__last_name'),
-                        Value(' '),
-                        F('teacher_student__first_name'),
-                        output_field=CharField())).annotate(count=Count('id'))
+                lessons = queryset.count_by_students()
             case _:
-                lessons = queryset.values('date').annotate(count=Count('id'))
+                lessons = queryset.count_by_date()
         return Response({'lessons': lessons})
 
 

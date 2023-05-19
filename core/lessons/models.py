@@ -3,6 +3,8 @@ from clients.models import Subject, Teacher, TeacherStudent
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from lessons.managers import AggregateLessonManager
+
 PLANNED = 'planned'
 CANCELED = 'canceled'
 DONE = 'done'
@@ -69,6 +71,8 @@ class Lesson(models.Model):
         verbose_name = 'Урок'
         verbose_name_plural = 'Уроки'
         ordering = ('teacher', 'date', 'subject', 'start_time')
+
+    objects = AggregateLessonManager()
 
 
 class Homework(models.Model):
