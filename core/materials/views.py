@@ -1,4 +1,5 @@
 from clients.models import Teacher, Student
+from clients.pagination import MaterialsPagination
 from clients.permissions import IsTeacherOwner, IsStudentOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -25,6 +26,7 @@ class TeacherMaterialViewSet(ModelViewSet):
     serializer_class = TeacherMaterialSerializer
     http_method_names = ['get', 'patch', 'post', 'delete']
     filterset_class = MaterialFilter
+    pagination_class = MaterialsPagination
     permission_classes = (IsAuthenticated, IsTeacherOwner)
 
     def get_queryset(self):
@@ -49,6 +51,7 @@ class StudentMaterialViewSet(ReadOnlyModelViewSet):
     serializer_class = StudentMaterialSerializer
     http_method_names = ['get']
     filterset_class = MaterialFilter
+    pagination_class = MaterialsPagination
     permission_classes = (IsAuthenticated, IsStudentOwner,)
 
     def get_queryset(self):

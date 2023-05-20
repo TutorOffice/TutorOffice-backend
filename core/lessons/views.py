@@ -1,9 +1,12 @@
 from clients.models import Teacher, Student
+from clients.pagination import LessonListPagination, LessonAggregatePagination
 from clients.services import get_user_type
-from clients.permissions import IsTeacherOwner, IsStudentOwner, IsTeacher
+from clients.permissions import (
+    IsTeacherOwner,
+    IsStudentOwner,
+    IsTeacher
+)
 
-from django.db.models import Count, F, Value, CharField
-from django.db.models.functions import Concat
 from django.shortcuts import get_object_or_404
 
 from rest_framework.response import Response
@@ -77,12 +80,14 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
     фильтрации и группировки данных.
     """
     filterset_class = LessonFilter
+    pagination_class = LessonAggregatePagination
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
         Возвращаются все уроки для учителя и ученика,
-        в зависимости от типа профиля это осуществляется по-разному,
+        в зависимости от типа профиля
+        это осуществляется по-разному,
         т.к. ученик напрямую не связан с уроками
         """
         request = self.request
@@ -93,7 +98,8 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
             return teacher.lessons.all()
         student = get_object_or_404(Student,
                                     user=request.user)
-        return Lesson.objects.filter(teacher_student__student=student)
+        return Lesson.objects.filter(
+                teacher_student__student=student)
 
     def list(self, request, *args, **kwargs):
         """
@@ -128,6 +134,7 @@ class ListLessonViewSet(ListModelMixin,
     """
 
     filterset_class = LessonFilter
+    pagination_class = LessonListPagination
 
     def get_permissions(self):
         if self.action == 'create':

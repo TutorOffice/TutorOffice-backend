@@ -15,6 +15,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 
+from .pagination import SubjectsPagination, UsersPagination
 from .permissions import IsTeacher, IsTeacherOwner, IsStudent
 from .serializers import *
 from .services import get_user_type
@@ -170,6 +171,7 @@ class SubjectsView(ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     permission_classes = (IsAuthenticated, IsTeacher)
+    pagination_class = SubjectsPagination
     # добавить пермишн для учителей
 
 
@@ -179,6 +181,7 @@ class UserSubjectViewSet(ModelViewSet):
     добавление предметов репетитора
     """
     permission_classes = [IsAuthenticated, IsTeacher]
+    pagination_class = SubjectsPagination
     http_method_names = ('get', 'patch', 'post',)
     # 5) добавить пермишн для учителей
 
@@ -219,6 +222,7 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
     создание фиктивного ученика
     """
     serializer_class = TeacherStudentSerializer
+    pagination_class = UsersPagination
     permission_classes = [IsAuthenticated, IsTeacher]
     http_method_names = ('get', 'post',)
 
@@ -372,6 +376,7 @@ class StudentTeachersViewSet(ReadOnlyModelViewSet):
     Просмотр списка репетиторов ученика
     и отдельно взятого репетитора ученика
     """
+    pagination_class = UsersPagination
     permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = StudentTeacherSerializer
 
