@@ -230,8 +230,9 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         """
         Получение записей для текущего пользователя
         """
-        return TeacherStudent.objects.filter(
-            teacher=self.request.user.teacher_profile)
+        return TeacherStudent.objects.select_related(
+                'student__user').filter(
+                    teacher=self.request.user.teacher_profile)
 
     def perform_create(self, serializer):
         """
@@ -248,10 +249,13 @@ class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
     Просмотр отдельно взятого фиктивного ученика,
     его обновление и удаление
     """
-    queryset = TeacherStudent
     serializer_class = TeacherStudentDetailSerializer
     permission_classes = [IsAuthenticated, IsTeacherOwner]
     http_method_names = ('get', 'patch', 'delete',)
+
+    def get_queryset(self):
+        return TeacherStudent.objects.select_related(
+            'student__user', 'teacher__user').all()
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -381,4 +385,5 @@ class StudentTeachersViewSet(ReadOnlyModelViewSet):
     serializer_class = StudentTeacherSerializer
 
     def get_queryset(self):
-        return User.objects.filter(teacher_profile__studentM2M__student=self.request.user.student_profile)
+        return User.objects.filter(
+            teacher_profile__studentM2M__student=self.request.user.student_profile)

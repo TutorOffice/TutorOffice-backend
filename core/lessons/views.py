@@ -154,10 +154,13 @@ class ListLessonViewSet(ListModelMixin,
         if profile == 'teacher':
             teacher = get_object_or_404(Teacher,
                                         user=self.request.user)
-            return teacher.lessons.all()
+            return teacher.lessons.select_related(
+                'homework', 'teacher_student').all()
         student = get_object_or_404(Student,
                                     user=self.request.user)
-        return Lesson.objects.filter(teacher_student__student=student)
+        return Lesson.objects.select_related(
+            'teacher', 'homework', 'teacher__user').filter(
+                teacher_student__student=student)
 
     def perform_create(self, serializer):
         """Метод создания учителя у урока."""
@@ -179,7 +182,10 @@ class DetailTeacherLessonViewSet(RetrieveModelMixin,
     http_method_names = ['get', 'patch', 'delete']
     serializer_class = TeacherDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsTeacherOwner]
-    queryset = Lesson.objects.all()
+
+    def get_queryset(self):
+        return Lesson.objects.select_related(
+            'homework', 'subject', 'teacher_student', 'teacher__user').all()
 
 
 class DetailStudentLessonViewSet(RetrieveModelMixin,
@@ -191,3 +197,7 @@ class DetailStudentLessonViewSet(RetrieveModelMixin,
     serializer_class = StudentDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsStudentOwner]
     queryset = Lesson.objects.all()
+
+    def get_queryset(self):
+        return Lesson.objects.select_related(
+            'homework', 'subject', 'teacher').all()

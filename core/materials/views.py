@@ -33,7 +33,9 @@ class TeacherMaterialViewSet(ModelViewSet):
         """Получения queryset материалов  учителя"""
         teacher = get_object_or_404(Teacher,
                                     user=self.request.user)
-        return teacher.materials.all()
+        return teacher.materials.prefetch_related(
+            'teacher_student').select_related(
+                'subject').all()
 
     def perform_create(self, serializer):
         """Метод создания автора."""
@@ -58,4 +60,5 @@ class StudentMaterialViewSet(ReadOnlyModelViewSet):
         """Получения queryset материалов  учителя"""
         student = get_object_or_404(Student,
                                     user=self.request.user)
-        return Material.objects.filter(teacher_student__student=student)
+        return Material.objects.select_related(
+            'teacher__user', 'subject').filter(teacher_student__student=student)

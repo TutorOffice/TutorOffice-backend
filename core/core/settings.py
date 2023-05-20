@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'drf_yasg',
 ]
 
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -52,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -139,6 +143,10 @@ MEDIA_ROOT = BASE_DIR / 'backend_media'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'backend_static'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
