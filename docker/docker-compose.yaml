@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
 
   web:
-    image: orbins/tutoroffice:1.0.1
+    image: orbins/tutoroffice:1.0.11
 #    build:
 #      context: ../
     container_name: web
@@ -42,9 +42,9 @@ services:
       - redis:/data
 
   celery:
-    image: orbins/tutoroffice:1.0.1
-    # build:
-    #  context: ../
+    image: orbins/tutoroffice:1.0.11
+#    build:
+#      context: ../
     container_name: celery
     depends_on:
       - web
