@@ -187,15 +187,17 @@ class UserSubjectViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Получение всех предметов преподавателя"""
+        user = self.request.user
         return Subject.objects.filter(
-            teachers__user=self.request.user)
+            teachers__user=user)
 
     def get_object(self):
         """
         Получение профиля преподавателя
         для обновления перечня его предметов
         """
-        return Teacher.objects.get(user=self.request.user)
+        user = self.request.user
+        return Teacher.objects.get(user=user)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -230,9 +232,10 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         """
         Получение записей для текущего пользователя
         """
+        teacher = self.request.user.teacher_profile
         return TeacherStudent.objects.select_related(
                 'student__user').filter(
-                    teacher=self.request.user.teacher_profile)
+                    teacher=teacher)
 
     def perform_create(self, serializer):
         """
@@ -385,5 +388,6 @@ class StudentTeachersViewSet(ReadOnlyModelViewSet):
     serializer_class = StudentTeacherSerializer
 
     def get_queryset(self):
+        user = self.request.user
         return User.objects.filter(
-            teacher_profile__studentM2M__student=self.request.user.student_profile)
+            teacher_profile__studentM2M__student=user.student_profile)

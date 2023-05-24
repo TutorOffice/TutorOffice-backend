@@ -5,7 +5,7 @@ from .services import get_user_type
 class IsTeacher(BasePermission):
     """
     Кастомное ограничение прав доступа, проверяющее
-    является ли пользователь учителем (имеет профиль)
+    является ли пользователь репетитором (имеет профиль)
     """
     def has_permission(self, request, view):
         profile = get_user_type(request)
@@ -14,11 +14,12 @@ class IsTeacher(BasePermission):
         return False
 
 
-class IsTeacherOwner(BasePermission):
+class IsTeacherOwner(IsTeacher):
     """
-    Ограничение проверяет, является ли
-    этот учитель владельцем записи
+    Ограничение проверяет, относится ли
+    этот репетитор к уроку или материалу
     """
+
     def has_object_permission(self, request, view, obj):
         if request.user == obj.teacher.user:
             return True
@@ -37,18 +38,26 @@ class IsStudent(BasePermission):
         return False
 
 
-class IsStudentOwner(BasePermission):
+class IsStudentOwner(IsStudent):
     """
     Ограничение проверяет, относится ли
-    этот ученик к уроку или материалу
+    этот ученик к уроку
     """
-    def has_permission(self, request, view):
-        profile = get_user_type(request)
-        if profile == 'student':
-            return True
-        return False
 
     def has_object_permission(self, request, view, obj):
         if request.user.student_profile == obj.teacher_student.student:
+            return True
+        return False
+
+
+class IsStudentMaterialOwner(IsStudent):
+    """
+    Ограничение проверяет, относится ли
+    этот ученик к материалу
+    """
+    def has_object_permission(self, request, view, obj):
+        queryset = obj.teacher_student.all()
+        students = [entry.student for entry in queryset]
+        if request.user.student_profile in students:
             return True
         return False

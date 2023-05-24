@@ -93,13 +93,11 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         request = self.request
         profile = get_user_type(request)
         if profile == 'teacher':
-            teacher = get_object_or_404(Teacher,
-                                        user=request.user)
-            return teacher.lessons.all()
-        student = get_object_or_404(Student,
-                                    user=request.user)
+            return Lesson.objects.filter(
+                teacher__user=request.user
+            )
         return Lesson.objects.filter(
-                teacher_student__student=student)
+                teacher_student__student=request.user.student_profile)
 
     def list(self, request, *args, **kwargs):
         """
@@ -152,21 +150,18 @@ class ListLessonViewSet(ListModelMixin,
         request = self.request
         profile = get_user_type(request)
         if profile == 'teacher':
-            teacher = get_object_or_404(Teacher,
-                                        user=self.request.user)
-            return teacher.lessons.select_related(
-                'homework', 'teacher_student').all()
-        student = get_object_or_404(Student,
-                                    user=self.request.user)
+            return Lesson.objects.select_related(
+                'homework', 'teacher_student').filter(
+                    teacher__user=request.user
+            )
         return Lesson.objects.select_related(
             'teacher', 'homework', 'teacher__user').filter(
-                teacher_student__student=student)
+                teacher_student__student__user=request.user)
 
     def perform_create(self, serializer):
         """Метод создания учителя у урока."""
-        teacher = get_object_or_404(Teacher,
-                                    user=self.request.user)
-        serializer.save(teacher=teacher)
+        user = self.request.user
+        serializer.save(teacher=user.teacher_profile)
 
 
 class DetailTeacherLessonViewSet(RetrieveModelMixin,

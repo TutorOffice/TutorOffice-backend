@@ -1,6 +1,6 @@
 from clients.models import Teacher, Student
 from clients.pagination import MaterialsPagination
-from clients.permissions import IsTeacherOwner, IsStudentOwner
+from clients.permissions import IsTeacherOwner, IsStudentMaterialOwner
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import (
@@ -30,18 +30,16 @@ class TeacherMaterialViewSet(ModelViewSet):
     permission_classes = (IsAuthenticated, IsTeacherOwner)
 
     def get_queryset(self):
-        """Получения queryset материалов  учителя"""
-        teacher = get_object_or_404(Teacher,
-                                    user=self.request.user)
-        return teacher.materials.prefetch_related(
-            'teacher_student').select_related(
-                'subject').all()
+        """Получения материалов учителя"""
+        return Material.objects.select_related(
+            'subject').prefetch_related(
+                'teacher_student').filter(
+                    teacher__user=self.request.user)
 
     def perform_create(self, serializer):
-        """Метод создания автора."""
-        teacher = get_object_or_404(Teacher,
-                                    user=self.request.user)
-        serializer.save(teacher=teacher)
+        """Добавления автора-учителя к материалу"""
+        user = self.request.user
+        serializer.save(teacher=user.teacher_profile)
 
 
 class StudentMaterialViewSet(ReadOnlyModelViewSet):
@@ -54,11 +52,11 @@ class StudentMaterialViewSet(ReadOnlyModelViewSet):
     http_method_names = ['get']
     filterset_class = MaterialFilter
     pagination_class = MaterialsPagination
-    permission_classes = (IsAuthenticated, IsStudentOwner,)
+    permission_classes = (IsAuthenticated, IsStudentMaterialOwner,)
 
     def get_queryset(self):
         """Получения queryset материалов  учителя"""
-        student = get_object_or_404(Student,
-                                    user=self.request.user)
+        request = self.request
         return Material.objects.select_related(
-            'teacher__user', 'subject').filter(teacher_student__student=student)
+            'teacher__user', 'subject', 'teacher').filter(
+                teacher_student__student__user=request.user)
