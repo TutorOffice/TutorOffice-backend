@@ -70,7 +70,7 @@ class TeacherMaterialSerializer(ModelSerializer):
                 "detail": "Нельзя указать ученика "
                           "для публичного материала!"
             })
-        elif len(student) == 0 and kind == 'private':
+        elif not student and kind == 'private':
             raise ValidationError({
                 "detail": "Нельзя создать приватный материал "
                           "без указания ученика!"
@@ -89,6 +89,13 @@ class TeacherMaterialSerializer(ModelSerializer):
                   'type',
                   'date',
                   )
+
+    def update(self, instance, validated_data):
+        kind = validated_data.get('type', None)
+        if kind == 'public':
+            dir(instance)
+            instance.teacher_student.clear()
+        return super().update(instance, validated_data)
 
 
 class StudentMaterialSerializer(ModelSerializer):

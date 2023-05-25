@@ -87,7 +87,7 @@ DATABASES = {
         'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.sqlite3'),
         'NAME': os.getenv('DB_NAME', default=BASE_DIR / 'db.sqlite3'),
         'USER': os.getenv('DB_USER', default='postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', default='password'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST', default='postgres'),
         'PORT': os.getenv('DB_PORT', default='5432'),
     }
@@ -209,8 +209,8 @@ SIMPLE_JWT = {
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', default='smtp.mail.ru')
 EMAIL_PORT = os.getenv('EMAIL_PORT', default=465)
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', default='lk.repetitor@mail.ru')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', default='XWkqMRsJ93CNguuDuudf')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 

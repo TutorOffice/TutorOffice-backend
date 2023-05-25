@@ -33,4 +33,4 @@ class MaterialFilter(FilterSet):
 
     class Meta:
         model = Material
-        fields = ('student', 'subject', 'text', 'type')
+        fields = ('student', 'subject', 'text', 'type', 'date',)
