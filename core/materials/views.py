@@ -27,7 +27,6 @@ class TeacherMaterialViewSet(ModelViewSet):
     pagination_class = MaterialsPagination
     permission_classes = (IsAuthenticated, IsTeacherOwner)
 
-
     def get_queryset(self):
         """Получения материалов учителя"""
         return Material.objects.select_related(

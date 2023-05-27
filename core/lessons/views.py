@@ -1,4 +1,4 @@
-from clients.models import Teacher, Student
+from clients.models import Teacher
 from clients.pagination import LessonListPagination, LessonAggregatePagination
 from clients.services import get_user_type
 from clients.permissions import (
@@ -8,6 +8,8 @@ from clients.permissions import (
 )
 
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -164,6 +166,7 @@ class ListLessonViewSet(ListModelMixin,
         serializer.save(teacher=user.teacher_profile)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class DetailTeacherLessonViewSet(RetrieveModelMixin,
                                  UpdateModelMixin,
                                  DestroyModelMixin,
@@ -183,6 +186,7 @@ class DetailTeacherLessonViewSet(RetrieveModelMixin,
             'homework', 'subject', 'teacher_student', 'teacher__user').all()
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class DetailStudentLessonViewSet(RetrieveModelMixin,
                                  GenericViewSet):
     """

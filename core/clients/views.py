@@ -1,3 +1,10 @@
+from django.conf import settings
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.sites.shortcuts import get_current_site
+from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.mixins import *
@@ -9,11 +16,6 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import get_object_or_404
-from django.conf import settings
 
 from .pagination import SubjectsPagination, UsersPagination
 from .permissions import IsTeacher, IsTeacherOwner, IsStudent
@@ -162,6 +164,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class SubjectsView(ListAPIView):
     """
     Получение всех предметов,
@@ -175,6 +178,7 @@ class SubjectsView(ListAPIView):
     # добавить пермишн для учителей
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class UserSubjectViewSet(ModelViewSet):
     """
     Получение, обновление и
@@ -205,6 +209,7 @@ class UserSubjectViewSet(ModelViewSet):
         return UserSubjectSerializer
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
                      GenericViewSet):
     """Получение и обновление профиля пользователя"""
@@ -246,6 +251,7 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         serializer.save(teacher=teacher)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
                                    DestroyModelMixin, GenericViewSet):
     """
@@ -378,6 +384,7 @@ class ConfirmView(APIView):
                         status=status.HTTP_200_OK)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
     """
     Просмотр списка репетиторов ученика
