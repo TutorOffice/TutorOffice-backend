@@ -9,7 +9,7 @@ from rest_framework.serializers import (
     PrimaryKeyRelatedField,
     ReadOnlyField, CharField)
 
-from .models import Homework, Lesson
+from .models import Lesson
 
 
 class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
