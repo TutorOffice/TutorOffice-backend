@@ -3,34 +3,13 @@ from datetime import date
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (
-    CurrentUserDefault, ModelSerializer,
+    ModelSerializer,
     SerializerMethodField, SlugRelatedField,
     ValidationError, StringRelatedField,
-    PrimaryKeyRelatedField, BooleanField,
+    PrimaryKeyRelatedField,
     ReadOnlyField, CharField)
 
 from .models import Homework, Lesson
-
-
-class HomeworkTeacherSerializer(ModelSerializer):
-    """Сериализатор для представления ДЗ для учителя"""
-    teacher = SlugRelatedField(slug_field='pk',
-                               default=CurrentUserDefault(),
-                               read_only=True)
-
-    class Meta:
-        model = Homework
-        fields = ('id', 'teacher', 'title', 'text', 'comment')
-
-
-class HomeworkStudentSerializer(ModelSerializer):
-    """Сериализатор для представления ДЗ для студента"""
-    teacher = SlugRelatedField(slug_field='pk',
-                               read_only=True)
-
-    class Meta:
-        model = Homework
-        fields = ('id', 'teacher', 'title', 'text', 'comment')
 
 
 class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
