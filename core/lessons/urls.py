@@ -5,6 +5,8 @@ from .views import (DetailTeacherLessonViewSet, DetailStudentLessonViewSet,
                     ListLessonViewSet, AggregateLessonsViewSet)
 # HomeworkStudentViewSet, HomeworkTeacherViewSet,
 
+app_name = 'lessons'
+
 router = DefaultRouter()
 # router.register(r'homeworks_students',
 #                 HomeworkStudentViewSet,

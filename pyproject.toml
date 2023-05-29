@@ -19,6 +19,9 @@ psycopg2-binary = "^2.9.6"
 psycopg2 = "^2.9.6"
 
 
+[tool.poetry.group.dev.dependencies]
+django-debug-toolbar = "^4.1.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

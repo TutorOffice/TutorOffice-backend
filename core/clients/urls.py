@@ -3,8 +3,10 @@ from rest_framework import routers
 from .views import *
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth.views import (
-    PasswordResetDoneView, PasswordResetCompleteView
+    PasswordResetDoneView, PasswordResetCompleteView, PasswordChangeView, PasswordChangeDoneView
 )
+
+app_name = 'clients'
 
 router = routers.DefaultRouter()
 router.register('register',
@@ -30,6 +32,12 @@ urlpatterns = [
          ProfileViewSet.as_view({'get': 'retrieve',
                                  'patch': 'update'}),
          name='profile',),
+    path('password-change/',
+         PasswordChangeView.as_view(),
+         name='password_change',),
+    path('password-change-done/',
+         PasswordChangeDoneView.as_view(),
+         name='password_change_done',),
     path('password-reset/', CustomPasswordResetView.as_view(),
          name='password_reset'),
     path('password-reset/done/',

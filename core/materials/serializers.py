@@ -1,7 +1,7 @@
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (
-    ChoiceField, CurrentUserDefault,
+    ChoiceField,
     ModelSerializer, PrimaryKeyRelatedField,
     DateField, StringRelatedField, SerializerMethodField,
     ValidationError
@@ -35,14 +35,9 @@ class TeacherMaterialSerializer(ModelSerializer):
     """
     Сериализатор для материалов репетитора
     """
-    teacher = PrimaryKeyRelatedField(
-        default=CurrentUserDefault(),
-        write_only=True,
-        queryset=Teacher.objects.all()
-    )
     subject = SubjectPrimaryKeyRelated(
-        write_only=True,
-        allow_null=True,
+       write_only=True,
+       allow_null=True,
     )
     subject_title = StringRelatedField(
         source='subject'
@@ -68,16 +63,14 @@ class TeacherMaterialSerializer(ModelSerializer):
         return [f"{student.last_name} {student.first_name}" for student in students]
 
     def validate(self, attrs):
-        print(attrs)
         student = attrs.get('teacher_student', None)
         kind = attrs.get('type', None)
-        print(kind)
         if student and kind == 'public':
             raise ValidationError({
                 "detail": "Нельзя указать ученика "
                           "для публичного материала!"
             })
-        elif student is None and kind == 'private':
+        elif not student and kind == 'private':
             raise ValidationError({
                 "detail": "Нельзя создать приватный материал "
                           "без указания ученика!"
@@ -87,7 +80,6 @@ class TeacherMaterialSerializer(ModelSerializer):
     class Meta:
         model = Material
         fields = ('id',
-                  'teacher',
                   'student',
                   'student_full_name',
                   'subject',
@@ -97,6 +89,13 @@ class TeacherMaterialSerializer(ModelSerializer):
                   'type',
                   'date',
                   )
+
+    def update(self, instance, validated_data):
+        kind = validated_data.get('type', None)
+        if kind == 'public':
+            dir(instance)
+            instance.teacher_student.clear()
+        return super().update(instance, validated_data)
 
 
 class StudentMaterialSerializer(ModelSerializer):

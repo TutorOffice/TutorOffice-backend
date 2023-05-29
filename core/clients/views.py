@@ -1,3 +1,10 @@
+from django.conf import settings
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.sites.shortcuts import get_current_site
+from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.mixins import *
@@ -10,11 +17,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
-from django.contrib.sites.shortcuts import get_current_site
-from django.shortcuts import get_object_or_404
-from django.conf import settings
-
+from .pagination import SubjectsPagination, UsersPagination
 from .permissions import IsTeacher, IsTeacherOwner, IsStudent
 from .serializers import *
 from .services import get_user_type
@@ -161,6 +164,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class SubjectsView(ListAPIView):
     """
     Получение всех предметов,
@@ -170,29 +174,34 @@ class SubjectsView(ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
     permission_classes = (IsAuthenticated, IsTeacher)
+    pagination_class = SubjectsPagination
     # добавить пермишн для учителей
 
 
+@method_decorator(cache_page(60 * 15), name='dispatch')
 class UserSubjectViewSet(ModelViewSet):
     """
     Получение, обновление и
     добавление предметов репетитора
     """
     permission_classes = [IsAuthenticated, IsTeacher]
+    pagination_class = SubjectsPagination
     http_method_names = ('get', 'patch', 'post',)
     # 5) добавить пермишн для учителей
 
     def get_queryset(self):
         """Получение всех предметов преподавателя"""
+        user = self.request.user
         return Subject.objects.filter(
-            teachers__user=self.request.user)
+            teachers__user=user)
 
     def get_object(self):
         """
         Получение профиля преподавателя
         для обновления перечня его предметов
         """
-        return Teacher.objects.get(user=self.request.user)
+        user = self.request.user
+        return Teacher.objects.get(user=user)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -200,6 +209,7 @@ class UserSubjectViewSet(ModelViewSet):
         return UserSubjectSerializer
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class ProfileViewSet(RetrieveModelMixin, UpdateModelMixin,
                      GenericViewSet):
     """Получение и обновление профиля пользователя"""
@@ -219,6 +229,7 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
     создание фиктивного ученика
     """
     serializer_class = TeacherStudentSerializer
+    pagination_class = UsersPagination
     permission_classes = [IsAuthenticated, IsTeacher]
     http_method_names = ('get', 'post',)
 
@@ -226,8 +237,10 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         """
         Получение записей для текущего пользователя
         """
-        return TeacherStudent.objects.filter(
-            teacher=self.request.user.teacher_profile)
+        teacher = self.request.user.teacher_profile
+        return TeacherStudent.objects.select_related(
+                'student__user').filter(
+                    teacher=teacher)
 
     def perform_create(self, serializer):
         """
@@ -238,16 +251,20 @@ class TeacherStudentsViewSet(CreateModelMixin, ListModelMixin,
         serializer.save(teacher=teacher)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
                                    DestroyModelMixin, GenericViewSet):
     """
     Просмотр отдельно взятого фиктивного ученика,
     его обновление и удаление
     """
-    queryset = TeacherStudent
     serializer_class = TeacherStudentDetailSerializer
     permission_classes = [IsAuthenticated, IsTeacherOwner]
     http_method_names = ('get', 'patch', 'delete',)
+
+    def get_queryset(self):
+        return TeacherStudent.objects.select_related(
+            'student__user', 'teacher__user').all()
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -367,13 +384,17 @@ class ConfirmView(APIView):
                         status=status.HTTP_200_OK)
 
 
+@method_decorator(cache_page(60 * 5), name='dispatch')
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
     """
     Просмотр списка репетиторов ученика
     и отдельно взятого репетитора ученика
     """
+    pagination_class = UsersPagination
     permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = StudentTeacherSerializer
 
     def get_queryset(self):
-        return User.objects.filter(teacher_profile__studentM2M__student=self.request.user.student_profile)
+        user = self.request.user
+        return User.objects.filter(
+            teacher_profile__studentM2M__student=user.student_profile)
