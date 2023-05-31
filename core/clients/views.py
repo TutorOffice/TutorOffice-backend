@@ -25,6 +25,10 @@ from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
 from .tasks import Email
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class RegisterViewSet(CreateModelMixin, GenericViewSet):
     """
@@ -39,6 +43,7 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
         user = get_object_or_404(User, pk=response.data['id'])
+        logger.info(f"Пользователь с почтой {user.email} зарегистрирован!")
         token = RefreshToken.for_user(user)
         template = 'clients/activate.html'
         email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
@@ -48,9 +53,13 @@ class RegisterViewSet(CreateModelMixin, GenericViewSet):
             "full_name": f"{user.last_name} {user.first_name}"
          }
         domain = str(get_current_site(request))
+        logger.info("Отправка подтверждения почты "
+                    f"в celery для юзера {to_email}")
         Email.send_email_task.delay(domain, template,
                                     email_subject, context,
                                     to_email)
+        logger.info('Подтверждение почты для юзера '
+                    f'{to_email} отправлено в celery')
         return Response(
             {
                 "success": "Регистрация прошла успешно! "
@@ -73,12 +82,14 @@ class ActivateUserView(APIView):
         except (TokenError, User.DoesNotExist):
             user = None
         if user is None or user.is_active:
+            logger.info(f"Юзер не прошёл верификацию почты")
             return Response(
                 {"detail": "Ссылка недействительна"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         user.is_active = True
         user.save()
+        logger.info(f"Юзер {user.email} прошёл верификацию почты!")
         refresh = RefreshToken.for_user(user)
         # добавляется тип пользователя, нужно для фронта
         request.user = user
@@ -111,8 +122,10 @@ class LoginView(TokenObtainPairView):
                     request.user = user
                     role = get_user_type(request)
                     response.data['role'] = role
+                    logger.info(f'{user.email} вошёл в систему')
                     return response
                 if user.check_password(password):
+                    logger.info(f'Неактивный пользователь {user.email} совершил попытку входа')
                     token = RefreshToken.for_user(user)
                     template = 'clients/activate.html'
                     email_subject = 'Подтвердите почту для активации вашего кабинета репетитора'
@@ -122,14 +135,19 @@ class LoginView(TokenObtainPairView):
                         "full_name": f"{user.last_name} {user.first_name}"
                     }
                     domain = str(get_current_site(request))
+                    logger.info("Отправка подтверждения почты "
+                                f"в celery для юзера {to_email}")
                     Email.send_email_task.delay(domain, template,
                                                 email_subject,
                                                 context, to_email)
+                    logger.info('Подтверждение почты для юзера '
+                                f'{to_email} отправлено в celery')
                     return Response({"detail": "Ваша почта не подтверждена! "
                                                "На неё было отправлено новое письмо с подтверждением!"},
                                     status=status.HTTP_401_UNAUTHORIZED)
                 raise User.DoesNotExist
             except User.DoesNotExist:
+                logger.warning(f'Пользователь с почтой {email} не найден!')
                 return Response({"detail": "Не найдено активной учетной записи с указанными данными"},
                                 status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "Все поля должны быть заполнены!"})
@@ -154,13 +172,18 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 
     def form_valid(self, form):
         # Отправляется сообщение об успешном сбросе пароля на почту пользователя
+        logger.info(f'Пользователь {form.user.email} успешно сбросил пароль!')
         response = super().form_valid(form)
+        logger.info("Отправка уведомления об успешном сбросе "
+                    f"пароля в celery для юзера {form.user.email}")
         Email.send_email_task.delay(
             email_subject='Сброс пароля - успешно',
             message='Ваш пароль был успешно сброшен!',
             from_email=settings.EMAIL_HOST_USER,
             to_email=form.user.email,
         )
+        logger.info('Сообщение об успешном сбросе пароля для '
+                    f'юзера {form.user.email} отправлено в celery')
         return response
 
 
@@ -271,6 +294,8 @@ class TeacherStudentsDetailViewSet(RetrieveModelMixin, UpdateModelMixin,
         Удаление ученика вместе с назначенными для него уроками
         """
         obj = self.get_object()
+        logger.info("Удаление ученика и уроков"
+                    f" юзера - {request.user.email}")
         obj.lessons.all().delete()
         return super().destroy(request, *args, **kwargs)
 
@@ -291,6 +316,8 @@ class RelateUnrelateStudentView(APIView):
         """
         # получение записи из таблицы TeacherStudent по её id
         try:
+            logger.info(f'Репетитор {request.user.email} пытается '
+                        f'отправить запрос на привязку ученика')
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"detail": "Такой записи не существует!"})
@@ -330,7 +357,11 @@ class RelateUnrelateStudentView(APIView):
             email_subject = 'Зарегистрируйтесь и подтвердите запрос от репетитора!'
             context['url_name'] = 'register-list'
             # !Нужно будет изменить имя на то, что будет определено в сеттингс
+        logger.info(f'Отправка запроса на привязку ученика - {to_email} '
+                    f'для репетитора {request.user.email} в celery')
         Email.send_email_task.delay(domain, template, email_subject, context, to_email)
+        logger.info(f'Запрос на привзяку ученика - {to_email} для '
+                    f'репетитора {request.user.email} отправлен в celery')
         obj.bind = 'awaiting'
         obj.save()
         return Response({"success": "Ваш запрос был успешно отправлен на почту пользователю!"},
@@ -342,6 +373,8 @@ class RelateUnrelateStudentView(APIView):
         псевдоученика учителя
         """
         try:
+            logger.info(f'Репетитор {request.user.email} '
+                        f'пытается отвязать ученика')
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"detail": "Такой записи не существует!"})
@@ -352,6 +385,8 @@ class RelateUnrelateStudentView(APIView):
         obj.student = None
         obj.bind = 'unrelated'
         obj.save()
+        logger.info(f'Репетитор {request.user.email} отвязал '
+                    f'ученика от псевдоученика {obj.email}')
         return Response({"success": "Ученик был успешно отвязан от вас!"})
 
 
@@ -372,7 +407,11 @@ class ConfirmView(APIView):
         obj.student = student
         obj.bind = 'related'
         obj.save()
+        logger.info(f'Ученик {obj.email} привязался к псевдоученику '
+                    f'репетитора {obj.teacher.user.email}')
         # Отправка уведомления учителю о добавлении
+        logger.info(f'Отправка сообщения об успешной привязке '
+                    f'в celery для репетитора {obj.teacher.user.email}')
         Email.send_email_task.delay(
             email_subject='Ученик подтвердил запрос на добавление!',
             message=(f'Пользователь {obj.last_name} {obj.first_name} подтвердил'
@@ -380,6 +419,8 @@ class ConfirmView(APIView):
             from_email=settings.EMAIL_HOST_USER,
             to_email=obj.teacher.user.email,
         )
+        logger.info(f'Cообщение об успешной привязке отправлено '
+                    f'в celery для репетитора {obj.teacher.user.email}')
         return Response({"success": "Вы были успешно добавлены к репетитору!"},
                         status=status.HTTP_200_OK)
 

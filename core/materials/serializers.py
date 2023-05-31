@@ -93,7 +93,6 @@ class TeacherMaterialSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         kind = validated_data.get('type', None)
         if kind == 'public':
-            dir(instance)
             instance.teacher_student.clear()
         return super().update(instance, validated_data)
 

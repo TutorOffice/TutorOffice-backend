@@ -126,6 +126,38 @@ DATE_INPUT_FORMATS = ['%d.%m.%Y']
 
 TIME_INPUT_FORMATS = ['%H:%M']
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'defaultformatter': {
+            'format': '[{asctime} | {levelname} | '
+                      '{module}] - {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'stream': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'defaultformatter',
+        },
+
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': 'general.log',
+            'formatter': 'defaultformatter',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['stream', 'file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': True,
+        }
+    },
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
