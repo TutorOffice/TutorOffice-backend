@@ -6,7 +6,7 @@ from django.contrib.auth.views import (
     PasswordResetDoneView, PasswordResetCompleteView, PasswordChangeView, PasswordChangeDoneView
 )
 
-app_name = 'clients'
+# app_name = 'clients' тег url во встроенном reset-password шаблоне не работает
 
 router = routers.DefaultRouter()
 router.register('register',
@@ -38,7 +38,8 @@ urlpatterns = [
     path('password-change-done/',
          PasswordChangeDoneView.as_view(),
          name='password_change_done',),
-    path('password-reset/', CustomPasswordResetView.as_view(),
+    path('password-reset/',
+         CustomPasswordResetView.as_view(),
          name='password_reset'),
     path('password-reset/done/',
          PasswordResetDoneView.as_view(),

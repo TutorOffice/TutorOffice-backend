@@ -22,29 +22,38 @@ class Lesson(models.Model):
         Teacher,
         on_delete=models.PROTECT,
         verbose_name='Учитель',
-        related_name='lessons')
+        related_name='lessons'
+    )
     teacher_student = models.ForeignKey(
         TeacherStudent,
         on_delete=models.PROTECT,
         verbose_name='Учитель-Ученик',
-        related_name='lessons')
+        related_name='lessons',
+    )
     date = models.DateField(
         verbose_name='Дата')
     start_time = models.TimeField(
-        verbose_name='Начало урока')
+        verbose_name='Начало урока',
+    )
     end_time = models.TimeField(
-        verbose_name='Конец урока')
+        verbose_name='Конец урока',
+    )
     subject = models.ForeignKey(
         Subject,
+        null=True,
         on_delete=models.PROTECT,
-        verbose_name='Предмет')
-    topic = models.TextField(
-        max_length=40,
+        verbose_name='Предмет',
+    )
+    student_comment = models.TextField(
         blank=True,
-        verbose_name='Тема урока')
-    comment = models.TextField(
+        max_length=100,
+        verbose_name='Комментарий',
+    )
+    teacher_comment = models.TextField(
         blank=True,
-        verbose_name='Комментарий')
+        max_length=100,
+        verbose_name='Комментарий',
+    )
     status = models.CharField(
         choices=STATUSCHOICE,
         default=PLANNED,
@@ -78,21 +87,22 @@ class Lesson(models.Model):
 class Homework(models.Model):
     """Модель, описывающая ДЗ к занятию"""
     title = models.TextField(
-        verbose_name='Заголовок'
+        verbose_name='Заголовок',
     )
     text = models.TextField(
-        verbose_name='Текст задания'
+        verbose_name='Текст задания',
     )
     comment = models.TextField(
         blank=True,
-        verbose_name='Комментарий к домашнему заданию')
+        verbose_name='Комментарий к домашнему заданию',
+    )
     lesson = models.OneToOneField(
         Lesson,
         related_name='homework',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name='Урок'
+        verbose_name='Урок',
     )
 
     def __str__(self):

@@ -6,10 +6,6 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class Email:
     @staticmethod
@@ -28,6 +24,5 @@ class Email:
         email = EmailMessage(email_subject, message, to=[to_email],
                              from_email=settings.EMAIL_HOST_USER, )
         email.send()
-        logger.info(f'Сообщение отправлено пользователю {to_email}')
         return Response({"success": "Сообщение успешно отправлено!"},
                         status=status.HTTP_200_OK)
