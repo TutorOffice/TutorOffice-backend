@@ -1,10 +1,17 @@
 import uuid
 
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin,
-                                        UserManager)
-from django.core.validators import (EmailValidator, MaxLengthValidator,
-                                    MinLengthValidator, RegexValidator)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    PermissionsMixin,
+    UserManager,
+)
+from django.core.validators import (
+    EmailValidator,
+    MaxLengthValidator,
+    MinLengthValidator,
+    RegexValidator,
+)
 from django.db import models
 
 #  length of first_name, last_name, patronymic_name from 2 to 50
@@ -141,7 +148,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         validators=[
             RegexValidator(
                 regex="^((\+7|7|8)[0-9]{10,12})$",
-                message="Телефон введен некорректно. От 11 до 13 символов. Введите в формате: 89051234567",
+                message="Телефон введен некорректно. "
+                        "От 11 до 13 символов. Введите в формате: 89051234567",
             ),
             MinLengthValidator(PHONE_MIN_LENGTH),
             MaxLengthValidator(PHONE_MAX_LENGTH),
@@ -150,7 +158,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
         "Электронная почта",
         unique=True,
-        validators=[EmailValidator(), MinLengthValidator(EMAIL_MIN_LENGTH), MaxLengthValidator(EMAIL_MAX_LENGTH)],
+        validators=[
+            EmailValidator(),
+            MinLengthValidator(EMAIL_MIN_LENGTH),
+            MaxLengthValidator(EMAIL_MAX_LENGTH),
+        ],
         error_messages={"invalid": "E-mail введен некорректно!"},
     )
     is_active = models.BooleanField(
@@ -307,7 +319,8 @@ class TeacherStudent(models.Model):
         validators=[
             RegexValidator(
                 regex="^((\+7|7|8)[0-9]{10,12})$",
-                message="Телефон введен некорректно. От 11 до 13 символов. Введите в формате: 89051234567",
+                message="Телефон введен некорректно. "
+                        "От 11 до 13 символов. Введите в формате: 89051234567",
             ),
             MinLengthValidator(PHONE_MIN_LENGTH),
             MaxLengthValidator(PHONE_MAX_LENGTH),
@@ -315,7 +328,11 @@ class TeacherStudent(models.Model):
     )
     email = models.EmailField(
         "Электронная почта",
-        validators=[EmailValidator(), MinLengthValidator(EMAIL_MIN_LENGTH), MaxLengthValidator(EMAIL_MAX_LENGTH)],
+        validators=[
+            EmailValidator(),
+            MinLengthValidator(EMAIL_MIN_LENGTH),
+            MaxLengthValidator(EMAIL_MAX_LENGTH),
+        ],
         error_messages={"invalid": "E-mail введен некорректно!"},
     )
     bind = models.CharField(

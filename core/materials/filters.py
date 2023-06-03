@@ -1,5 +1,9 @@
-from django_filters import (CharFilter, ChoiceFilter, DateFromToRangeFilter,
-                            FilterSet)
+from django_filters import (
+    CharFilter,
+    ChoiceFilter,
+    DateFromToRangeFilter,
+    FilterSet,
+)
 
 from .models import TYPECHOICE, Material
 

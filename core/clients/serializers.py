@@ -123,7 +123,10 @@ class UserSubjectSerializer(serializers.ModelSerializer):
         teacher = Teacher.objects.get(user=user)
         if teacher.subjects.exists():
             raise serializers.ValidationError(
-                {"subjects": "Эта функция больше недоступна! Вы можете обновить перечень ваших предметов!"}
+                {
+                    "subjects": "Эта функция больше недоступна! "
+                                "Вы можете обновить перечень ваших предметов!"
+                }
             )
         teacher.subjects.set(subjects)
         teacher.save()
@@ -171,9 +174,15 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
         if email:
             teacher = self.context["request"].user.teacher_profile
             if email == self.context["request"].user.email:
-                raise serializers.ValidationError({"email": "Вы не можете добавить себя в качестве ученика!"})
-            if TeacherStudent.objects.filter(teacher=teacher, email=email).exists():
-                raise serializers.ValidationError({"email": "У вас уже есть ученик с такой почтой!"})
+                raise serializers.ValidationError(
+                    {"email": "Вы не можете добавить себя в качестве ученика!"}
+                )
+            if TeacherStudent.objects.filter(
+                teacher=teacher, email=email
+            ).exists():
+                raise serializers.ValidationError(
+                    {"email": "У вас уже есть ученик с такой почтой!"}
+                )
         return attrs
 
 
@@ -195,7 +204,10 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
     def update(self, instance, validated_data):
         if instance.student and validated_data.get("email", None):
             raise serializers.ValidationError(
-                {"email": "Вы не можете обновить почту для привязанного пользователя!"}
+                {
+                    "email": "Вы не можете обновить почту "
+                             "для привязанного пользователя!"
+                }
             )
         return super().update(instance, validated_data)
 

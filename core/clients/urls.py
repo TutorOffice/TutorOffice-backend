@@ -1,23 +1,36 @@
-from django.contrib.auth.views import (PasswordChangeDoneView,
-                                       PasswordChangeView,
-                                       PasswordResetCompleteView,
-                                       PasswordResetDoneView)
+from django.contrib.auth.views import (
+    PasswordChangeDoneView,
+    PasswordChangeView,
+    PasswordResetCompleteView,
+    PasswordResetDoneView,
+)
 from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import (ActivateUserView, ConfirmView,
-                    CustomPasswordResetConfirmView, CustomPasswordResetView,
-                    LoginView, ProfileViewSet, RegisterViewSet,
-                    RelateUnrelateStudentView, StudentTeachersViewSet,
-                    SubjectsView, TeacherStudentsDetailViewSet,
-                    TeacherStudentsViewSet, UserSubjectViewSet)
+from .views import (
+    ActivateUserView,
+    ConfirmView,
+    CustomPasswordResetConfirmView,
+    CustomPasswordResetView,
+    LoginView,
+    ProfileViewSet,
+    RegisterViewSet,
+    RelateUnrelateStudentView,
+    StudentTeachersViewSet,
+    SubjectsView,
+    TeacherStudentsDetailViewSet,
+    TeacherStudentsViewSet,
+    UserSubjectViewSet,
+)
 
 # app_name = 'clients' тег url во встроенном reset-password шаблоне не работает
 
 router = routers.DefaultRouter()
 router.register("register", RegisterViewSet, basename="register")
-router.register("student/teachers", StudentTeachersViewSet, basename="student_teachers")
+router.register(
+    "student/teachers", StudentTeachersViewSet, basename="student_teachers"
+)
 
 
 urlpatterns = [
@@ -40,18 +53,32 @@ urlpatterns = [
         PasswordChangeDoneView.as_view(),
         name="password_change_done",
     ),
-    path("password-reset/", CustomPasswordResetView.as_view(), name="password_reset"),
-    path("password-reset/done/", PasswordResetDoneView.as_view(), name="password_reset_done"),
+    path(
+        "password-reset/",
+        CustomPasswordResetView.as_view(),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/done/",
+        PasswordResetDoneView.as_view(),
+        name="password_reset_done",
+    ),
     path(
         "password-reset/confirm/<uidb64>/<token>/",
         CustomPasswordResetConfirmView.as_view(),
         name="password_reset_confirm",
     ),
-    path("password-reset/complete/", PasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path(
+        "password-reset/complete/",
+        PasswordResetCompleteView.as_view(),
+        name="password_reset_complete",
+    ),
     path("subjects/", SubjectsView.as_view(), name="subjects"),
     path(
         "teacher/subjects/",
-        UserSubjectViewSet.as_view({"get": "list", "patch": "update", "post": "create"}),
+        UserSubjectViewSet.as_view(
+            {"get": "list", "patch": "update", "post": "create"}
+        ),
         name="teacher_subjects",
     ),
     path(
@@ -61,9 +88,15 @@ urlpatterns = [
     ),
     path(
         "teacher/student/<int:pk>/",
-        TeacherStudentsDetailViewSet.as_view({"get": "retrieve", "delete": "destroy", "patch": "partial_update"}),
+        TeacherStudentsDetailViewSet.as_view(
+            {"get": "retrieve", "delete": "destroy", "patch": "partial_update"}
+        ),
         name="teacher_student",
     ),
-    path("relate/student/<int:pk>/", RelateUnrelateStudentView.as_view(), name="relate"),
+    path(
+        "relate/student/<int:pk>/",
+        RelateUnrelateStudentView.as_view(),
+        name="relate",
+    ),
     path("confirm/<token>/", ConfirmView.as_view(), name="confirm"),
 ]

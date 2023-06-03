@@ -13,7 +13,9 @@ class Migration(migrations.Migration):
             model_name="material",
             name="file",
             field=models.FileField(
-                blank=True, upload_to="backend_media/materials/%Y/%m/%d", verbose_name="Файл материалов"
+                blank=True,
+                upload_to="backend_media/materials/%Y/%m/%d",
+                verbose_name="Файл материалов",
             ),
         ),
     ]

@@ -2,10 +2,15 @@ from datetime import date
 
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
-from rest_framework.serializers import (CharField, ModelSerializer,
-                                        PrimaryKeyRelatedField, ReadOnlyField,
-                                        SerializerMethodField,
-                                        StringRelatedField, ValidationError)
+from rest_framework.serializers import (
+    CharField,
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+    ReadOnlyField,
+    SerializerMethodField,
+    StringRelatedField,
+    ValidationError,
+)
 
 from .models import Lesson
 
@@ -45,9 +50,13 @@ class AbstractLessonSerializer(ModelSerializer):
          дата урока не раньше сегодня)
         """
         if data["start_time"] > data["end_time"]:
-            raise ValidationError("Время окончание урока должно быть позже времени начала урока!")
+            raise ValidationError(
+                "Время окончание урока должно быть позже времени начала урока!"
+            )
         if data["date"] < date.today():
-            raise ValidationError("Урок не может быть раньше сегодняшней даты!")
+            raise ValidationError(
+                "Урок не может быть раньше сегодняшней даты!"
+            )
         return data
 
     class Meta:
@@ -66,15 +75,26 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
     """Сериализатор для представления списка уроков для учителя"""
 
     student_full_name = SerializerMethodField(read_only=True)
-    student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
+    student = TeacherStudentPrimaryKeyRelated(
+        source="teacher_student", write_only=True
+    )
     subject = SubjectPrimaryKeyRelated(write_only=True, required=False)
-    teacher_comment = CharField(source="comment", write_only=True, required=False)
+    teacher_comment = CharField(
+        source="comment", write_only=True, required=False
+    )
 
     def get_student_full_name(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        return (
+            f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        )
 
     class Meta(AbstractLessonSerializer.Meta):
-        fields = AbstractLessonSerializer.Meta.fields + ["student_full_name", "student", "subject", "teacher_comment"]
+        fields = AbstractLessonSerializer.Meta.fields + [
+            "student_full_name",
+            "student",
+            "subject",
+            "teacher_comment",
+        ]
 
 
 class StudentListLessonSerializer(AbstractLessonSerializer):
@@ -98,7 +118,9 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
     status = CharField()
 
     def get_student_full_name(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        return (
+            f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        )
 
     class Meta(AbstractLessonSerializer.Meta):
         fields = AbstractLessonSerializer.Meta.fields + [
@@ -116,4 +138,8 @@ class StudentDetailLessonSerializer(AbstractLessonSerializer):
     subject_title = StringRelatedField(source="subject", read_only=True)
 
     class Meta(AbstractLessonSerializer.Meta):
-        fields = AbstractLessonSerializer.Meta.fields + ["teacher", "subject_title", "student_comment"]
+        fields = AbstractLessonSerializer.Meta.fields + [
+            "teacher",
+            "subject_title",
+            "student_comment",
+        ]

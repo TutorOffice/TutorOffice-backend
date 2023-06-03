@@ -6,7 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("clients", "0002_alter_teacher_students_alter_teacher_subjects_and_more"),
+        (
+            "clients",
+            "0002_alter_teacher_students_alter_teacher_subjects_and_more",
+        ),
     ]
 
     operations = [
@@ -24,7 +27,9 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 error_messages={"invalid": "Имя указанo некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],
@@ -37,7 +42,9 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 error_messages={"invalid": "Фамилия указана некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],
@@ -51,7 +58,9 @@ class Migration(migrations.Migration):
                 blank=True,
                 error_messages={"invalid": "Отчество указанo некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],
@@ -64,7 +73,9 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 error_messages={"invalid": "Имя указанo некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],
@@ -77,7 +88,9 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 error_messages={"invalid": "Фамилия указана некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],
@@ -91,7 +104,9 @@ class Migration(migrations.Migration):
                 blank=True,
                 error_messages={"invalid": "Отчество указанo некорректно"},
                 validators=[
-                    django.core.validators.RegexValidator(regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"),
+                    django.core.validators.RegexValidator(
+                        regex="^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
+                    ),
                     django.core.validators.MinLengthValidator(2),
                     django.core.validators.MaxLengthValidator(50),
                 ],

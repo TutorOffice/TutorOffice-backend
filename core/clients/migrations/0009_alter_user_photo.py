@@ -12,6 +12,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="user",
             name="photo",
-            field=models.ImageField(null=True, upload_to="backend_media/profiles/%Y/%m/%d", verbose_name="Фотография"),
+            field=models.ImageField(
+                null=True,
+                upload_to="backend_media/profiles/%Y/%m/%d",
+                verbose_name="Фотография",
+            ),
         ),
     ]

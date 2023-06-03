@@ -20,10 +20,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="User",
             fields=[
-                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "password",
+                    models.CharField(max_length=128, verbose_name="password"),
+                ),
                 (
                     "last_login",
-                    models.DateTimeField(blank=True, null=True, verbose_name="last login"),
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
+                    ),
                 ),
                 (
                     "is_superuser",
@@ -61,7 +66,9 @@ class Migration(migrations.Migration):
                     "patronymic_name",
                     models.TextField(
                         blank=True,
-                        error_messages={"invalid": "Отчество указанo некорректно"},
+                        error_messages={
+                            "invalid": "Отчество указанo некорректно"
+                        },
                         validators=[
                             django.core.validators.RegexValidator(
                                 regex="^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
@@ -75,7 +82,9 @@ class Migration(migrations.Migration):
                 (
                     "last_name",
                     models.TextField(
-                        error_messages={"invalid": "Фамилия указана некорректно"},
+                        error_messages={
+                            "invalid": "Фамилия указана некорректно"
+                        },
                         validators=[
                             django.core.validators.RegexValidator(
                                 regex="^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
@@ -103,7 +112,9 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        error_messages={"invalid": "E-mail введен некорректно!"},
+                        error_messages={
+                            "invalid": "E-mail введен некорректно!"
+                        },
                         max_length=254,
                         unique=True,
                         validators=[
@@ -116,7 +127,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_active",
-                    models.BooleanField(default=False, verbose_name="Подтверждение"),
+                    models.BooleanField(
+                        default=False, verbose_name="Подтверждение"
+                    ),
                 ),
                 (
                     "photo",
@@ -128,7 +141,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_staff",
-                    models.BooleanField(default=False, verbose_name="Доступ к админке"),
+                    models.BooleanField(
+                        default=False, verbose_name="Доступ к админке"
+                    ),
                 ),
                 (
                     "groups",
@@ -200,7 +215,12 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("title", models.TextField(db_index=True, max_length=30, unique=True)),
+                (
+                    "title",
+                    models.TextField(
+                        db_index=True, max_length=30, unique=True
+                    ),
+                ),
             ],
             options={
                 "verbose_name": "Предмет",
@@ -256,7 +276,9 @@ class Migration(migrations.Migration):
                     "patronymic_name",
                     models.TextField(
                         blank=True,
-                        error_messages={"invalid": "Отчество указанo некорректно"},
+                        error_messages={
+                            "invalid": "Отчество указанo некорректно"
+                        },
                         validators=[
                             django.core.validators.RegexValidator(
                                 regex="^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
@@ -270,7 +292,9 @@ class Migration(migrations.Migration):
                 (
                     "last_name",
                     models.TextField(
-                        error_messages={"invalid": "Фамилия указана некорректно"},
+                        error_messages={
+                            "invalid": "Фамилия указана некорректно"
+                        },
                         validators=[
                             django.core.validators.RegexValidator(
                                 regex="^([А-ЯЁ]{1}[][а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$"
@@ -298,7 +322,9 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        error_messages={"invalid": "E-mail введен некорректно!"},
+                        error_messages={
+                            "invalid": "E-mail введен некорректно!"
+                        },
                         max_length=254,
                         unique=True,
                         validators=[
@@ -311,7 +337,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "verify",
-                    models.BooleanField(default=False, verbose_name="Подтверждение"),
+                    models.BooleanField(
+                        default=False, verbose_name="Подтверждение"
+                    ),
                 ),
                 ("comment", models.TextField(blank=True)),
                 (
@@ -349,7 +377,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="teacher",
             name="subjects",
-            field=models.ManyToManyField(blank=True, related_name="teachers", to="clients.subject"),
+            field=models.ManyToManyField(
+                blank=True, related_name="teachers", to="clients.subject"
+            ),
         ),
         migrations.AddField(
             model_name="teacher",

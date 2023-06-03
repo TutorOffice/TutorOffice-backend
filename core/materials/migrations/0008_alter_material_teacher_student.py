@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("clients", "0009_alter_user_photo"),
-        ("materials", "0007_alter_material_file_alter_material_subject_and_more"),
+        (
+            "materials",
+            "0007_alter_material_file_alter_material_subject_and_more",
+        ),
     ]
 
     operations = [
@@ -14,7 +17,10 @@ class Migration(migrations.Migration):
             model_name="material",
             name="teacher_student",
             field=models.ManyToManyField(
-                blank=True, related_name="materials", to="clients.teacherstudent", verbose_name="Учитель-Ученик"
+                blank=True,
+                related_name="materials",
+                to="clients.teacherstudent",
+                verbose_name="Учитель-Ученик",
             ),
         ),
     ]

@@ -32,7 +32,12 @@ class Migration(migrations.Migration):
                         verbose_name="Файл материалов",
                     ),
                 ),
-                ("text", models.TextField(blank=True, verbose_name="Текст материалов")),
+                (
+                    "text",
+                    models.TextField(
+                        blank=True, verbose_name="Текст материалов"
+                    ),
+                ),
                 (
                     "type",
                     models.CharField(

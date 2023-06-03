@@ -19,7 +19,12 @@ STATUSCHOICE = [
 class Lesson(models.Model):
     """Модель для занятий"""
 
-    teacher = models.ForeignKey(Teacher, on_delete=models.PROTECT, verbose_name="Учитель", related_name="lessons")
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.PROTECT,
+        verbose_name="Учитель",
+        related_name="lessons",
+    )
     teacher_student = models.ForeignKey(
         TeacherStudent,
         on_delete=models.PROTECT,
@@ -63,9 +68,13 @@ class Lesson(models.Model):
         """Валидация даты и времени урока"""
         errors = {}
         if self.end_time <= self.start_time:
-            errors["end_time"] = ValidationError("Время конца урока должно быть позже времени начала урока!")
+            errors["end_time"] = ValidationError(
+                "Время конца урока должно быть позже времени начала урока!"
+            )
         if self.date < date.today():
-            errors["date"] = ValidationError("Дата урока не может быть раньше текущего дня!")
+            errors["date"] = ValidationError(
+                "Дата урока не может быть раньше текущего дня!"
+            )
         if errors:
             raise ValidationError(errors)
 

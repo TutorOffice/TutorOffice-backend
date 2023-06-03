@@ -13,7 +13,9 @@ class AggregateLessonQueryset(models.QuerySet):
         Подсчёт уроков юзера по предметам,
         по которым проводится конкретный урок
         """
-        return self.values(title=F("subject__title")).annotate(count=Count("id"))
+        return self.values(title=F("subject__title")).annotate(
+            count=Count("id")
+        )
 
     def count_by_status(self):
         """Подсчёт уроков юзера по статусу урока"""
@@ -33,7 +35,10 @@ class AggregateLessonQueryset(models.QuerySet):
         """
         return self.values(
             full_name=Concat(
-                F("teacher_student__last_name"), Value(" "), F("teacher_student__first_name"), output_field=CharField()
+                F("teacher_student__last_name"),
+                Value(" "),
+                F("teacher_student__first_name"),
+                output_field=CharField(),
             )
         ).annotate(count=Count("id"))
 
@@ -44,7 +49,10 @@ class AggregateLessonQueryset(models.QuerySet):
         """
         return self.values(
             full_name=Concat(
-                F("teacher__user__last_name"), Value(" "), F("teacher__user__first_name"), output_field=CharField()
+                F("teacher__user__last_name"),
+                Value(" "),
+                F("teacher__user__first_name"),
+                output_field=CharField(),
             )
         ).annotate(count=Count("id"))
 

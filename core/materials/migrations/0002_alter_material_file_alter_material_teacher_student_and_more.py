@@ -5,7 +5,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("clients", "0002_alter_teacher_students_alter_teacher_subjects_and_more"),
+        (
+            "clients",
+            "0002_alter_teacher_students_alter_teacher_subjects_and_more",
+        ),
         ("materials", "0001_initial"),
     ]
 
@@ -31,6 +34,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="material",
             name="text",
-            field=models.TextField(blank=True, verbose_name="Текст материалов"),
+            field=models.TextField(
+                blank=True, verbose_name="Текст материалов"
+            ),
         ),
     ]

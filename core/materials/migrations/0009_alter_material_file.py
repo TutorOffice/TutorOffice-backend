@@ -12,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="material",
             name="file",
-            field=models.FileField(upload_to="materials/", verbose_name="Файл материалов"),
+            field=models.FileField(
+                upload_to="materials/", verbose_name="Файл материалов"
+            ),
         ),
     ]

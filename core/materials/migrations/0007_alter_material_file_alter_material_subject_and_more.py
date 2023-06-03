@@ -14,20 +14,29 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="material",
             name="file",
-            field=models.FileField(upload_to="backend_media/materials/%Y/%m/%d", verbose_name="Файл материалов"),
+            field=models.FileField(
+                upload_to="backend_media/materials/%Y/%m/%d",
+                verbose_name="Файл материалов",
+            ),
         ),
         migrations.AlterField(
             model_name="material",
             name="subject",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.PROTECT, to="clients.subject", verbose_name="Предмет"
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="clients.subject",
+                verbose_name="Предмет",
             ),
         ),
         migrations.AlterField(
             model_name="material",
             name="teacher_student",
             field=models.ManyToManyField(
-                null=True, related_name="materials", to="clients.teacherstudent", verbose_name="Учитель-Ученик"
+                null=True,
+                related_name="materials",
+                to="clients.teacherstudent",
+                verbose_name="Учитель-Ученик",
             ),
         ),
     ]

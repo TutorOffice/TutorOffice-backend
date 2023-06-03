@@ -29,7 +29,10 @@ class Migration(migrations.Migration):
             model_name="lesson",
             name="subject",
             field=models.ForeignKey(
-                blank=True, on_delete=django.db.models.deletion.PROTECT, to="clients.subject", verbose_name="Предмет"
+                blank=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="clients.subject",
+                verbose_name="Предмет",
             ),
         ),
     ]

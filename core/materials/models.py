@@ -19,17 +19,31 @@ class Material(models.Model):
     возможность рассылки.
     """
 
-    teacher = models.ForeignKey(Teacher, related_name="materials", on_delete=models.PROTECT, verbose_name="Учитель")
+    teacher = models.ForeignKey(
+        Teacher,
+        related_name="materials",
+        on_delete=models.PROTECT,
+        verbose_name="Учитель",
+    )
     teacher_student = models.ManyToManyField(
         TeacherStudent,
         related_name="materials",
         verbose_name="Учитель-Ученик",
         blank=True,
     )
-    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, verbose_name="Предмет", null=True)
-    file = models.FileField(upload_to="materials/", verbose_name="Файл материалов")
+    subject = models.ForeignKey(
+        Subject, on_delete=models.PROTECT, verbose_name="Предмет", null=True
+    )
+    file = models.FileField(
+        upload_to="materials/", verbose_name="Файл материалов"
+    )
     text = models.TextField(verbose_name="Текст к материалу", blank=True)
-    type = models.CharField(max_length=10, choices=TYPECHOICE, default=PRIVATE, verbose_name="Тип материалов")
+    type = models.CharField(
+        max_length=10,
+        choices=TYPECHOICE,
+        default=PRIVATE,
+        verbose_name="Тип материалов",
+    )
     date = models.DateField(verbose_name="дата", auto_now=True)
 
     def __str__(self):

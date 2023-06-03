@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
             model_name="teacherstudent",
             name="bind",
             field=models.CharField(
-                choices=[("unrelated", "unrelated"), ("awaiting", "awaiting"), ("related", "related")],
+                choices=[
+                    ("unrelated", "unrelated"),
+                    ("awaiting", "awaiting"),
+                    ("related", "related"),
+                ],
                 default="unrelated",
                 max_length=10,
                 verbose_name="Привязка",

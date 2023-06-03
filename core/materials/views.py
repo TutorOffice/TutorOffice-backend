@@ -53,6 +53,6 @@ class StudentMaterialViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         """Получения queryset материалов учителя"""
         request = self.request
-        return Material.objects.select_related("teacher__user", "subject", "teacher").filter(
-            teacher_student__student__user=request.user
-        )
+        return Material.objects.select_related(
+            "teacher__user", "subject", "teacher"
+        ).filter(teacher_student__student__user=request.user)

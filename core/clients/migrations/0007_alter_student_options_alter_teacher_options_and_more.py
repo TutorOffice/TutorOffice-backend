@@ -13,11 +13,19 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name="student",
-            options={"ordering": ("user",), "verbose_name": "Студент", "verbose_name_plural": "Студенты"},
+            options={
+                "ordering": ("user",),
+                "verbose_name": "Студент",
+                "verbose_name_plural": "Студенты",
+            },
         ),
         migrations.AlterModelOptions(
             name="teacher",
-            options={"ordering": ("user",), "verbose_name": "Учитель", "verbose_name_plural": "Учителя"},
+            options={
+                "ordering": ("user",),
+                "verbose_name": "Учитель",
+                "verbose_name_plural": "Учителя",
+            },
         ),
         migrations.AlterModelOptions(
             name="user",

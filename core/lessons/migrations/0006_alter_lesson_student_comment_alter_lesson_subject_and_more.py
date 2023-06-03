@@ -14,18 +14,25 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="lesson",
             name="student_comment",
-            field=models.TextField(blank=True, max_length=100, verbose_name="Комментарий"),
+            field=models.TextField(
+                blank=True, max_length=100, verbose_name="Комментарий"
+            ),
         ),
         migrations.AlterField(
             model_name="lesson",
             name="subject",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.PROTECT, to="clients.subject", verbose_name="Предмет"
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                to="clients.subject",
+                verbose_name="Предмет",
             ),
         ),
         migrations.AlterField(
             model_name="lesson",
             name="teacher_comment",
-            field=models.TextField(blank=True, max_length=100, verbose_name="Комментарий"),
+            field=models.TextField(
+                blank=True, max_length=100, verbose_name="Комментарий"
+            ),
         ),
     ]

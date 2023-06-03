@@ -6,7 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("clients", "0007_alter_student_options_alter_teacher_options_and_more"),
+        (
+            "clients",
+            "0007_alter_student_options_alter_teacher_options_and_more",
+        ),
     ]
 
     operations = [
@@ -150,6 +153,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="user",
             name="photo",
-            field=models.ImageField(null=True, upload_to="static/images/", verbose_name="Фотография"),
+            field=models.ImageField(
+                null=True,
+                upload_to="static/images/",
+                verbose_name="Фотография",
+            ),
         ),
     ]

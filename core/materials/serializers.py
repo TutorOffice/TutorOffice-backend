@@ -1,10 +1,14 @@
 from clients.models import Teacher
 from django.shortcuts import get_object_or_404
-from rest_framework.serializers import (ChoiceField, DateField,
-                                        ModelSerializer,
-                                        PrimaryKeyRelatedField,
-                                        SerializerMethodField,
-                                        StringRelatedField, ValidationError)
+from rest_framework.serializers import (
+    ChoiceField,
+    DateField,
+    ModelSerializer,
+    PrimaryKeyRelatedField,
+    SerializerMethodField,
+    StringRelatedField,
+    ValidationError,
+)
 
 from .models import TYPECHOICE, Material
 
@@ -59,15 +63,24 @@ class TeacherMaterialSerializer(ModelSerializer):
 
     def get_student_full_name(self, obj):
         students = obj.teacher_student.all()
-        return [f"{student.last_name} {student.first_name}" for student in students]
+        return [
+            f"{student.last_name} {student.first_name}" for student in students
+        ]
 
     def validate(self, attrs):
         student = attrs.get("teacher_student", None)
         kind = attrs.get("type", None)
         if student and kind == "public":
-            raise ValidationError({"detail": "Нельзя указать ученика для публичного материала!"})
+            raise ValidationError(
+                {"detail": "Нельзя указать ученика для публичного материала!"}
+            )
         elif not student and kind == "private":
-            raise ValidationError({"detail": "Нельзя создать приватный материал без указания ученика!"})
+            raise ValidationError(
+                {
+                    "detail": "Нельзя создать приватный материал "
+                              "без указания ученика!"
+                }
+            )
         return attrs
 
     class Meta:

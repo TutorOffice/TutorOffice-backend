@@ -8,23 +8,44 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("clients", "0007_alter_student_options_alter_teacher_options_and_more"),
+        (
+            "clients",
+            "0007_alter_student_options_alter_teacher_options_and_more",
+        ),
     ]
 
     operations = [
         migrations.CreateModel(
             name="Lesson",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("date", models.DateField(verbose_name="Дата")),
                 ("start_time", models.TimeField(verbose_name="Начало урока")),
                 ("end_time", models.TimeField(verbose_name="Конец урока")),
-                ("topic", models.TextField(blank=True, max_length=40, verbose_name="Тема урока")),
-                ("comment", models.TextField(blank=True, verbose_name="Комментарий")),
+                (
+                    "topic",
+                    models.TextField(
+                        blank=True, max_length=40, verbose_name="Тема урока"
+                    ),
+                ),
+                (
+                    "comment",
+                    models.TextField(blank=True, verbose_name="Комментарий"),
+                ),
                 (
                     "subject",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT, to="clients.subject", verbose_name="Предмет"
+                        on_delete=django.db.models.deletion.PROTECT,
+                        to="clients.subject",
+                        verbose_name="Предмет",
                     ),
                 ),
                 (
@@ -55,10 +76,24 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Homework",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("title", models.TextField(verbose_name="Заголовок")),
                 ("text", models.TextField(verbose_name="Текст задания")),
-                ("comment", models.TextField(blank=True, verbose_name="Комментарий к домашнему заданию")),
+                (
+                    "comment",
+                    models.TextField(
+                        blank=True,
+                        verbose_name="Комментарий к домашнему заданию",
+                    ),
+                ),
                 (
                     "lesson",
                     models.ForeignKey(

@@ -12,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="material",
             name="text",
-            field=models.TextField(blank=True, verbose_name="Текст к материалу"),
+            field=models.TextField(
+                blank=True, verbose_name="Текст к материалу"
+            ),
         ),
     ]

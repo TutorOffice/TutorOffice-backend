@@ -5,7 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("materials", "0002_alter_material_file_alter_material_teacher_student_and_more"),
+        (
+            "materials",
+            "0002_alter_material_file_alter_material_teacher_student_and_more",
+        ),
     ]
 
     operations = [

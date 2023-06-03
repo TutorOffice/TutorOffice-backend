@@ -10,7 +10,14 @@ class SubjectAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("email", "show_full_name", "phone", "is_active", "show_student", "show_teacher")
+    list_display = (
+        "email",
+        "show_full_name",
+        "phone",
+        "is_active",
+        "show_student",
+        "show_teacher",
+    )
     search_fields = ("last_name", "phone", "email")
     search_help_text = "Фамилия, телефон или e-mail"
     list_filter = (

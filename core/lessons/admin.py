@@ -10,12 +10,21 @@ class HomeworkAdmin(admin.StackedInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ("teacher", "subject", "date", "show_student", "start_time", "show_homework")
+    list_display = (
+        "teacher",
+        "subject",
+        "date",
+        "show_student",
+        "start_time",
+        "show_homework",
+    )
     date_hierarchy = "date"
     inlines = [HomeworkAdmin]
 
     def show_student(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        return (
+            f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+        )
 
     show_student.short_description = "Студент"
 

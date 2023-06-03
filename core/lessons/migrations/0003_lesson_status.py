@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
             model_name="lesson",
             name="status",
             field=models.CharField(
-                choices=[("planned", "public"), ("canceled", "private"), ("done", "done")],
+                choices=[
+                    ("planned", "public"),
+                    ("canceled", "private"),
+                    ("done", "done"),
+                ],
                 default="planned",
                 max_length=10,
                 verbose_name="Статус",
