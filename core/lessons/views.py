@@ -1,31 +1,21 @@
+from clients.pagination import LessonAggregatePagination, LessonListPagination
+from clients.permissions import IsStudentOwner, IsTeacher, IsTeacherOwner
+from clients.services import get_user_type
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-
-from rest_framework.response import Response
+from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
+                                   ListModelMixin, RetrieveModelMixin,
+                                   UpdateModelMixin)
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import (
-    GenericViewSet,
-)
-from rest_framework.mixins import (
-    ListModelMixin,
-    CreateModelMixin,
-    RetrieveModelMixin,
-    DestroyModelMixin,
-    UpdateModelMixin,
-)
-
-from clients.pagination import LessonListPagination, LessonAggregatePagination
-from clients.services import get_user_type
-from clients.permissions import IsTeacherOwner, IsStudentOwner, IsTeacher
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from .filters import LessonFilter
 from .models import Lesson
-from .serializers import (
-    TeacherListLessonSerializer,
-    StudentListLessonSerializer,
-    TeacherDetailLessonSerializer,
-    StudentDetailLessonSerializer,
-)
+from .serializers import (StudentDetailLessonSerializer,
+                          StudentListLessonSerializer,
+                          TeacherDetailLessonSerializer,
+                          TeacherListLessonSerializer)
 
 
 class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):

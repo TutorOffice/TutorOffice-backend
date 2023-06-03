@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+
 from .services import get_user_type
 
 

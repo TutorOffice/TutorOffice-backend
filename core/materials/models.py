@@ -1,6 +1,5 @@
+from clients.models import Subject, Teacher, TeacherStudent
 from django.db import models
-
-from clients.models import Teacher, TeacherStudent, Subject
 
 # Create your models here.
 

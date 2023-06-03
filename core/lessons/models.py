@@ -1,10 +1,8 @@
 from datetime import date
 
+from clients.models import Subject, Teacher, TeacherStudent
 from django.core.exceptions import ValidationError
 from django.db import models
-
-from clients.models import Subject, Teacher, TeacherStudent
-
 from lessons.managers import AggregateLessonManager
 
 PLANNED = "planned"

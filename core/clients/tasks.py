@@ -1,8 +1,7 @@
 from celery import shared_task
-from django.template.loader import render_to_string
-from django.core.mail import EmailMessage
 from django.conf import settings
-
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from rest_framework import status
 from rest_framework.response import Response
 

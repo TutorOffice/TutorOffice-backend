@@ -1,13 +1,17 @@
-from django.urls import path, include
+from django.contrib.auth.views import (PasswordChangeDoneView,
+                                       PasswordChangeView,
+                                       PasswordResetCompleteView,
+                                       PasswordResetDoneView)
+from django.urls import include, path
 from rest_framework import routers
-from .views import *
 from rest_framework_simplejwt.views import TokenRefreshView
-from django.contrib.auth.views import (
-    PasswordResetDoneView,
-    PasswordResetCompleteView,
-    PasswordChangeView,
-    PasswordChangeDoneView,
-)
+
+from .views import (ActivateUserView, ConfirmView,
+                    CustomPasswordResetConfirmView, CustomPasswordResetView,
+                    LoginView, ProfileViewSet, RegisterViewSet,
+                    RelateUnrelateStudentView, StudentTeachersViewSet,
+                    SubjectsView, TeacherStudentsDetailViewSet,
+                    TeacherStudentsViewSet, UserSubjectViewSet)
 
 # app_name = 'clients' тег url во встроенном reset-password шаблоне не работает
 

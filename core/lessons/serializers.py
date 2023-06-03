@@ -1,19 +1,12 @@
 from datetime import date
 
-from django.shortcuts import get_object_or_404
-
-from rest_framework.serializers import (
-    ModelSerializer,
-    SerializerMethodField,
-    SlugRelatedField,
-    ValidationError,
-    StringRelatedField,
-    PrimaryKeyRelatedField,
-    ReadOnlyField,
-    CharField,
-)
-
 from clients.models import Teacher
+from django.shortcuts import get_object_or_404
+from rest_framework.serializers import (CharField, ModelSerializer,
+                                        PrimaryKeyRelatedField, ReadOnlyField,
+                                        SerializerMethodField,
+                                        StringRelatedField, ValidationError)
+
 from .models import Lesson
 
 

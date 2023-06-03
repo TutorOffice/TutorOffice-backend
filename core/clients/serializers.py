@@ -1,11 +1,10 @@
-from django.db.transaction import atomic
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-
+from django.db.transaction import atomic
 from rest_framework import serializers
 
-from .models import User, Teacher, Student, Subject, TeacherStudent
+from .models import Student, Subject, Teacher, TeacherStudent, User
 
 
 # Сериализатор для обработки формы регистрации

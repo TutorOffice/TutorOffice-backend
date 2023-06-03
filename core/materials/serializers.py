@@ -1,16 +1,10 @@
-from django.shortcuts import get_object_or_404
-
-from rest_framework.serializers import (
-    ChoiceField,
-    ModelSerializer,
-    PrimaryKeyRelatedField,
-    DateField,
-    StringRelatedField,
-    SerializerMethodField,
-    ValidationError,
-)
-
 from clients.models import Teacher
+from django.shortcuts import get_object_or_404
+from rest_framework.serializers import (ChoiceField, DateField,
+                                        ModelSerializer,
+                                        PrimaryKeyRelatedField,
+                                        SerializerMethodField,
+                                        StringRelatedField, ValidationError)
 
 from .models import TYPECHOICE, Material
 

@@ -1,32 +1,37 @@
 import logging
 
 from django.conf import settings
-from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.auth.views import (PasswordResetConfirmView,
+                                       PasswordResetView)
 from django.contrib.sites.shortcuts import get_current_site
+from django.db.transaction import atomic
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-
+from rest_framework import status
 from rest_framework.generics import ListAPIView
-from rest_framework.viewsets import GenericViewSet, ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.mixins import *
+from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
+                                   ListModelMixin, RetrieveModelMixin,
+                                   UpdateModelMixin)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
-
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.viewsets import (GenericViewSet, ModelViewSet,
+                                     ReadOnlyModelViewSet)
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .pagination import SubjectsPagination, UsersPagination
-from .permissions import IsTeacher, IsTeacherOwner, IsStudent
-from .serializers import *
-from .services import get_user_type
-from .models import User, Subject, Teacher, TeacherStudent
 from .forms import CustomPasswordResetForm
+from .models import Student, Subject, Teacher, TeacherStudent, User
+from .pagination import SubjectsPagination, UsersPagination
+from .permissions import IsStudent, IsTeacher, IsTeacherOwner
+from .serializers import (ProfileSerializer, RegisterSerializer,
+                          StudentTeacherSerializer, SubjectSerializer,
+                          TeacherStudentDetailSerializer,
+                          TeacherStudentSerializer, UserSubjectSerializer)
+from .services import get_user_type
 from .tasks import Email
-
 
 logger = logging.getLogger(__name__)
 

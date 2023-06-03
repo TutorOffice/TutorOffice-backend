@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Count, F, Value, CharField
+from django.db.models import CharField, Count, F, Value
 from django.db.models.functions import Concat
 
 

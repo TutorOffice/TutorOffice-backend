@@ -1,7 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import DetailTeacherLessonViewSet, DetailStudentLessonViewSet, ListLessonViewSet, AggregateLessonsViewSet
+from .views import (AggregateLessonsViewSet, DetailStudentLessonViewSet,
+                    DetailTeacherLessonViewSet, ListLessonViewSet)
 
 # HomeworkStudentViewSet, HomeworkTeacherViewSet,
 
