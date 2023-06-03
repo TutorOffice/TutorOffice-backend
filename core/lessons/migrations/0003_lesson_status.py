@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('lessons', '0002_alter_homework_lesson'),
+        ("lessons", "0002_alter_homework_lesson"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='lesson',
-            name='status',
-            field=models.CharField(choices=[('planned', 'public'), ('canceled', 'private'), ('done', 'done')], default='planned', max_length=10, verbose_name='Статус'),
+            model_name="lesson",
+            name="status",
+            field=models.CharField(
+                choices=[("planned", "public"), ("canceled", "private"), ("done", "done")],
+                default="planned",
+                max_length=10,
+                verbose_name="Статус",
+            ),
         ),
     ]

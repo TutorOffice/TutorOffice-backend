@@ -5,26 +5,29 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('clients', '0009_alter_user_photo'),
-        ('materials', '0006_material_date'),
+        ("clients", "0009_alter_user_photo"),
+        ("materials", "0006_material_date"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='material',
-            name='file',
-            field=models.FileField(upload_to='backend_media/materials/%Y/%m/%d', verbose_name='Файл материалов'),
+            model_name="material",
+            name="file",
+            field=models.FileField(upload_to="backend_media/materials/%Y/%m/%d", verbose_name="Файл материалов"),
         ),
         migrations.AlterField(
-            model_name='material',
-            name='subject',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='clients.subject', verbose_name='Предмет'),
+            model_name="material",
+            name="subject",
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.PROTECT, to="clients.subject", verbose_name="Предмет"
+            ),
         ),
         migrations.AlterField(
-            model_name='material',
-            name='teacher_student',
-            field=models.ManyToManyField(null=True, related_name='materials', to='clients.teacherstudent', verbose_name='Учитель-Ученик'),
+            model_name="material",
+            name="teacher_student",
+            field=models.ManyToManyField(
+                null=True, related_name="materials", to="clients.teacherstudent", verbose_name="Учитель-Ученик"
+            ),
         ),
     ]

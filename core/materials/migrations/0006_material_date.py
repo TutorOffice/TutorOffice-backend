@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('materials', '0005_alter_material_file'),
+        ("materials", "0005_alter_material_file"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='material',
-            name='date',
-            field=models.DateField(auto_now=True, verbose_name='дата'),
+            model_name="material",
+            name="date",
+            field=models.DateField(auto_now=True, verbose_name="дата"),
         ),
     ]

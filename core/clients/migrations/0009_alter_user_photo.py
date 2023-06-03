@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('clients', '0008_alter_teacherstudent_comment_and_more'),
+        ("clients", "0008_alter_teacherstudent_comment_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='photo',
-            field=models.ImageField(null=True, upload_to='backend_media/profiles/%Y/%m/%d', verbose_name='Фотография'),
+            model_name="user",
+            name="photo",
+            field=models.ImageField(null=True, upload_to="backend_media/profiles/%Y/%m/%d", verbose_name="Фотография"),
         ),
     ]

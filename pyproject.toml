@@ -18,6 +18,7 @@ drf-yasg = "^1.21.5"
 psycopg2-binary = "^2.9.6"
 psycopg2 = "^2.9.6"
 djangorestframework-simplejwt = "^5.2.2"
+black = "^23.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -26,3 +27,22 @@ django-debug-toolbar = "^4.1.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 119
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''

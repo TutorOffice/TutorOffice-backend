@@ -13,40 +13,40 @@ class AggregateLessonQueryset(models.QuerySet):
         Подсчёт уроков юзера по предметам,
         по которым проводится конкретный урок
         """
-        return self.values(title=F('subject__title')).annotate(count=Count('id'))
+        return self.values(title=F("subject__title")).annotate(count=Count("id"))
 
     def count_by_status(self):
         """Подсчёт уроков юзера по статусу урока"""
-        return self.values('status').annotate(count=Count('id'))
+        return self.values("status").annotate(count=Count("id"))
 
     def count_by_date(self):
         """
         Подсчёт уроков юзера по датам их проведения,
         используется по умолчанию
         """
-        return self.values('date').annotate(count=Count('id'))
+        return self.values("date").annotate(count=Count("id"))
 
     def count_by_students(self):
         """
         Подсчёт уроков репетитора
         по каждому ученику
         """
-        return self.values(full_name=Concat(
-                                    F('teacher_student__last_name'),
-                                    Value(' '),
-                                    F('teacher_student__first_name'),
-                                    output_field=CharField())).annotate(count=Count('id'))
+        return self.values(
+            full_name=Concat(
+                F("teacher_student__last_name"), Value(" "), F("teacher_student__first_name"), output_field=CharField()
+            )
+        ).annotate(count=Count("id"))
 
     def count_by_teachers(self):
         """
         Подсчёт уроков ученика
         по каждому репетитору
         """
-        return self.values(full_name=Concat(
-                                    F('teacher__user__last_name'),
-                                    Value(' '),
-                                    F('teacher__user__first_name'),
-                                    output_field=CharField())).annotate(count=Count('id'))
+        return self.values(
+            full_name=Concat(
+                F("teacher__user__last_name"), Value(" "), F("teacher__user__first_name"), output_field=CharField()
+            )
+        ).annotate(count=Count("id"))
 
 
 class AggregateLessonManager(models.Manager):

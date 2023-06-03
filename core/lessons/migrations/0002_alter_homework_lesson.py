@@ -5,15 +5,21 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('lessons', '0001_initial'),
+        ("lessons", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='homework',
-            name='lesson',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='homework', to='lessons.lesson', verbose_name='Урок'),
+            model_name="homework",
+            name="lesson",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="homework",
+                to="lessons.lesson",
+                verbose_name="Урок",
+            ),
         ),
     ]

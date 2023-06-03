@@ -7,9 +7,10 @@ class IsTeacher(BasePermission):
     Кастомное ограничение прав доступа, проверяющее
     является ли пользователь репетитором (имеет профиль)
     """
+
     def has_permission(self, request, view):
         profile = get_user_type(request)
-        if profile == 'teacher':
+        if profile == "teacher":
             return True
         return False
 
@@ -31,9 +32,10 @@ class IsStudent(BasePermission):
     Кастомное ограничение прав доступа, проверяющее
     является ли пользователь студентом (имеет профиль)
     """
+
     def has_permission(self, request, view):
         profile = get_user_type(request)
-        if profile == 'student':
+        if profile == "student":
             return True
         return False
 
@@ -55,6 +57,7 @@ class IsStudentMaterialOwner(IsStudent):
     Ограничение проверяет, относится ли
     этот ученик к материалу
     """
+
     def has_object_permission(self, request, view, obj):
         queryset = obj.teacher_student.all()
         students = [entry.student for entry in queryset]

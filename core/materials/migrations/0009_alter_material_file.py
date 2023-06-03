@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('materials', '0008_alter_material_teacher_student'),
+        ("materials", "0008_alter_material_teacher_student"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='material',
-            name='file',
-            field=models.FileField(upload_to='materials/', verbose_name='Файл материалов'),
+            model_name="material",
+            name="file",
+            field=models.FileField(upload_to="materials/", verbose_name="Файл материалов"),
         ),
     ]

@@ -5,20 +5,37 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('clients', '0003_alter_teacherstudent_options_and_more'),
+        ("clients", "0003_alter_teacherstudent_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='teacherstudent',
-            name='email',
-            field=models.EmailField(error_messages={'invalid': 'E-mail введен некорректно!'}, max_length=254, validators=[django.core.validators.EmailValidator(), django.core.validators.MinLengthValidator(7), django.core.validators.MaxLengthValidator(254)], verbose_name='Электронная почта'),
+            model_name="teacherstudent",
+            name="email",
+            field=models.EmailField(
+                error_messages={"invalid": "E-mail введен некорректно!"},
+                max_length=254,
+                validators=[
+                    django.core.validators.EmailValidator(),
+                    django.core.validators.MinLengthValidator(7),
+                    django.core.validators.MaxLengthValidator(254),
+                ],
+                verbose_name="Электронная почта",
+            ),
         ),
         migrations.AlterField(
-            model_name='teacherstudent',
-            name='phone',
-            field=models.TextField(null=True, validators=[django.core.validators.RegexValidator(message='Телефон введен некорректно.Введите телефон в формате +79051234567', regex='^((\\+7|7|8)[0-9]{10})$')], verbose_name='Телефон'),
+            model_name="teacherstudent",
+            name="phone",
+            field=models.TextField(
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="Телефон введен некорректно.Введите телефон в формате +79051234567",
+                        regex="^((\\+7|7|8)[0-9]{10})$",
+                    )
+                ],
+                verbose_name="Телефон",
+            ),
         ),
     ]

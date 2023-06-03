@@ -22,9 +22,7 @@ class Migration(migrations.Migration):
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
                     "last_login",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="last login"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="last login"),
                 ),
                 (
                     "is_superuser",
@@ -350,9 +348,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="teacher",
             name="subjects",
-            field=models.ManyToManyField(
-                blank=True, related_name="teachers", to="clients.subject"
-            ),
+            field=models.ManyToManyField(blank=True, related_name="teachers", to="clients.subject"),
         ),
         migrations.AddField(
             model_name="teacher",

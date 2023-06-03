@@ -1,11 +1,3 @@
-from clients.pagination import LessonListPagination, LessonAggregatePagination
-from clients.services import get_user_type
-from clients.permissions import (
-    IsTeacherOwner,
-    IsStudentOwner,
-    IsTeacher
-)
-
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -19,8 +11,12 @@ from rest_framework.mixins import (
     CreateModelMixin,
     RetrieveModelMixin,
     DestroyModelMixin,
-    UpdateModelMixin
+    UpdateModelMixin,
 )
+
+from clients.pagination import LessonListPagination, LessonAggregatePagination
+from clients.services import get_user_type
+from clients.permissions import IsTeacherOwner, IsStudentOwner, IsTeacher
 
 from .filters import LessonFilter
 from .models import Lesson
@@ -28,7 +24,7 @@ from .serializers import (
     TeacherListLessonSerializer,
     StudentListLessonSerializer,
     TeacherDetailLessonSerializer,
-    StudentDetailLessonSerializer
+    StudentDetailLessonSerializer,
 )
 
 
@@ -38,6 +34,7 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
     с возможностью выбора параметров для
     фильтрации и группировки данных.
     """
+
     filterset_class = LessonFilter
     pagination_class = LessonAggregatePagination
     permission_classes = [IsAuthenticated]
@@ -51,12 +48,9 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         """
         request = self.request
         profile = get_user_type(request)
-        if profile == 'teacher':
-            return Lesson.objects.filter(
-                teacher__user=request.user
-            )
-        return Lesson.objects.filter(
-                teacher_student__student=request.user.student_profile)
+        if profile == "teacher":
+            return Lesson.objects.filter(teacher__user=request.user)
+        return Lesson.objects.filter(teacher_student__student=request.user.student_profile)
 
     def list(self, request, *args, **kwargs):
         """
@@ -65,25 +59,23 @@ class AggregateLessonsViewSet(ListModelMixin, GenericViewSet):
         предметам, учителям для учеников и ученикам для учителей.
         """
         queryset = self.filter_queryset(self.get_queryset())
-        group_by = request.query_params.get('group_by', None)
+        group_by = request.query_params.get("group_by", None)
         match group_by:
             # добавить поле status в values
-            case 'subject':
+            case "subject":
                 lessons = queryset.count_by_subjects()
-            case 'status':
+            case "status":
                 lessons = queryset.count_by_status()
-            case 'teacher':
+            case "teacher":
                 lessons = queryset.count_by_teachers()
-            case 'student':
+            case "student":
                 lessons = queryset.count_by_students()
             case _:
                 lessons = queryset.count_by_date()
-        return Response({'lessons': lessons})
+        return Response({"lessons": lessons})
 
 
-class ListLessonViewSet(ListModelMixin,
-                        CreateModelMixin,
-                        GenericViewSet):
+class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
     """
     Возвращает список уроков с
     возможностью фильтрации.
@@ -94,28 +86,25 @@ class ListLessonViewSet(ListModelMixin,
     pagination_class = LessonListPagination
 
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action == "create":
             return [IsAuthenticated(), IsTeacher()]
         return [IsAuthenticated()]
 
     def get_serializer_class(self):
         request = self.request
         profile = get_user_type(request)
-        if profile == 'teacher':
+        if profile == "teacher":
             return TeacherListLessonSerializer
         return StudentListLessonSerializer
 
     def get_queryset(self):
         request = self.request
         profile = get_user_type(request)
-        if profile == 'teacher':
-            return Lesson.objects.select_related(
-                'homework', 'teacher_student').filter(
-                    teacher__user=request.user
-            )
-        return Lesson.objects.select_related(
-            'teacher', 'homework', 'teacher__user').filter(
-                teacher_student__student__user=request.user)
+        if profile == "teacher":
+            return Lesson.objects.select_related("homework", "teacher_student").filter(teacher__user=request.user)
+        return Lesson.objects.select_related("teacher", "homework", "teacher__user").filter(
+            teacher_student__student__user=request.user
+        )
 
     def perform_create(self, serializer):
         """Метод создания учителя у урока."""
@@ -123,37 +112,32 @@ class ListLessonViewSet(ListModelMixin,
         serializer.save(teacher=user.teacher_profile)
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
-class DetailTeacherLessonViewSet(RetrieveModelMixin,
-                                 UpdateModelMixin,
-                                 DestroyModelMixin,
-                                 GenericViewSet):
+@method_decorator(cache_page(60 * 5), name="dispatch")
+class DetailTeacherLessonViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     """
     Возвращает конкретный урок
     как для учителей, только учитель имеет право
     редактировать и удалять урок
     """
 
-    http_method_names = ['get', 'patch', 'delete']
+    http_method_names = ["get", "patch", "delete"]
     serializer_class = TeacherDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsTeacherOwner]
 
     def get_queryset(self):
-        return Lesson.objects.select_related(
-            'homework', 'subject', 'teacher_student', 'teacher__user').all()
+        return Lesson.objects.select_related("homework", "subject", "teacher_student", "teacher__user").all()
 
 
-@method_decorator(cache_page(60 * 5), name='dispatch')
-class DetailStudentLessonViewSet(RetrieveModelMixin,
-                                 GenericViewSet):
+@method_decorator(cache_page(60 * 5), name="dispatch")
+class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
     """
     Возвращает конкретный урок для ученика,
     имеется только возможность чтения
     """
+
     serializer_class = StudentDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsStudentOwner]
     queryset = Lesson.objects.all()
 
     def get_queryset(self):
-        return Lesson.objects.select_related(
-            'homework', 'subject', 'teacher').all()
+        return Lesson.objects.select_related("homework", "subject", "teacher").all()

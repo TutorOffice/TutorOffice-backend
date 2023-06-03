@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('materials', '0003_alter_material_options'),
+        ("materials", "0003_alter_material_options"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='material',
-            name='text',
-            field=models.TextField(blank=True, verbose_name='Текст к материалу'),
+            model_name="material",
+            name="text",
+            field=models.TextField(blank=True, verbose_name="Текст к материалу"),
         ),
     ]
