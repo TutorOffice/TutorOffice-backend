@@ -145,8 +145,9 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
     репетитора и создания нового ученика
     """
 
-    comment = serializers.CharField(write_only=True, required=False)
     photo = serializers.SerializerMethodField(read_only=True, allow_null=True)
+    email = serializers.EmailField(write_only=True)
+    phone = serializers.CharField(write_only=True, required=False)
 
     def get_photo(self, obj):
         try:
@@ -162,10 +163,10 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
             "last_name",
             "first_name",
             "patronymic_name",
+            "level",
+            "photo",
             "phone",
             "email",
-            "comment",
-            "photo",
         )
         read_only_fields = ("id",)
 
@@ -191,8 +192,8 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
     Сериализатор для обработки получения,
     обновления и удаления ученика репетитора
     """
-
-    comment = serializers.CharField()
+    email = serializers.EmailField()
+    phone = serializers.CharField()
 
     class Meta(TeacherStudentSerializer.Meta):
         fields = TeacherStudentSerializer.Meta.fields + ("bind",)

@@ -341,7 +341,7 @@ class TeacherStudent(models.Model):
         choices=TYPECHOICE,
         default=UNRELATED,
     )
-    comment = models.TextField(blank=True, max_length=256)
+    level = models.CharField(blank=True, max_length=25)
 
     class Meta:
         verbose_name = "Учитель-Ученик"
