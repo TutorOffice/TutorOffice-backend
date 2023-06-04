@@ -216,8 +216,12 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
 class StudentTeacherSerializer(serializers.ModelSerializer):
     """
     Сериализатор для обработки получения
-    репетитора(-ов) ученика
+    списка репетиторов ученика
     """
+    subjects = serializers.SerializerMethodField()
+
+    def get_subjects(self, obj):
+        return [str(subject) for subject in obj.teacher_profile.subjects.all()]
 
     class Meta:
         model = User
@@ -226,7 +230,25 @@ class StudentTeacherSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "patronymic_name",
+            "photo",
+            "subjects"
+        )
+
+
+class StudentTeacherDetailSerializer(StudentTeacherSerializer):
+    """
+    Сериализатор для обработки получения
+    отдельного репетитора ученика
+    """
+
+    class Meta(StudentTeacherSerializer.Meta):
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "patronymic_name",
             "email",
             "phone",
             "photo",
+            "subjects",
         )

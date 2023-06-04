@@ -39,6 +39,7 @@ from .serializers import (
     ProfileSerializer,
     RegisterSerializer,
     StudentTeacherSerializer,
+    StudentTeacherDetailSerializer,
     SubjectSerializer,
     TeacherStudentDetailSerializer,
     TeacherStudentSerializer,
@@ -301,23 +302,37 @@ class TeacherStudentViewSet(ModelViewSet):
     http_method_names = ['post', 'patch', 'delete', 'get']
 
     def get_permissions(self):
+        """
+        Эндпоинт доступен только для репетиторов.
+        Изменять, удалять и получать записи отдельных
+        псевдоучеников может только репетитор,
+        который их создал.
+        """
         if self.action in ("partial_update", "destroy", "retrieve"):
             return [IsAuthenticated(), IsTeacherOwner()]
         return [IsAuthenticated(), IsTeacher()]
 
     def get_serializer_class(self):
         if self.action in ("partial_update", "destroy", "retrieve"):
-            return TeacherStudentSerializer
-        return TeacherStudentDetailSerializer
+            return TeacherStudentDetailSerializer
+        return TeacherStudentSerializer
 
     def get_object(self):
-        return TeacherStudent.objects.select_related(
-            "student__user", "teacher__user"
-        ).get(pk=self.kwargs['pk'])
+        """Получение псевдоученика репетитора"""
+        pk = self.kwargs['pk']
+        user = self.request.user
+        return get_object_or_404(
+            TeacherStudent.objects.select_related(
+                "student__user", "teacher__user"
+            ).all(),
+            pk=pk,
+            teacher=user.teacher_profile
+        )
 
     def get_queryset(self):
         """
-        Получение записей для текущего пользователя
+        Получение записей псевдоучеников для
+        текущего пользователя-репетитора
         """
         teacher = self.request.user.teacher_profile
         return TeacherStudent.objects.select_related("student__user").filter(
@@ -520,11 +535,44 @@ class StudentTeachersViewSet(ReadOnlyModelViewSet):
     """
 
     pagination_class = UsersPagination
-    permission_classes = [IsAuthenticated, IsStudent]
     serializer_class = StudentTeacherSerializer
 
+    def get_permissions(self):
+        """Эндпоинт доступен только для учеников"""
+        if self.action == "list":
+            return [IsAuthenticated(), IsStudent()]
+        return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return StudentTeacherSerializer
+        return StudentTeacherDetailSerializer
+
     def get_queryset(self):
+        """
+        Получение списка репетиторов
+        текущего пользователя-ученика
+        """
         user = self.request.user
-        return User.objects.filter(
+        return User.objects.select_related(
+            'teacher_profile',
+        ).filter(
+            teacher_profile__studentM2M__student=user.student_profile
+        )
+
+    def get_object(self):
+        """
+        Получение конкретного репетитора,
+        текущего пользователя-ученика
+        """
+        pk = self.kwargs['pk']
+        user = self.request.user
+        return get_object_or_404(
+            User.objects.select_related(
+                'teacher_profile'
+            ).prefetch_related(
+                'teacher_profile__subjects'
+            ).all(),
+            pk=pk,
             teacher_profile__studentM2M__student=user.student_profile
         )
