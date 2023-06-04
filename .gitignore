@@ -138,3 +138,4 @@ bash.exe.stackdump
 core/static/materials/*
 /core/test.yaml
 /docker/.env
+backend_media/

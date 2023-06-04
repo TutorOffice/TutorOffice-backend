@@ -32,19 +32,38 @@ class Material(models.Model):
         blank=True,
     )
     subject = models.ForeignKey(
-        Subject, on_delete=models.PROTECT, verbose_name="Предмет", null=True
+        Subject,
+        on_delete=models.PROTECT,
+        verbose_name="Предмет",
+        null=True
     )
     file = models.FileField(
-        upload_to="materials/", verbose_name="Файл материалов"
+        upload_to="materials/",
+        verbose_name="Файл материалов"
     )
-    text = models.TextField(verbose_name="Текст к материалу", blank=True)
-    type = models.CharField(
+    file_type = models.CharField(
+        max_length=25,
+        verbose_name="Тип файла",
+        null=True,
+    )
+    file_size = models.IntegerField(
+        verbose_name="Размер файла (КБ)",
+        null=True,
+    )
+    text = models.TextField(
+        verbose_name="Текст к материалу",
+        blank=True,
+    )
+    material_type = models.CharField(
         max_length=10,
         choices=TYPECHOICE,
         default=PRIVATE,
         verbose_name="Тип материалов",
     )
-    date = models.DateField(verbose_name="дата", auto_now=True)
+    date = models.DateField(
+        verbose_name="дата",
+        auto_now=True,
+    )
 
     def __str__(self):
         return f"{self.subject}"

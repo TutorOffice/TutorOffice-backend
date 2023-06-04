@@ -8,6 +8,8 @@ from rest_framework.serializers import (
     SerializerMethodField,
     StringRelatedField,
     ValidationError,
+    IntegerField,
+    CharField,
 )
 
 from .models import TYPECHOICE, Material
@@ -55,11 +57,13 @@ class TeacherMaterialSerializer(ModelSerializer):
     student_full_name = SerializerMethodField(
         read_only=True,
     )
-    type = ChoiceField(
+    material_type = ChoiceField(
         choices=TYPECHOICE,
         default="private",
     )
     date = DateField(read_only=True)
+    file_type = CharField(read_only=True)
+    file_size = IntegerField(read_only=True)
 
     def get_student_full_name(self, obj):
         students = obj.teacher_student.all()
@@ -69,18 +73,22 @@ class TeacherMaterialSerializer(ModelSerializer):
 
     def validate(self, attrs):
         student = attrs.get("teacher_student", None)
-        kind = attrs.get("type", None)
-        if student and kind == "public":
+        material_type = attrs.get("material_type", None)
+        if student and material_type == "public":
             raise ValidationError(
                 {"detail": "Нельзя указать ученика для публичного материала!"}
             )
-        elif not student and kind == "private":
+        elif not student and material_type == "private":
             raise ValidationError(
                 {
                     "detail": "Нельзя создать приватный материал "
                               "без указания ученика!"
                 }
             )
+        file = self.context["request"].FILES.get("file", None)
+        if file:
+            attrs["file_size"] = file.size // 1024
+            attrs["file_type"] = file.content_type
         return attrs
 
     class Meta:
@@ -92,14 +100,16 @@ class TeacherMaterialSerializer(ModelSerializer):
             "subject",
             "subject_title",
             "file",
+            "file_type",
+            "file_size",
             "text",
-            "type",
+            "material_type",
             "date",
         )
 
     def update(self, instance, validated_data):
-        kind = validated_data.get("type", None)
-        if kind == "public":
+        material_type = validated_data.get("material_type", None)
+        if material_type == "public":
             instance.teacher_student.clear()
         return super().update(instance, validated_data)
 
@@ -119,6 +129,8 @@ class StudentMaterialSerializer(ModelSerializer):
             "teacher",
             "subject",
             "file",
+            "file_type",
+            "file_size",
             "text",
             "date",
         )
