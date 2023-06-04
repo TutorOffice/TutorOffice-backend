@@ -296,7 +296,7 @@ class ProfileViewSet(
         return self.request.user
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
+# @method_decorator(cache_page(60 * 5), name="dispatch")
 class TeacherStudentViewSet(ModelViewSet):
     pagination_class = UsersPagination
     http_method_names = ['post', 'patch', 'delete', 'get']
