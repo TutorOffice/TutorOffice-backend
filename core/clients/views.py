@@ -295,21 +295,25 @@ class ProfileViewSet(
         return self.request.user
 
 
-class TeacherStudentsViewSet(
-    CreateModelMixin, ListModelMixin, GenericViewSet
-):
-    """
-    Просмотр списка фиктивных учеников и
-    создание фиктивного ученика
-    """
-
-    serializer_class = TeacherStudentSerializer
+@method_decorator(cache_page(60 * 5), name="dispatch")
+class TeacherStudentViewSet(ModelViewSet):
     pagination_class = UsersPagination
-    permission_classes = [IsAuthenticated, IsTeacher]
-    http_method_names = (
-        "get",
-        "post",
-    )
+    http_method_names = ['post', 'patch', 'delete', 'get']
+
+    def get_permissions(self):
+        if self.action in ("partial_update", "destroy", "retrieve"):
+            return [IsAuthenticated(), IsTeacherOwner()]
+        return [IsAuthenticated(), IsTeacher()]
+
+    def get_serializer_class(self):
+        if self.action in ("partial_update", "destroy", "retrieve"):
+            return TeacherStudentSerializer
+        return TeacherStudentDetailSerializer
+
+    def get_object(self):
+        return TeacherStudent.objects.select_related(
+            "student__user", "teacher__user"
+        ).get(pk=self.kwargs['pk'])
 
     def get_queryset(self):
         """
@@ -325,36 +329,15 @@ class TeacherStudentsViewSet(
         Сохраняет запись в бд, добавив
         внешний ключ на учителя
         """
+
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)
-
-
-@method_decorator(cache_page(60 * 5), name="dispatch")
-class TeacherStudentsDetailViewSet(
-    RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet
-):
-    """
-    Просмотр отдельно взятого фиктивного ученика,
-    его обновление и удаление
-    """
-
-    serializer_class = TeacherStudentDetailSerializer
-    permission_classes = [IsAuthenticated, IsTeacherOwner]
-    http_method_names = (
-        "get",
-        "patch",
-        "delete",
-    )
-
-    def get_queryset(self):
-        return TeacherStudent.objects.select_related(
-            "student__user", "teacher__user"
-        ).all()
 
     def destroy(self, request, *args, **kwargs):
         """
         Удаление ученика вместе с назначенными для него уроками
         """
+
         obj = self.get_object()
         logger.info(
             "Удаление ученика и уроков" f" юзера - {request.user.email}"

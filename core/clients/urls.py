@@ -19,8 +19,7 @@ from .views import (
     RelateUnrelateStudentView,
     StudentTeachersViewSet,
     SubjectsView,
-    TeacherStudentsDetailViewSet,
-    TeacherStudentsViewSet,
+    TeacherStudentViewSet,
     UserSubjectViewSet,
 )
 
@@ -30,6 +29,9 @@ router = routers.DefaultRouter()
 router.register("register", RegisterViewSet, basename="register")
 router.register(
     "student/teachers", StudentTeachersViewSet, basename="student_teachers"
+)
+router.register(
+    "teacher/students", TeacherStudentViewSet, basename="teacher_students"
 )
 
 
@@ -80,18 +82,6 @@ urlpatterns = [
             {"get": "list", "patch": "update", "post": "create"}
         ),
         name="teacher_subjects",
-    ),
-    path(
-        "teacher/students/",
-        TeacherStudentsViewSet.as_view({"get": "list", "post": "create"}),
-        name="teacher_students",
-    ),
-    path(
-        "teacher/student/<int:pk>/",
-        TeacherStudentsDetailViewSet.as_view(
-            {"get": "retrieve", "delete": "destroy", "patch": "partial_update"}
-        ),
-        name="teacher_student",
     ),
     path(
         "relate/student/<int:pk>/",
