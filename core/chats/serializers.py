@@ -27,6 +27,7 @@ class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
 
 
 class TeacherChatSerializer(ModelSerializer):
+    """Сериализатор для обработки чатов для репетиторов"""
     student = TeacherStudentPrimaryKeyRelated(
         source="teacher_student",
         write_only=True
@@ -42,6 +43,7 @@ class TeacherChatSerializer(ModelSerializer):
 
 
 class StudentChatSerializer(ModelSerializer):
+    """Сериализатор для обработки чатов для учеников"""
     teacher = StringRelatedField(read_only=True)
 
     class Meta:

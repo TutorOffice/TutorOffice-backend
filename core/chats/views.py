@@ -9,14 +9,24 @@ from .serializers import TeacherChatSerializer, StudentChatSerializer
 
 
 class ChatViewSet(ModelViewSet):
-    http_method_names = ("get", "delete",)
+    """ViewSet для работы с чатами"""
+
+    http_method_names = ("get", "post", "delete")
 
     def get_permissions(self):
+        """
+        Создание и удаление чатов доступно
+        только для репетиторов
+        """
         if self.action in ("create", "destroy"):
             return [IsAuthenticated(), IsTeacherOwner()]
         return [IsAuthenticated()]
 
     def get_queryset(self):
+        """
+        Получение списка чатов пользователя
+        с учётом типа пользователя
+        """
         profile = get_user_type(self.request)
         if profile == "teacher":
             return Chat.objects.select_related(
@@ -30,11 +40,19 @@ class ChatViewSet(ModelViewSet):
         )
 
     def get_serializer_class(self):
+        """
+        Выбор сериализатора в зависимости
+        от типа пользователя
+        """
         profile = get_user_type(self.request)
         if profile == "teacher":
             return TeacherChatSerializer
         return StudentChatSerializer
 
     def perform_create(self, serializer):
+        """
+        При создании чата добавляется
+        репетитор, создавший чат
+        """
         teacher = self.request.user.teacher_profile
         serializer.save(teacher=teacher)

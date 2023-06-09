@@ -16,6 +16,7 @@ STATUSCHOICE = [
 
 
 class Chat(models.Model):
+    """Модель чатов"""
     id = models.UUIDField(
         primary_key=True,
         unique=True,
@@ -37,6 +38,7 @@ class Chat(models.Model):
 
 
 class Homework(models.Model):
+    """Модель ДЗ"""
     id = models.UUIDField(
         primary_key=True,
         unique=True,
@@ -81,6 +83,7 @@ class Homework(models.Model):
 
 
 class Message(models.Model):
+    """Модель сообщений"""
     id = models.UUIDField(
         primary_key=True,
         unique=True,
