@@ -23,13 +23,13 @@ class Lesson(models.Model):
         Teacher,
         on_delete=models.PROTECT,
         verbose_name="Учитель",
-        related_name="lessons",
+        related_name="t_lessons",
     )
     teacher_student = models.ForeignKey(
         TeacherStudent,
         on_delete=models.PROTECT,
-        verbose_name="Учитель-Ученик",
-        related_name="lessons",
+        verbose_name="Псевдоученик",
+        related_name="ts_lessons",
     )
     date = models.DateField(verbose_name="Дата")
     start_time = models.TimeField(
@@ -47,12 +47,12 @@ class Lesson(models.Model):
     student_comment = models.TextField(
         blank=True,
         max_length=100,
-        verbose_name="Комментарий",
+        verbose_name="Комментарий ученика",
     )
     teacher_comment = models.TextField(
         blank=True,
         max_length=100,
-        verbose_name="Комментарий",
+        verbose_name="Комментарий репетитора",
     )
     status = models.CharField(
         choices=STATUSCHOICE,
@@ -84,34 +84,3 @@ class Lesson(models.Model):
         ordering = ("teacher", "date", "subject", "start_time")
 
     objects = AggregateLessonManager()
-
-
-class Homework(models.Model):
-    """Модель, описывающая ДЗ к занятию"""
-
-    title = models.TextField(
-        verbose_name="Заголовок",
-    )
-    text = models.TextField(
-        verbose_name="Текст задания",
-    )
-    comment = models.TextField(
-        blank=True,
-        verbose_name="Комментарий к домашнему заданию",
-    )
-    lesson = models.OneToOneField(
-        Lesson,
-        related_name="homework",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        verbose_name="Урок",
-    )
-
-    def __str__(self):
-        return self.title
-
-    class Meta:
-        verbose_name = "Домашнее задание"
-        verbose_name_plural = "Домашние задания"
-        ordering = ("title",)

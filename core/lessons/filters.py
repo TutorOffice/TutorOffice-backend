@@ -4,7 +4,7 @@
 """
 from django_filters import CharFilter, DateFromToRangeFilter, FilterSet
 
-from .models import Homework, Lesson
+from .models import Lesson
 
 
 class LessonFilter(FilterSet):
@@ -36,27 +36,4 @@ class LessonFilter(FilterSet):
             "date",
             "subject",
             "status",
-        )
-
-
-class HomeworkFilter(FilterSet):
-    """Фильтры по полям title и text модели Homework"""
-
-    title = CharFilter(
-        field_name="title",
-        lookup_expr="icontains",
-        label="Заголовок",
-    )
-
-    text = CharFilter(
-        field_name="text",
-        lookup_expr="icontains",
-        label="Поиск в тексте",
-    )
-
-    class Meta:
-        model = Homework
-        fields = (
-            "title",
-            "text",
         )
