@@ -28,7 +28,7 @@ class Chat(models.Model):
         verbose_name="Репетитор",
         related_name="t_chats",
     )
-    teacher_student = models.ForeignKey(
+    teacher_student = models.OneToOneField(
         TeacherStudent,
         on_delete=models.PROTECT,
         verbose_name="Псевдоученик",
