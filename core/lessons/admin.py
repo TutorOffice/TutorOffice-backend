@@ -1,35 +1,26 @@
 from django.contrib import admin
 
-from .models import Homework, Lesson
-
-
-class HomeworkAdmin(admin.StackedInline):
-    model = Homework
-    list_display = ("show_teacher", "lesson", "title")
+from .models import Lesson
 
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "teacher",
         "subject",
-        "date",
         "show_student",
+        "date",
         "start_time",
-        "show_homework",
+        "status",
     )
+    list_display_links = ("id", "teacher")
     date_hierarchy = "date"
-    inlines = [HomeworkAdmin]
+    empty_value_display = "-пусто-"
 
     def show_student(self, obj):
         return (
             f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
         )
 
-    show_student.short_description = "Студент"
-
-    @admin.display(boolean=True)
-    def show_homework(self, obj):
-        return Homework.objects.filter(lesson=obj).exists()
-
-    show_homework.short_description = "Домашнее задание"
+    show_student.short_description = "Ученик"

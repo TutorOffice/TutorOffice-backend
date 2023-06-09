@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "clients.apps.ClientsConfig",
     "lessons.apps.LessonsConfig",
     "materials.apps.MaterialsConfig",
+    "chats.apps.ChatsConfig",
     "rest_framework",
     "psycopg2",
     "django_filters",

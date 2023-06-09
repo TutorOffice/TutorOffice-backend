@@ -1,6 +1,5 @@
 from datetime import date
 
-from clients.models import Teacher
 from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (
     CharField,
@@ -12,6 +11,7 @@ from rest_framework.serializers import (
     ValidationError,
 )
 
+from clients.models import Teacher
 from .models import Lesson
 
 

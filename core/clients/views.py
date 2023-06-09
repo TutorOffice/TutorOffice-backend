@@ -14,8 +14,6 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import (
     CreateModelMixin,
-    DestroyModelMixin,
-    ListModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
 )
@@ -377,11 +375,11 @@ class RelateUnrelateStudentView(APIView):
         то просто предлагает зарегистрироваться
         """
         # получение записи из таблицы TeacherStudent по её id
+        logger.info(
+            f"Репетитор {request.user.email} пытается "
+            f"отправить запрос на привязку ученика"
+        )
         try:
-            logger.info(
-                f"Репетитор {request.user.email} пытается "
-                f"отправить запрос на привязку ученика"
-            )
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"detail": "Такой записи не существует!"})
@@ -455,10 +453,10 @@ class RelateUnrelateStudentView(APIView):
         Метод для отвязки ученика от
         псевдоученика учителя
         """
+        logger.info(
+            f"Репетитор {request.user.email} пытается отвязать ученика"
+        )
         try:
-            logger.info(
-                f"Репетитор {request.user.email} пытается отвязать ученика"
-            )
             obj = TeacherStudent.objects.get(pk=pk)
         except TeacherStudent.DoesNotExist:
             return Response({"detail": "Такой записи не существует!"})

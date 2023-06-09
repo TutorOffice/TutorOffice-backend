@@ -11,6 +11,7 @@ class SubjectAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = (
+        "id",
         "email",
         "show_full_name",
         "phone",
@@ -18,6 +19,7 @@ class UserAdmin(admin.ModelAdmin):
         "show_student",
         "show_teacher",
     )
+    list_display_links = ("id", "email", )
     search_fields = ("last_name", "phone", "email")
     search_help_text = "Фамилия, телефон или e-mail"
     list_filter = (
@@ -49,6 +51,7 @@ class StudentAdmin(admin.ModelAdmin):
     list_display = ("user", "show_email", "show_phone", "show_is_active")
     search_fields = ("user__last_name", "user__email", "user__phone")
     search_help_text = "Фамилия, почта или телефон"
+    empty_value_display = "-пусто-"
 
     def show_email(self, obj):
         return obj.user.email
@@ -72,6 +75,7 @@ class TeacherAdmin(admin.ModelAdmin):
     list_display = ("user", "show_subjects", "show_students")
     search_fields = ("user__last_name", "user__email", "user__phone")
     search_help_text = "Фамилия, почта или телефон учителя"
+    empty_value_display = "-пусто-"
 
     def show_subjects(self, obj):
         subject_list = []
@@ -93,9 +97,9 @@ class TeacherAdmin(admin.ModelAdmin):
 
 @admin.register(TeacherStudent)
 class TeacherStudentAdmin(admin.ModelAdmin):
-    list_display = ("teacher", "show_student", "email", "bind")
+    list_display = ("show_student", "email", "teacher",  "bind",)
 
     def show_student(self, obj):
         return f"{obj.last_name} {obj.first_name}"
 
-    show_student.short_description = "Студент"
+    show_student.short_description = "ФИО псевдоученика"

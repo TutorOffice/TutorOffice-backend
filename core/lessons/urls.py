@@ -13,12 +13,6 @@ from .views import (
 app_name = "lessons"
 
 router = DefaultRouter()
-# router.register(r'homeworks_students',
-#                 HomeworkStudentViewSet,
-#                 basename='homeworks_students')
-# router.register(r'homeworks_teachers',
-#                 HomeworkTeacherViewSet,
-#                 basename='homeworks_teachers')
 router.register(
     r"user/lesson/number", AggregateLessonsViewSet, basename="lesson_number"
 )

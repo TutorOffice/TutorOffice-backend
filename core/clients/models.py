@@ -157,6 +157,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(
         "Электронная почта",
+        max_length=50,
         unique=True,
         validators=[
             EmailValidator(),
@@ -328,6 +329,7 @@ class TeacherStudent(models.Model):
     )
     email = models.EmailField(
         "Электронная почта",
+        max_length=50,
         validators=[
             EmailValidator(),
             MinLengthValidator(EMAIL_MIN_LENGTH),
@@ -344,8 +346,8 @@ class TeacherStudent(models.Model):
     level = models.CharField(blank=True, max_length=25)
 
     class Meta:
-        verbose_name = "Учитель-Ученик"
-        verbose_name_plural = "Учитель-Ученики"
+        verbose_name = "Псевдоученик"
+        verbose_name_plural = "Псевдоученики"
         ordering = ("teacher",)
 
     def __str__(self):
