@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (
     ModelSerializer,
     PrimaryKeyRelatedField,
@@ -5,47 +6,53 @@ from rest_framework.serializers import (
     StringRelatedField,
 )
 
-from clients.models import TeacherStudent
-from .models import Chat
+from clients.models import Teacher
+from .models import Homework
 
 
-class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
+class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
     """
-    При создании чата можно выбрать только тех
-    учеников, что принадлежат этому репетитору, но
-    только тех, с которыми чат ещё не создан
+    Возможность при создании урока выбора
+    предмета только из предметов учителя
     """
 
     def get_queryset(self):
         request = self.context.get("request", None)
-        teacher = request.user.teacher_profile
-        return TeacherStudent.objects.filter(
-            teacher=teacher
-        ).exclude(
-            ts_chats__teacher=teacher
-        )
+        teacher = get_object_or_404(Teacher, user=request.user)
+        return teacher.subjects.all()
 
 
-class TeacherChatSerializer(ModelSerializer):
-    """Сериализатор для обработки чатов для репетиторов"""
-    student = TeacherStudentPrimaryKeyRelated(
-        source="teacher_student",
-        write_only=True
-    )
-    student_full_name = SerializerMethodField(read_only=True)
+class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
+    """Возможность при создании урока выбора
+    студента только из студентов учителя"""
 
-    def get_student_full_name(self, obj):
+    def get_queryset(self):
+        request = self.context.get("request", None)
+        teacher = get_object_or_404(Teacher, user=request.user)
+        return teacher.studentM2M.all()
+
+
+class TeacherHomeworkSerializer(ModelSerializer):
+    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
+    subject_title = StringRelatedField(source="subject", read_only=True)
+    student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
+    teacher_student = SerializerMethodField(read_only=True)
+
+    def get_teacher_student(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
-        model = Chat
-        fields = ("id", "student", "student_full_name",)
-
-
-class StudentChatSerializer(ModelSerializer):
-    """Сериализатор для обработки чатов для учеников"""
-    teacher = StringRelatedField(read_only=True)
-
-    class Meta:
-        model = Chat
-        fields = ("id", "teacher")
+        model = Homework
+        fields = (
+            "id",
+            "student",
+            "teacher_student",
+            "timestamp",
+            "subject",
+            "subject_title",
+            "text",
+            "file",
+            "reply_file",
+            "status",
+        )
+        read_only_fields = ("id", "reply_file", "timestamp")

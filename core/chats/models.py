@@ -7,34 +7,11 @@ SENDED = "sended"
 DONE = "done"
 ACCEPTED = "accepted"
 
-
 STATUSCHOICE = [
     (SENDED, "sended"),
     (ACCEPTED, "accepted"),
     (DONE, "done"),
 ]
-
-
-class Chat(models.Model):
-    """Модель чатов"""
-    id = models.UUIDField(
-        primary_key=True,
-        unique=True,
-        editable=False,
-        default=uuid.uuid4,
-    )
-    teacher = models.ForeignKey(
-        Teacher,
-        on_delete=models.PROTECT,
-        verbose_name="Репетитор",
-        related_name="t_chats",
-    )
-    teacher_student = models.OneToOneField(
-        TeacherStudent,
-        on_delete=models.PROTECT,
-        verbose_name="Псевдоученик",
-        related_name="ts_chats",
-    )
 
 
 class Homework(models.Model):
@@ -45,11 +22,17 @@ class Homework(models.Model):
         editable=False,
         default=uuid.uuid4,
     )
-    chat = models.ForeignKey(
-        Chat,
+    teacher = models.ForeignKey(
+        Teacher,
         on_delete=models.PROTECT,
-        verbose_name="Чат",
-        related_name="homeworks",
+        verbose_name="Учитель",
+        related_name="t_homeworks",
+    )
+    teacher_student = models.ForeignKey(
+        TeacherStudent,
+        on_delete=models.PROTECT,
+        verbose_name="Псевдоученик",
+        related_name="ts_homeworks",
     )
     timestamp = models.DateTimeField(
         verbose_name="Дата и время",
@@ -90,11 +73,17 @@ class Message(models.Model):
         editable=False,
         default=uuid.uuid4,
     )
-    chat = models.ForeignKey(
-        Chat,
+    teacher = models.ForeignKey(
+        Teacher,
         on_delete=models.PROTECT,
-        verbose_name="Чат",
-        related_name="messages",
+        verbose_name="Учитель",
+        related_name="t_messages",
+    )
+    teacher_student = models.ForeignKey(
+        TeacherStudent,
+        on_delete=models.PROTECT,
+        verbose_name="Псевдоученик",
+        related_name="ts_messages",
     )
     timestamp = models.DateTimeField(
         verbose_name="Дата и время",
@@ -105,6 +94,6 @@ class Message(models.Model):
     )
     file = models.FileField(
         verbose_name="Файл",
-        upload_to="homeworks/tasks",
+        upload_to="messages/",
         null=True,
     )
