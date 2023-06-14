@@ -1,10 +1,11 @@
 from clients.pagination import MaterialsPagination
-from clients.permissions import IsStudentMaterialOwner, IsTeacherOwner
+from common.permissions import IsTeacherOwner
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from .filters import MaterialFilter
 from .models import Material
+from .permissions import IsStudentMaterialOwner
 from .serializers import StudentMaterialSerializer, TeacherMaterialSerializer
 
 

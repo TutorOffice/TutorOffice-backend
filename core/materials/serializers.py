@@ -1,10 +1,7 @@
-from clients.models import Teacher
-from django.shortcuts import get_object_or_404
 from rest_framework.serializers import (
     ChoiceField,
     DateField,
     ModelSerializer,
-    PrimaryKeyRelatedField,
     SerializerMethodField,
     StringRelatedField,
     ValidationError,
@@ -12,31 +9,12 @@ from rest_framework.serializers import (
     CharField,
 )
 
+from common.serializers import (
+    SubjectPrimaryKeyRelated,
+    TeacherStudentPrimaryKeyRelated,
+)
+
 from .models import TYPECHOICE, Material
-
-
-class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
-    """
-    Возможность при создании урока выбора
-    предмета только из предметов учителя
-    """
-
-    def get_queryset(self):
-        request = self.context.get("request", None)
-        teacher = get_object_or_404(Teacher, user=request.user)
-        return teacher.subjects.all()
-
-
-class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
-    """
-    Возможность при создании урока выбора
-    студента только из студентов учителя
-    """
-
-    def get_queryset(self):
-        request = self.context.get("request", None)
-        teacher = get_object_or_404(Teacher, user=request.user)
-        return teacher.studentM2M.all()
 
 
 class TeacherMaterialSerializer(ModelSerializer):

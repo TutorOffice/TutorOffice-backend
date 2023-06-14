@@ -1,5 +1,5 @@
 from clients.pagination import LessonAggregatePagination, LessonListPagination
-from clients.permissions import IsStudentOwner, IsTeacher, IsTeacherOwner
+from common.permissions import IsStudentOwner, IsTeacher, IsTeacherOwner
 from clients.services import get_user_type
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page

@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from .services import get_user_type
+from clients.services import get_user_type
 
 
 class IsTeacher(BasePermission):
@@ -49,19 +49,5 @@ class IsStudentOwner(IsStudent):
 
     def has_object_permission(self, request, view, obj):
         if request.user.student_profile == obj.teacher_student.student:
-            return True
-        return False
-
-
-class IsStudentMaterialOwner(IsStudent):
-    """
-    Ограничение проверяет, относится ли
-    этот ученик к материалу
-    """
-
-    def has_object_permission(self, request, view, obj):
-        queryset = obj.teacher_student.all()
-        students = [entry.student for entry in queryset]
-        if request.user.student_profile in students:
             return True
         return False
