@@ -4,7 +4,11 @@ from rest_framework.serializers import (
     StringRelatedField,
 )
 
-from common.serializers import SubjectPrimaryKeyRelated, TeacherStudentPrimaryKeyRelated
+from common.serializers import (
+    SubjectPrimaryKeyRelated,
+    TeacherPrimaryKeyRelated,
+    TeacherStudentPrimaryKeyRelated
+)
 from .models import Homework, Message
 
 
@@ -15,9 +19,9 @@ class TeacherHomeworkSerializer(ModelSerializer):
     subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
     subject_title = StringRelatedField(source="subject", read_only=True)
     student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
-    teacher_student = SerializerMethodField(read_only=True)
+    student_full_name = SerializerMethodField(read_only=True)
 
-    def get_teacher_student(self, obj):
+    def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
@@ -25,7 +29,7 @@ class TeacherHomeworkSerializer(ModelSerializer):
         fields = (
             "id",
             "student",
-            "teacher_student",
+            "student_full_name",
             "timestamp",
             "subject",
             "subject_title",
@@ -69,40 +73,37 @@ class TeacherMessageSerializer(ModelSerializer):
     Сериализатор обработки сообщений для репетитора
     """
     student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
-    teacher_student = SerializerMethodField(read_only=True)
-
-    def get_teacher_student(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
         model = Message
         fields = (
             "id",
             "student",
-            "teacher_student",
+            "sender",
             "timestamp",
             "text",
             "file",
         )
+        read_only_fields = ("sender", "timestamp", )
 
 
 class StudentMessageSerializer(ModelSerializer):
     """
     Сериализатор обработки сообщений для ученика
     """
-    student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
-    teacher_student = SerializerMethodField(read_only=True)
+    teacher = TeacherPrimaryKeyRelated(source="teacher_student", write_only=True)
 
-    def get_teacher_student(self, obj):
+    def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
 
     class Meta:
         model = Message
         fields = (
             "id",
-            "student",
-            "teacher_student",
+            "teacher",
+            "sender",
             "timestamp",
             "text",
             "file",
         )
+        read_only_fields = ("sender", "timestamp",)

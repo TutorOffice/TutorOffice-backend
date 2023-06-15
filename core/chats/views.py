@@ -29,7 +29,8 @@ class TeacherHomeworkViewSet(ModelViewSet):
     # pagination
     # select_related
     # изменить timestamp
-    # Получать дз от конкретного чата, а не от всех (учитель и ученик)
+    # выводить только отправителя ДЗ
+    # photo отправителя?
 
     def get_queryset(self):
         user = self.request.user
@@ -54,7 +55,8 @@ class StudentHomeworkViewSet(ModelViewSet):
     # pagination
     # select_related
     # изменить timestamp
-    # Получать дз от конкретного чата, а не от всех (учитель и ученик)
+    # выводить только отправителя ДЗ
+    # photo отправителя?
 
     def get_queryset(self):
         user = self.request.user
@@ -72,8 +74,7 @@ class TeacherMessageViewSet(ModelViewSet):
     # pagination
     # select_related
     # изменить timestamp
-    # Получать сообщения от конкретного чата, а не от всех (учитель и ученик)
-    # выводить только отправителя
+    # photo отправителя?
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -86,7 +87,7 @@ class TeacherMessageViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
-        serializer.save(teacher=teacher, sender="teacher")
+        serializer.save(teacher=teacher, sender=str(teacher))
 
 
 class StudentMessageViewSet(ModelViewSet):
@@ -106,8 +107,7 @@ class StudentMessageViewSet(ModelViewSet):
     # pagination
     # select_related
     # изменить timestamp
-    # Получать сообщения от конкретного чата, а не от всех (учитель и ученик)
-    # выводить только отправителя
+    # photo отправителя??
 
     def get_queryset(self):
         user = self.request.user
@@ -118,10 +118,10 @@ class StudentMessageViewSet(ModelViewSet):
     def perform_create(self, serializer):
         student = self.request.user.student_profile
         teacher = serializer.data['teacher']
-        teacher_student = TeacherStudent.objects.get(
+        obj = TeacherStudent.objects.get(
             teacher=teacher, student=student
         )
-        print(f"obj - {teacher_student}")
         serializer.save(
-            teacher_student=teacher_student
+            teacher_student=obj,
+            sender=f"{obj.last_name} {obj.first_name}"
         )

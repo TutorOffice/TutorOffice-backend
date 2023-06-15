@@ -13,14 +13,6 @@ STATUSCHOICE = [
     (DONE, "done"),
 ]
 
-TEACHER = "teacher"
-STUDENT = "student"
-
-SENDERCHOICE = [
-    (TEACHER, "teacher"),
-    (STUDENT, "student"),
-]
-
 
 class Homework(models.Model):
     """Модель ДЗ"""
@@ -107,6 +99,5 @@ class Message(models.Model):
     )
     sender = models.CharField(
         verbose_name="Отправитель",
-        max_length=10,
-        choices=SENDERCHOICE,
+        max_length=256,
     )

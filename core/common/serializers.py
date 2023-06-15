@@ -7,8 +7,8 @@ from clients.models import Teacher
 
 class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
     """
-    Возможность при создании урока выбора
-    предмета только из предметов учителя
+    Возможность выбора предмета
+    только из предметов учителя
     """
 
     def get_queryset(self):
@@ -18,10 +18,24 @@ class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
 
 
 class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
-    """Возможность при создании урока выбора
-    студента только из студентов учителя"""
+    """
+    Возможность выбора студента
+    только из студентов преподавателя
+    """
 
     def get_queryset(self):
         request = self.context.get("request", None)
         teacher = get_object_or_404(Teacher, user=request.user)
         return teacher.studentM2M.all()
+
+
+class TeacherPrimaryKeyRelated(PrimaryKeyRelatedField):
+    """
+    Возможность выбора преподавателя
+    только из преподавателей ученика
+    """
+    def get_queryset(self):
+        request = self.context.get("request", None)
+        return Teacher.objects.filter(
+            studentM2M__student=request.user.student_profile
+        )
