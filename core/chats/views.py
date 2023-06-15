@@ -1,12 +1,15 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from clients.models import TeacherStudent
 from common.permissions import IsTeacherOwner, IsStudentOwner
 
+from .filters import HomeworkFilter, MessageFilter
 from .models import Homework, Message
 from .permissions import IsSender
 from .serializers import (
     StudentHomeworkSerializer,
+    StudentMessageSerializer,
     TeacherHomeworkSerializer,
     TeacherMessageSerializer,
 )
@@ -22,14 +25,15 @@ class TeacherHomeworkViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherHomeworkSerializer
     permission_classes = (IsAuthenticated, IsTeacherOwner)
-    # filterset
+    filterset_class = HomeworkFilter
     # pagination
     # select_related
     # изменить timestamp
+    # Получать дз от конкретного чата, а не от всех (учитель и ученик)
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher__user=user)
+        return Homework.objects.filter(teacher__user=user,)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
@@ -46,10 +50,11 @@ class StudentHomeworkViewSet(ModelViewSet):
     http_method_names = ("get", "patch",)
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
-    # filterset
+    filterset_class = HomeworkFilter
     # pagination
     # select_related
     # изменить timestamp
+    # Получать дз от конкретного чата, а не от всех (учитель и ученик)
 
     def get_queryset(self):
         user = self.request.user
@@ -63,10 +68,12 @@ class TeacherMessageViewSet(ModelViewSet):
     """
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherMessageSerializer
-    # filterset
+    filterset_class = MessageFilter
     # pagination
     # select_related
     # изменить timestamp
+    # Получать сообщения от конкретного чата, а не от всех (учитель и ученик)
+    # выводить только отправителя
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -88,16 +95,19 @@ class StudentMessageViewSet(ModelViewSet):
     для ученика
     """
     http_method_names = ("get", "post", "patch", "delete")
-    # serializer_class = StudentMessageSerializer
+    serializer_class = StudentMessageSerializer
+    filterset_class = MessageFilter
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
             return [IsAuthenticated(), IsStudentOwner(), IsSender()]
         return [IsAuthenticated(), IsStudentOwner()]
-    # filterset
+
     # pagination
     # select_related
-    # указание teacher_student, который отправляет и student, который принимает сообщения
+    # изменить timestamp
+    # Получать сообщения от конкретного чата, а не от всех (учитель и ученик)
+    # выводить только отправителя
 
     def get_queryset(self):
         user = self.request.user
@@ -105,6 +115,13 @@ class StudentMessageViewSet(ModelViewSet):
             teacher_student__student=user.student_profile
         )
 
-    # def perform_create(self, serializer):
-    #     student = self.request.user.teacher_profile
-    #     serializer.save(teacher=teacher)
+    def perform_create(self, serializer):
+        student = self.request.user.student_profile
+        teacher = serializer.data['teacher']
+        teacher_student = TeacherStudent.objects.get(
+            teacher=teacher, student=student
+        )
+        print(f"obj - {teacher_student}")
+        serializer.save(
+            teacher_student=teacher_student
+        )

@@ -1,7 +1,3 @@
-"""Кастомный фильтр для представления Lesson.
-    Фильтрация по фамилии студента, названию предмета,
-    ключевым словам в заголовке домашней работы и диапазону дат.
-"""
 from django_filters import CharFilter, DateFromToRangeFilter, FilterSet
 
 from .models import Lesson

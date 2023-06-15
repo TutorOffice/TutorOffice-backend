@@ -84,3 +84,25 @@ class TeacherMessageSerializer(ModelSerializer):
             "text",
             "file",
         )
+
+
+class StudentMessageSerializer(ModelSerializer):
+    """
+    Сериализатор обработки сообщений для ученика
+    """
+    student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
+    teacher_student = SerializerMethodField(read_only=True)
+
+    def get_teacher_student(self, obj):
+        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+
+    class Meta:
+        model = Message
+        fields = (
+            "id",
+            "student",
+            "teacher_student",
+            "timestamp",
+            "text",
+            "file",
+        )
