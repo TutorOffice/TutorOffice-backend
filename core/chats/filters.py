@@ -1,54 +1,47 @@
-from django_filters import CharFilter, FilterSet
+from django_filters import CharFilter, ChoiceFilter
 
-from .models import Homework, Message
+from common.filters import CommonFilter
+
+from .models import Homework, Message, STATUSCHOICE
 
 
-class HomeworkFilter(FilterSet):
-    """
-    Фильтры для ДЗ
-    """
-    teacher = CharFilter(
-        field_name="teacher__user__id",
-        label="Репетитор",
+class HomeworkFilter(CommonFilter):
+    """Фильтры для модели ДЗ"""
+    status = ChoiceFilter(
+        choices=STATUSCHOICE,
+        label="Статус ДЗ",
     )
-    student = CharFilter(
-        field_name="teacher_student__id",
-        label="Студент",
-    )
-    subject = CharFilter(
-        field_name="subject__id",
-        label="Предмет",
-    )
-    status = CharFilter(
-        label="Статус"
+    text = CharFilter(
+        field_name="text",
+        lookup_expr="icontains",
+        label="Встречается в тексте",
     )
 
     class Meta:
         model = Homework
-        fields = (
+        fields = [
             "teacher",
             "student",
             "subject",
-            "status"
-        )
+            "status",
+            "text",
+        ]
 
 
-class MessageFilter(FilterSet):
-    """
-    Фильтры для сообщений
-    """
-    teacher = CharFilter(
-        field_name="teacher__user__id",
-        label="Репетитор",
-    )
-    student = CharFilter(
-        field_name="teacher_student__id",
-        label="Студент",
+class MessageFilter(CommonFilter):
+    """Фильтры для модели сообщений"""
+    text = CharFilter(
+        field_name="text",
+        lookup_expr="icontains",
+        label="Встречается в тексте",
     )
 
     class Meta:
         model = Message
-        fields = (
+        fields = [
             "teacher",
             "student",
-        )
+            "subject",
+            "text",
+        ]
+
