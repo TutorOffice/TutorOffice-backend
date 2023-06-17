@@ -73,37 +73,63 @@ class TeacherMessageSerializer(ModelSerializer):
     Сериализатор обработки сообщений для репетитора
     """
     student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
+    student_full_name = SerializerMethodField(read_only=True)
+    teacher = StringRelatedField(read_only=True)
+    sender_photo = SerializerMethodField(read_only=True, allow_null=True)
+
+    def get_student_full_name(self, obj):
+        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+
+    def get_sender_photo(self, obj):
+        if obj.sender == "teacher":
+            photo = obj.teacher.user.photo
+            return photo or None
+        photo = obj.teacher_student.student.user.photo
+        return photo or None
 
     class Meta:
         model = Message
         fields = (
             "id",
             "student",
+            "student_full_name",
+            "teacher",
             "sender",
+            "sender_photo",
             "timestamp",
             "text",
             "file",
         )
-        read_only_fields = ("sender", "timestamp", )
+        read_only_fields = ("id", "sender", "timestamp")
 
 
 class StudentMessageSerializer(ModelSerializer):
     """
     Сериализатор обработки сообщений для ученика
     """
-    teacher = TeacherPrimaryKeyRelated(source="teacher_student", write_only=True)
+    teacher = TeacherPrimaryKeyRelated(source="teacher_student")
+    student = StringRelatedField(source="teacher_student.student", read_only=True)
+    sender_photo = SerializerMethodField(read_only=True, allow_null=True)
+    teacher_full_name = StringRelatedField(source="teacher", read_only=True)
 
-    def get_student_full_name(self, obj):
-        return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+    def get_sender_photo(self, obj):
+        if obj.sender == "teacher":
+            photo = obj.teacher.user.photo
+            return photo or None
+        photo = obj.teacher_student.student.user.photo
+        return photo or None
 
     class Meta:
         model = Message
         fields = (
             "id",
             "teacher",
+            "teacher_full_name",
+            "sender_photo",
+            "student",
             "sender",
             "timestamp",
             "text",
             "file",
         )
-        read_only_fields = ("sender", "timestamp",)
+        read_only_fields = ("id", "sender", "timestamp",)

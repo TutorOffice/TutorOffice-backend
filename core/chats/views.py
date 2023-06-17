@@ -26,11 +26,6 @@ class TeacherHomeworkViewSet(ModelViewSet):
     serializer_class = TeacherHomeworkSerializer
     permission_classes = (IsAuthenticated, IsTeacherOwner)
     filterset_class = HomeworkFilter
-    # pagination
-    # select_related
-    # изменить timestamp
-    # выводить только отправителя ДЗ
-    # photo отправителя?
 
     def get_queryset(self):
         user = self.request.user
@@ -52,11 +47,6 @@ class StudentHomeworkViewSet(ModelViewSet):
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
     filterset_class = HomeworkFilter
-    # pagination
-    # select_related
-    # изменить timestamp
-    # выводить только отправителя ДЗ
-    # photo отправителя?
 
     def get_queryset(self):
         user = self.request.user
@@ -71,10 +61,6 @@ class TeacherMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherMessageSerializer
     filterset_class = MessageFilter
-    # pagination
-    # select_related
-    # изменить timestamp
-    # photo отправителя?
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -87,7 +73,7 @@ class TeacherMessageViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
-        serializer.save(teacher=teacher, sender=str(teacher))
+        serializer.save(teacher=teacher, sender="teacher")
 
 
 class StudentMessageViewSet(ModelViewSet):
@@ -104,11 +90,6 @@ class StudentMessageViewSet(ModelViewSet):
             return [IsAuthenticated(), IsStudentOwner(), IsSender()]
         return [IsAuthenticated(), IsStudentOwner()]
 
-    # pagination
-    # select_related
-    # изменить timestamp
-    # photo отправителя??
-
     def get_queryset(self):
         user = self.request.user
         return Message.objects.filter(
@@ -123,5 +104,5 @@ class StudentMessageViewSet(ModelViewSet):
         )
         serializer.save(
             teacher_student=obj,
-            sender=f"{obj.last_name} {obj.first_name}"
+            sender="student"
         )

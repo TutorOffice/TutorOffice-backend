@@ -41,7 +41,5 @@ class MessageFilter(CommonFilter):
         fields = [
             "teacher",
             "student",
-            "subject",
             "text",
         ]
-
