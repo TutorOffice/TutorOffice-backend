@@ -20,9 +20,17 @@ class TeacherHomeworkSerializer(ModelSerializer):
     subject_title = StringRelatedField(source="subject", read_only=True)
     student = TeacherStudentPrimaryKeyRelated(source="teacher_student", write_only=True)
     student_full_name = SerializerMethodField(read_only=True)
+    student_photo = SerializerMethodField(read_only=True, allow_null=True)
 
     def get_student_full_name(self, obj):
         return f"{obj.teacher_student.last_name} {obj.teacher_student.first_name}"
+
+    def get_student_photo(self, obj):
+        try:
+            photo = obj.teacher_student.student.user.photo
+            return photo or None
+        except AttributeError:
+            return None
 
     class Meta:
         model = Homework
@@ -30,6 +38,7 @@ class TeacherHomeworkSerializer(ModelSerializer):
             "id",
             "student",
             "student_full_name",
+            "student_photo",
             "timestamp",
             "subject",
             "subject_title",
@@ -47,12 +56,18 @@ class StudentHomeworkSerializer(ModelSerializer):
     """
     subject = StringRelatedField(read_only=True)
     teacher = StringRelatedField(read_only=True)
+    teacher_photo = SerializerMethodField(read_only=True, allow_null=True)
+
+    def get_teacher_photo(self, obj):
+        photo = obj.teacher.user.photo
+        return photo or None
 
     class Meta:
         model = Homework
         fields = (
             "id",
             "teacher",
+            "teacher_photo",
             "timestamp",
             "subject",
             "text",

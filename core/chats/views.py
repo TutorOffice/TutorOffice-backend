@@ -29,7 +29,7 @@ class TeacherHomeworkViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher__user=user,)
+        return Homework.objects.filter(teacher__user=user)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
