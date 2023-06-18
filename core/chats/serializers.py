@@ -1,7 +1,7 @@
 from rest_framework.serializers import (
     ModelSerializer,
     SerializerMethodField,
-    StringRelatedField,
+    StringRelatedField
 )
 
 from common.serializers import (
@@ -9,7 +9,7 @@ from common.serializers import (
     TeacherPrimaryKeyRelated,
     TeacherStudentPrimaryKeyRelated
 )
-from .models import Homework, Message
+from .models import Homework, Message, TeacherStudent
 
 
 class TeacherHomeworkSerializer(ModelSerializer):
@@ -122,12 +122,27 @@ class StudentMessageSerializer(ModelSerializer):
     """
     Сериализатор обработки сообщений для ученика
     """
-    teacher = TeacherPrimaryKeyRelated(source="teacher_student")
-    student = StringRelatedField(source="teacher_student.student", read_only=True)
-    sender_photo = SerializerMethodField(read_only=True, allow_null=True)
-    teacher_full_name = StringRelatedField(source="teacher", read_only=True)
+    teacher = TeacherPrimaryKeyRelated(
+        write_only=True
+    )
+    student = StringRelatedField(
+        source="teacher_student.student",
+        read_only=True
+    )
+    sender_photo = SerializerMethodField(
+        read_only=True,
+        allow_null=True
+    )
+    teacher_full_name = StringRelatedField(
+        source="teacher",
+        read_only=True
+    )
 
     def get_sender_photo(self, obj):
+        request = self.context["request"]
+        if self.context["view"].action == "create":
+            photo = request.user.photo
+            return photo or None
         if obj.sender == "teacher":
             photo = obj.teacher.user.photo
             return photo or None
@@ -140,9 +155,9 @@ class StudentMessageSerializer(ModelSerializer):
             "id",
             "teacher",
             "teacher_full_name",
-            "sender_photo",
             "student",
             "sender",
+            "sender_photo",
             "timestamp",
             "text",
             "file",

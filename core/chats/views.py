@@ -43,7 +43,7 @@ class StudentHomeworkViewSet(ModelViewSet):
     возможность создавать, удалять
     и изменять статус ДЗ.
     """
-    http_method_names = ("get", "patch",)
+    http_method_names = ("get", "patch")
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
     filterset_class = HomeworkFilter
@@ -98,7 +98,7 @@ class StudentMessageViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         student = self.request.user.student_profile
-        teacher = serializer.data['teacher']
+        teacher = self.request.data["teacher"]
         obj = TeacherStudent.objects.get(
             teacher=teacher, student=student
         )
