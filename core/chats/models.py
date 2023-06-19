@@ -3,6 +3,8 @@ import uuid
 from django.db import models
 from clients.models import TeacherStudent, Teacher, Subject
 
+from .managers import AggregateLessonManager
+
 SENDED = "sended"
 DONE = "done"
 ACCEPTED = "accepted"
@@ -63,6 +65,8 @@ class Homework(models.Model):
         choices=STATUSCHOICE,
         default=SENDED,
     )
+
+    objects = AggregateLessonManager()
 
 
 class Message(models.Model):

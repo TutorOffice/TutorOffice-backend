@@ -1,8 +1,11 @@
+from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from clients.models import TeacherStudent
 from common.permissions import IsTeacherOwner, IsStudentOwner
+from clients.services import get_user_type
 
 from .filters import HomeworkFilter, MessageFilter
 from .models import Homework, Message
@@ -106,3 +109,32 @@ class StudentMessageViewSet(ModelViewSet):
             teacher_student=obj,
             sender="student"
         )
+
+
+class AggregateHomeworks(ListModelMixin, GenericViewSet):
+    """
+    Вью для возврата количество ДЗ
+    для пользователя с фильтрацией
+    и группировкой по статусу
+    """
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
+    filterset_class = HomeworkFilter
+    # pagination
+    # optimization
+
+    def get_queryset(self):
+        request = self.request
+        profile = get_user_type(request)
+        if profile == "teacher":
+            return Homework.objects.filter(
+                teacher=request.user.teacher_profile
+            )
+        return Homework.objects.filter(
+            teacher_student__student=request.user.student_profile
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        homeworks = queryset.count_by_status()
+        return Response({"homeworks": homeworks})

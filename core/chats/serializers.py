@@ -9,7 +9,7 @@ from common.serializers import (
     TeacherPrimaryKeyRelated,
     TeacherStudentPrimaryKeyRelated
 )
-from .models import Homework, Message, TeacherStudent
+from .models import Homework, Message
 
 
 class TeacherHomeworkSerializer(ModelSerializer):
