@@ -29,10 +29,11 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from common.permissions import IsStudent, IsTeacher, IsTeacherOwner
+
 from .forms import CustomPasswordResetForm
 from .models import Student, Subject, Teacher, TeacherStudent, User
 from .pagination import SubjectsPagination, UsersPagination
-from .permissions import IsStudent, IsTeacher, IsTeacherOwner
 from .serializers import (
     ProfileSerializer,
     RegisterSerializer,

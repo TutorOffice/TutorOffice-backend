@@ -1,12 +1,32 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import ChatViewSet
-
+from .views import (
+    AggregateHomeworks,
+    StudentHomeworkViewSet,
+    StudentMessageViewSet,
+    TeacherHomeworkViewSet,
+    TeacherMessageViewSet,
+                    )
 app_name = "chats"
 
 router = DefaultRouter()
 router.register(
-    r"chats", ChatViewSet, basename="chats"
+    r"teacher/homeworks", TeacherHomeworkViewSet, basename="teacher_homeworks"
 )
-urlpatterns = [path("", include(router.urls))]
+router.register(
+    r"student/homeworks", StudentHomeworkViewSet, basename="student_homeworks"
+)
+router.register(
+    r"teacher/messages", TeacherMessageViewSet, basename="teacher_messages"
+)
+router.register(
+    r"student/messages", StudentMessageViewSet, basename="student_messages"
+)
+urlpatterns = [
+    path("", include(router.urls)),
+    path("user/homeworks/number/",
+         AggregateHomeworks.as_view({"get": "list"}),
+         name="homeworks_number",
+         )
+    ]
