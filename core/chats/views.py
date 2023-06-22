@@ -39,7 +39,9 @@ class TeacherHomeworkViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher__user=user)
+        return Homework.objects.select_related(
+            "teacher_student__student__user", "subject",
+        ).filter(teacher__user=user)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
@@ -61,7 +63,8 @@ class StudentHomeworkViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(
+        return Homework.objects.select_related(
+            "teacher__user").filter(
             teacher_student__student=user.student_profile
         )
 
@@ -83,7 +86,9 @@ class TeacherMessageViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(teacher__user=user)
+        return Message.objects.select_related(
+            "teacher__user", "teacher_student__student__user",
+        ).filter(teacher__user=user)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
@@ -107,7 +112,9 @@ class StudentMessageViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(
+        return Message.objects.select_related(
+            "teacher_student__student__user", "teacher__user"
+        ).filter(
             teacher_student__student=user.student_profile
         )
 
