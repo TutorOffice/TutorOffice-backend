@@ -113,9 +113,10 @@ class StudentMessageViewSet(ModelViewSet):
 
 class AggregateHomeworks(ListModelMixin, GenericViewSet):
     """
-    Вью для возврата количество ДЗ
+    Вьюха для возврата количества ДЗ
     для пользователя с фильтрацией
-    и группировкой по статусу
+    с группировкой по ученкам и статусам для репетитора,
+    а также репетиторам и статусам для ученика
     """
     permission_classes = [IsAuthenticated]
     http_method_names = ["get"]
@@ -124,6 +125,10 @@ class AggregateHomeworks(ListModelMixin, GenericViewSet):
     # optimization
 
     def get_queryset(self):
+        """
+        Получение набора записей ДЗ в
+        зависимости от типа пользователя
+        """
         request = self.request
         profile = get_user_type(request)
         if profile == "teacher":
@@ -135,6 +140,17 @@ class AggregateHomeworks(ListModelMixin, GenericViewSet):
         )
 
     def list(self, request, *args, **kwargs):
+        """
+        Набор записей ДЗ фильтруется, если был выбран фильтр,
+        а затем производится подсчёт количества ДЗ с
+        группировкой по ученикам и статусам для репетиторов,
+        а также репетиторам и статусам для учеников
+        """
         queryset = self.filter_queryset(self.get_queryset())
-        homeworks = queryset.count_by_status()
+        request = self.request
+        profile = get_user_type(request)
+        if profile == "teacher":
+            homeworks = queryset.count_by_student()
+        else:
+            homeworks = queryset.count_by_teacher()
         return Response({"homeworks": homeworks})
