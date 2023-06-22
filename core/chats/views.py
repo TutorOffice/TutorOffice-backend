@@ -4,8 +4,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from clients.models import TeacherStudent
-from common.permissions import IsTeacherOwner, IsStudentOwner
+from clients.pagination import (
+    HomeworkAggregatePagination,
+    HomeworkListPagination,
+    MessagePagination,
+)
 from clients.services import get_user_type
+from common.permissions import IsTeacherOwner, IsStudentOwner
+
 
 from .filters import HomeworkFilter, MessageFilter
 from .models import Homework, Message
@@ -29,6 +35,7 @@ class TeacherHomeworkViewSet(ModelViewSet):
     serializer_class = TeacherHomeworkSerializer
     permission_classes = (IsAuthenticated, IsTeacherOwner)
     filterset_class = HomeworkFilter
+    pagination = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -50,10 +57,13 @@ class StudentHomeworkViewSet(ModelViewSet):
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
     filterset_class = HomeworkFilter
+    pagination = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher_student__student=user.student_profile)
+        return Homework.objects.filter(
+            teacher_student__student=user.student_profile
+        )
 
 
 class TeacherMessageViewSet(ModelViewSet):
@@ -64,6 +74,7 @@ class TeacherMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherMessageSerializer
     filterset_class = MessageFilter
+    pagination = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -87,6 +98,7 @@ class StudentMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = StudentMessageSerializer
     filterset_class = MessageFilter
+    pagination = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -121,7 +133,7 @@ class AggregateHomeworks(ListModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get"]
     filterset_class = HomeworkFilter
-    # pagination
+    pagination = HomeworkAggregatePagination
     # optimization
 
     def get_queryset(self):
