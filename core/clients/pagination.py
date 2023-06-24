@@ -47,3 +47,33 @@ class LessonAggregatePagination(PageNumberPagination):
 
     page_size = 31
     page_query_param = "page"
+
+
+class HomeworkListPagination(PageNumberPagination):
+    """
+    Класс пагинации для вывода
+    списка ДЗ для пользователя
+    """
+
+    page_size = 5
+    page_query_param = "page"
+
+
+class HomeworkAggregatePagination(PageNumberPagination):
+    """
+    Класс пагинации для вывода
+    агрегированных данных по ДЗ
+    """
+
+    page_size = 15
+    page_query_param = "page"
+
+
+class MessagePagination(PageNumberPagination):
+    """
+    Класс пагинации для вывода
+    списка сообщений для пользователя
+    """
+
+    page_size = 20
+    page_query_param = "page"
