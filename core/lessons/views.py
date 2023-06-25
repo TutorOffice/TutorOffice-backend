@@ -1,8 +1,6 @@
 from clients.pagination import LessonAggregatePagination, LessonListPagination
 from common.permissions import IsStudentOwner, IsTeacher, IsTeacherOwner
 from clients.services import get_user_type
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -112,7 +110,6 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
         serializer.save(teacher=user.teacher_profile)
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class DetailTeacherLessonViewSet(
     RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet
 ):
@@ -132,7 +129,6 @@ class DetailTeacherLessonViewSet(
         ).all()
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
     """
     Возвращает конкретный урок для ученика,
