@@ -255,7 +255,6 @@ class UserSubjectViewSet(ModelViewSet):
         "patch",
         "post",
     )
-    # 5) добавить пермишн для учителей
 
     def get_queryset(self):
         """Получение всех предметов преподавателя"""
