@@ -98,10 +98,10 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
         profile = get_user_type(request)
         if profile == "teacher":
             return Lesson.objects.select_related(
-                "homework", "teacher_student"
+                "teacher_student"
             ).filter(teacher__user=request.user)
         return Lesson.objects.select_related(
-            "teacher", "homework", "teacher__user"
+            "teacher", "teacher__user"
         ).filter(teacher_student__student__user=request.user)
 
     def perform_create(self, serializer):
@@ -125,7 +125,7 @@ class DetailTeacherLessonViewSet(
 
     def get_queryset(self):
         return Lesson.objects.select_related(
-            "homework", "subject", "teacher_student", "teacher__user"
+            "subject", "teacher_student", "teacher__user"
         ).all()
 
 
@@ -141,5 +141,5 @@ class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
 
     def get_queryset(self):
         return Lesson.objects.select_related(
-            "homework", "subject", "teacher"
+            "subject", "teacher"
         ).all()
