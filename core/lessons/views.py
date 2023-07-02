@@ -129,7 +129,9 @@ class DetailTeacherLessonViewSet(
         ).all()
 
 
-class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
+class DetailStudentLessonViewSet(
+    RetrieveModelMixin, UpdateModelMixin, GenericViewSet
+):
     """
     Возвращает конкретный урок для ученика,
     имеется только возможность чтения
@@ -138,6 +140,7 @@ class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
     serializer_class = StudentDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsStudentOwner]
     queryset = Lesson.objects.all()
+    http_method_names = ['get', 'patch']
 
     def get_queryset(self):
         return Lesson.objects.select_related(

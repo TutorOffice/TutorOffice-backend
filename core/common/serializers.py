@@ -19,8 +19,8 @@ class SubjectPrimaryKeyRelated(PrimaryKeyRelatedField):
 
 class TeacherStudentPrimaryKeyRelated(PrimaryKeyRelatedField):
     """
-    Возможность выбора студента
-    только из студентов преподавателя
+    Возможность выбора ученика
+    только из учеников преподавателя
     """
 
     def get_queryset(self):

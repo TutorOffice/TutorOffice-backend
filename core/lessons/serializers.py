@@ -60,7 +60,7 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
     student = TeacherStudentPrimaryKeyRelated(
         source="teacher_student", write_only=True
     )
-    subject = SubjectPrimaryKeyRelated(write_only=True, required=False)
+    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
     teacher_comment = CharField(
         source="comment", write_only=True, required=False
     )
@@ -95,7 +95,7 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
     """
 
     student_full_name = SerializerMethodField(read_only=True)
-    subject = SubjectPrimaryKeyRelated(write_only=True)
+    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
     subject_title = StringRelatedField(source="subject", read_only=True)
     status = CharField()
 
@@ -125,3 +125,11 @@ class StudentDetailLessonSerializer(AbstractLessonSerializer):
             "subject_title",
             "student_comment",
         ]
+        read_only_fields = (
+            'status',
+            'start_time',
+            'end_time',
+            'date',
+            'status',
+            'id',
+        )
