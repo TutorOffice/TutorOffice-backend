@@ -11,11 +11,6 @@ class HomeworkFilter(CommonFilter):
         choices=STATUSCHOICE,
         label="Статус ДЗ",
     )
-    text = CharFilter(
-        field_name="text",
-        lookup_expr="icontains",
-        label="Встречается в тексте",
-    )
 
     class Meta:
         model = Homework
@@ -24,7 +19,6 @@ class HomeworkFilter(CommonFilter):
             "student",
             "subject",
             "status",
-            "text",
         ]
 
 

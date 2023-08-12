@@ -35,7 +35,7 @@ class TeacherHomeworkViewSet(ModelViewSet):
     serializer_class = TeacherHomeworkSerializer
     permission_classes = (IsAuthenticated, IsTeacherOwner)
     filterset_class = HomeworkFilter
-    pagination = HomeworkListPagination
+    pagination_class = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -59,7 +59,7 @@ class StudentHomeworkViewSet(ModelViewSet):
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
     filterset_class = HomeworkFilter
-    pagination = HomeworkListPagination
+    pagination_class = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -77,7 +77,7 @@ class TeacherMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherMessageSerializer
     filterset_class = MessageFilter
-    pagination = MessagePagination
+    pagination_class = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -103,7 +103,7 @@ class StudentMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = StudentMessageSerializer
     filterset_class = MessageFilter
-    pagination = MessagePagination
+    pagination_class = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):

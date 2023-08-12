@@ -12,11 +12,6 @@ from .models import TYPECHOICE, Material
 class MaterialFilter(CommonFilter):
     """Фильтры по всем полям модели Lesson"""
 
-    text = CharFilter(
-        field_name="text",
-        lookup_expr="icontains",
-        label="Встречается в тексте",
-    )
     type = ChoiceFilter(
         choices=TYPECHOICE,
         label="Тип материала",
@@ -32,7 +27,6 @@ class MaterialFilter(CommonFilter):
             "teacher",
             "student",
             "subject",
-            "text",
             "type",
             "date",
         ]
