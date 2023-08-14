@@ -1,6 +1,17 @@
 version: "3.3"
 
 services:
+  nginx:
+    container_name: nginx
+    image: orbins/tutoroffice-nginx
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend_media:/nginx/media
+
+
   postgres:
     container_name: postgres
     image: postgres:15
@@ -21,7 +32,9 @@ services:
       - postgres
       - redis
     restart: always
-    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend_media:/project/core/backend_media
+    command: gunicorn core.wsgi -c ./core/gunicorn.py
 
   pgadmin:
     container_name: pgadmin
@@ -32,7 +45,6 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.ru
       PGADMIN_DEFAULT_PASSWORD: password
       PGADMIN_PORT: 5050
-#      PGADMIN_CONFIG_SERVER_MODE: null
     ports:
       - "5050:80"
     restart: unless-stopped
