@@ -1879,7 +1879,7 @@ paths:
         required: true
         type: integer
     patch:
-      summary: ''
+      summary: Изменить комментарий ученика к уроку
       operationId: patch-student-lessons-id
       responses:
         '200':
@@ -1933,6 +1933,8 @@ paths:
           x-examples:
             '':
               student_comment: string
+      tags:
+        - Ученики
   /teacher/materials:
     get:
       operationId: materials_list
