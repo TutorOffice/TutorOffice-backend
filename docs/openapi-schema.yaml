@@ -1,0 +1,4730 @@
+swagger: '2.0'
+info:
+  title: TutorOffice API
+  version: v1
+  contact:
+    name: Tkachenko Danil
+    email: orwellj@mail.ru
+tags:
+  - name: Пользователи
+    description: пользователи
+  - name: Ученики
+    description: ученики
+  - name: Репетиторы
+    description: репетиторы
+host: '127.0.0.1:8000'
+schemes:
+  - http
+basePath: /
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  'JWT [Bearer {JWT}]':
+    name: Authorization
+    type: apiKey
+    in: header
+paths:
+  /register:
+    post:
+      operationId: register
+      description: |-
+        Создание пользователя и отправка сообщения для верификации почты.
+        Эндпоинт доступен для всех пользователей. Доступен только метод POST. 
+        В случае успешного создания пользователю на почту отправляется письмо с вложенной ссылкой для подтверждения почты и в ответе возвращается предупреждение о том, что ему необходимо перейти на почту для подтверждения.
+        Эндпоинт не авторизует пользователя, а только создает его и отправляет письмо для подтверждения.
+        Если пользователь ввёл несуществующую почту, пользователь будет создан, но письмо отправлено не будет.
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Register'
+          x-examples:
+            Регистрация ученика:
+              first_name: Дмитрий
+              patronymic_name: Владимирович
+              last_name: Иванов
+              email: example@example.com
+              phone: '81234567890'
+              is_teacher: false
+              password: Fh789123!
+              password2: Fh789123!
+            Регистрация репетитора:
+              first_name: Дмитрий
+              patronymic_name: Владимирович
+              last_name: Иванов
+              email: example@example.com
+              phone: '81234567890'
+              is_teacher: true
+              password: Fh789123!
+              password2: Fh789123!
+          description: ''
+      responses:
+        '201':
+          description: ''
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+                example: Регистрация прошла успешно! Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!
+                description: Сообщение об успешной регистрации
+          examples:
+            Успешная регистрация:
+              success: Регистрация прошла успешно! Для входа в аккаунт Вам было отправлено письмо с подтверждением на почту!
+        '400':
+          $ref: '#/responses/ValidationError'
+      summary: Создание пользователя
+      tags:
+        - Пользователи
+    parameters: []
+  '/activate/{token}':
+    parameters:
+      - name: token
+        in: path
+        type: string
+        description: 'Токен, который встроен в ссылку, присылаемую на почту пользователю для подтверждения своего аккаунта. Предназначен для идентификации пользователя и сохранения конфиденциальности его данных.'
+        required: true
+    post:
+      summary: Подтверждение почты
+      operationId: activate
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              refresh:
+                type: string
+              access:
+                type: string
+              role:
+                type: string
+          examples:
+            Активация для ученика:
+              refresh: string
+              access: string
+              role: student
+            Активация для учителя:
+              refresh: string
+              access: string
+              role: teacher
+        '400':
+          $ref: '#/responses/ValidationError'
+      description: |-
+        Верификация почты. Эндпоинт принимает только метод POST, доступен для всех пользователей.
+        Если у токена истечёт срок годности (1 день) или он является невалидным (попытка подмены), или же если пользователь захочет повторно воспользоваться ссылкой с этим же токеном, вернётся ошибка.
+        В случае успеха возвращаются access и refresh-токены, чтобы авторизовать и перенаправить профиль пользователя и тип пользователя, который необходим для fronted-приложения. Подробнее о токенах см. раздел <b>Токены</b>
+      parameters: []
+      tags:
+        - Пользователи
+  /profile:
+    get:
+      operationId: profile_read
+      description: Получение профиля текущего пользователя. Эндпоинт доступен только для <b>текущего</b> авторизованного пользователя.
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Profile'
+          examples:
+            Данные профиля:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              first_name: Дмитрий
+              patronymic_name: Владимирович
+              last_name: Иванов
+              email: example@example.com
+              phone: '81234567890'
+              photo: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+      summary: Профиль пользователя
+      tags:
+        - Пользователи
+    patch:
+      operationId: profile_update
+      description: 'Частичное обновление данных профиля текущего пользователя. Эндпоинт доступен только для <b>текущего</b> авторизованного пользователя. Изменение почты недоступно. В ответ возварщаются все данные профиля пользователя, включая измененные.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Profile'
+          x-examples:
+            Поля для обновления:
+              first_name: Дмитрий
+              patronymic_name: Владимирович
+              last_name: Иванов
+              phone: '81234567890'
+              photo: 'http://example.com'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Profile'
+          examples:
+            Данные профиля пользователя:
+              first_name: Дмитрий
+              patronymic_name: Владимирович
+              last_name: Иванов
+              phone: '81234567890'
+              photo: 'http://example.com'
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+      summary: Обновление профиля пользователя
+      tags:
+        - Пользователи
+    parameters: []
+  /login:
+    post:
+      operationId: login
+      description: |
+        <p>
+        <a href="https://jwt.io/introduction">Токены JWT</a> - единственный допустимый способ авторизации пользователей в рамках данного проекта. Для получения токена в запросе нужно передать email пользователя и password. В случае, если пользователь с такой парой email/password существует, сервер создаст пару токенов refresh и access и отправит их в ответном JSON вместе с типом пользователя, необходимым для frontend-приложения. Эндпоинт доступен для всех пользователей, допустим только метод POST. Если пользователь не подтвердил почту, на неё будет отправлено письмо с просьбой подтверждения.
+
+        Любой запрос к серверу, требующий авторизацию и аутентификацию следует отправлять с авторизационным токеном:<br>
+        <pre>Authorization: Bearer ACCESS_TOKEN</pre>
+        </p>
+        <p>
+        Вот общий воркфлоу для аутентификации пользователей в бэкэнде Django/DRF с использованием JWT с токенами <code>access</code> и <code>refresh</code>:
+        <ul>
+        <li>Пользователь вводит свои учетные данные для входа (имя пользователя/адрес электронной почты и пароль) в форму входа в интерфейсе.</li>
+        <li>Внешний интерфейс (фронтэнд) отправляет запрос POST к эндпоинту API, отвечающему за обработку аутентификации пользователя.</li>
+        <li>В бэкэнде Django/DRF контроллер аутентификации проверяет учетные данные пользователя. Если учетные данные действительны, серверная часть создает access-токен JWT и refresh-токен и возвращает их фронтэнду в ответе.</li>
+        <li>Во внешнем интерфейсе действие входа получает ответ и извлекает токены доступа и обновления JWT. Затем токены сохраняются в локальном хранилище или в файле cookie для будущего использования.</li>
+        <li>Для всех последующих запросов API, сделанных внешним интерфейсом, access-токен JWT включается в заголовок авторизации запроса: <code>Authorization: Bearer ACCESS_TOKEN</code></li>
+        <li>В бэкэнде Django/DRF класс аутентификации JWT используется для проверки токена доступа JWT и извлечения из него информации о пользователе.</li>
+        <li>Если токен доступа действителен, запрос обрабатывается так, как если бы пользователь прошел проверку подлинности. Если токен доступа недействителен, серверная часть возвращает ответ об ошибке, указывающий, что пользователь не прошел проверку подлинности.</li>
+        <li>Если срок действия access-токена истек, внешний интерфейс может использовать refresh-токен  для получения нового access-токена, отправив запрос к <code>/refresh/</code> бэкэнда Django/DRF. Эндпоинт проверяет refresh-токен и выдает в ответ новый access и refresh токены.</li>
+        <li>Внешний интерфейс получает новые токены и сохраняет их в локальном хранилище или файле cookie для будущего использования.</li>
+        <li>Затем внешний интерфейс повторяет исходный запрос API с новым access-токеном.</li>
+        </ul>
+        </p>
+        <p>
+        Это обычная практика для внешнего интерфейса, чтобы контролировать возраст access-токена.
+        Внешний интерфейс должен проверять время истечения срока действия access-токена перед
+        выполнением запроса API. Если срок действия токена истек, внешний интерфейс
+        может использовать refresh-токен для получения нового access-токена, как описано выше.
+        </p>
+        <p>
+        Время истечения срока действия токена JWT хранится в полезной нагрузке токена.
+        Эта информация представляется в виде временной метки Unix и указывается с помощью ключа «exp» (срок действия).
+        Вот пример токена JWT со сроком действия:
+        <pre>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+        eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyNDI2MjJ9.
+        SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        </pre>
+        В этом примере время истечения срока действия <code>1516242622</code> включено во вторую
+        часть токена JWT, которая является полезной нагрузкой.
+        Полезная нагрузка — это объект JSON, закодированный как строка Base64, и он содержит ключи,
+        определяющие свойства токена, включая время истечения срока действия.
+        </p>
+        <p>
+        Чтобы получить доступ к сроку действия токена JWT, интерфейсу необходимо декодировать токен
+        и проанализировать полезную нагрузку.
+        Вот пример того, как декодировать токен JWT с помощью библиотеки jsonwebtoken в Node.js:
+        <pre>
+        const jwt = require('jsonwebtoken');
+
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyNDI2MjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+
+        const decoded = jwt.decode(token);
+
+        const expiration = decoded.exp;
+        </pre>
+        </p>
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TokenObtainPair'
+          x-examples:
+            Получение токенов авторизации:
+              email: example@example.com
+              password: Fh789123!
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/TokenObtainPair'
+          examples:
+            Получение токенов для ученика:
+              email: example@example.com
+              password: Fh789123!
+              role: student
+            Получение токенов для репетитора:
+              email: example@example.com
+              password: Fh789123!
+              role: teacher
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+      summary: Создание токенов
+      tags:
+        - Токены
+    parameters: []
+  /refresh:
+    post:
+      operationId: refresh
+      description: 'Принимает refresh-токен и в случае, если он верный, возвращает пару access и refresh.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TokenRefresh'
+          x-examples: {}
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/TokenRefresh'
+          examples:
+            Обновление токенов:
+              refresh: string
+              access: string
+        '401':
+          $ref: '#/responses/AuthenticationError'
+      summary: Обновление токенов
+      tags:
+        - Токены
+    parameters: []
+  /password-reset:
+    post:
+      summary: Сброс пароля
+      operationId: post-password-reset
+      responses:
+        '204':
+          description: 'Успешное создание запроса на сброс, получение письма с подтверждением на почту'
+      tags:
+        - Сброс
+      description: 'Сброс пароля. Для осуществления операции необходимо передать почту, к которой привязан аккаунт пользователя. В случае если такой аккаунт существует на него будет отправлено письмо с подтверждением сброса. В ином случае письмо попросту не будет отправлено.'
+  /password-reset/done:
+    get:
+      summary: Уведомление о сбросе
+      tags:
+        - Сброс
+      responses:
+        '204':
+          description: Возвращается шаблон с подтверждением принятия запроса от пользователя на сброс пароля.
+          schema:
+            type: object
+            properties: {}
+      operationId: password-reset-done
+      description: 'Шаблон, который возвращается в качестве ответа на ввод пользователем почты для сброса пароля. Чтобы не раскрыать клиентскую базу шаблон возвращается в любом случае, даже если пользователь ввёл почту, которой нет в базе данных. В таком случае письмо с подтверждением сброса попросту не будет отправлено.'
+    parameters: []
+  '/password-reset/confirm/{uid}/{token}':
+    parameters:
+      - type: string
+        name: uid
+        in: path
+        required: true
+        description: 'Уникальный идентификатор пользователя, необходим для персонализации писем.'
+      - type: string
+        name: token
+        in: path
+        required: true
+        description: 'Токен, необходим для обеспечения конфиденциальности и целостности данных'
+    post:
+      summary: Подтверждение сброса пароля
+      operationId: ''
+      responses:
+        '204':
+          description: 'Пароль успешно изменён, перебросит на другой шаблон'
+        '400':
+          $ref: '#/responses/ValidationError'
+      tags:
+        - Сброс
+      description: 'Для подтверждение сброса пароля пользователю необходимо перейти по ссылке, находящейся в письме, присланном ему на почту. Ему необходимо ввести новый пароль и повторить его.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              new_password1:
+                type: string
+                format: password
+              new_password2:
+                type: string
+                format: password
+  /password-reset/complete:
+    get:
+      summary: Пароль успешно сброшен
+      tags:
+        - Сброс
+      responses:
+        '204':
+          description: Шаблон с подтверждением успешной смены пароля.
+          schema:
+            type: object
+            properties: {}
+      operationId: password-reset-complete
+      description: Возвращает шаболон в случае успешной смены пароля пользователем
+  /subjects:
+    get:
+      operationId: subjects_list
+      description: 'Получение <b>всех</b> предметов, доступно только для <b>репетиторов</b>. Возврщается имя предмета и его id. Имеется пагинация (разбивка данных по страницам).'
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 3
+                next: null
+                previous: null
+                results:
+                  - id: 3
+                    title: Computer Science
+                  - id: 1
+                    title: История
+                  - id: 2
+                    title: Математика
+            properties:
+              count:
+                type: integer
+                description: Количество записей
+              next:
+                description: Следующая страница
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                description: Предыдущая страница
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+          examples:
+            Список предметов:
+              count: 3
+              next: null
+              previous: null
+              results:
+                - id: 3
+                  title: Computer Science
+                - id: 1
+                  title: История
+                - id: 2
+                  title: Математика
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение всех предметов
+      tags:
+        - Репетиторы
+    parameters: []
+  /teacher/subjects:
+    get:
+      operationId: teacher_subjects_list
+      description: 'Получение предметов текущего пользователя-репетитора. Эндпоинт доступен для всех авторизованных пользователей, которые являются репетиторами. Имеется пагинация (разбивка данных по страницам).'
+      parameters:
+        - type: string
+          name: page
+          in: query
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 3
+                next: null
+                previous: null
+                results:
+                  - id: 3
+                    title: Computer Science
+                  - id: 1
+                    title: История
+                  - id: 2
+                    title: Математика
+            properties:
+              count:
+                type: integer
+                description: Количество записей
+              next:
+                description: Следующая страница
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                description: Предыдущая страница
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+          examples:
+            Предметы репетитора:
+              count: 3
+              next: null
+              previous: null
+              results:
+                - id: 3
+                  title: Computer Science
+                - id: 1
+                  title: История
+                - id: 2
+                  title: Математика
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение предметов преподавателя
+      tags:
+        - Репетиторы
+    post:
+      operationId: teacher_subjects_create
+      description: 'Добавление предметов для текущего пользователя-репетитора. Предметы можно выбрать только из списка всех существующих предметов. Возможность добавления (отправки POST) досутпна лишь единожды. Эндпоинт доступен для всех авторизованных пользователей, которые являются репетиторами. Принимается список id существующих предметов. '
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserSubject'
+          x-examples:
+            Добавление предметов:
+              subjects:
+                - 1
+                - 2
+                - 3
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/UserSubject'
+          examples:
+            Предметы преподавателя:
+              subjects:
+                - 1
+                - 2
+                - 3
+              titles:
+                - string string string
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Добавление предметов репетитору
+      tags:
+        - Предметы
+    parameters: []
+    patch:
+      summary: Обновление предметов репетитора
+      operationId: patch-teacher-subjects
+      responses:
+        '200':
+          description: ''
+          examples:
+            Предметы преподавателя:
+              subjects:
+                - 1
+                - 2
+                - 3
+              titles:
+                - string
+                - string
+                - string
+          schema:
+            type: object
+            properties:
+              subjects:
+                type: array
+                items:
+                  type: integer
+              titles:
+                type: array
+                items:
+                  type: string
+            x-examples:
+              Example 1:
+                subjects:
+                  - 1
+                titles:
+                  - История
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      description: 'Обновление предметов для текущего пользователя-репетитора. Предметы можно выбрать только из списка всех существующих предметов. Эндпоинт доступен для всех авторизованных пользователей, которые являются репетиторами. Принимается список id существующих предметов. '
+      tags:
+        - Предметы
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              subjects:
+                type: array
+                items:
+                  type: string
+            x-examples:
+              Example 1:
+                subjects:
+                  - Недопустимый первичный ключ "2" - объект не существует.
+          x-examples:
+            Обновление перечня предметов:
+              subjects:
+                - 1
+                - 2
+                - 3
+  /teacher/students:
+    get:
+      operationId: teacher_students_list
+      description: |-
+        <h4>Фиктивные ученики</h4>
+        <p>
+        В нашем проекте каждый репетитор имеет возможность создавать своих собственных учеников и использовать их для организации своего рабочего процесса, при этом нет необходимости в регистрации реального пользователя в качестве ученика. Это реализуется за счёт механизма создания так называемых <b>фиктивных</b> учеников. Это как раз таки и есть те самые ученики, которых создаёт репетитор. Для этого ему достаточно указать ФИО ученика и что важно <b>верный</b> адрес электронной почты, чтобы в дальнейшем этого фиктивного ученика можно было связать с реальным пользователем-учеником, отправив ему запрос на почту. Нет, ничего страшного в том, что репетитор может указать неверный или несуществующий адрес электронной почты, его всегда можно поменять, пока пользователь-ученик не привязан или же отвязать пользователя-ученик. 
+        </p>
+        Получение списка всех учеников репетитора. Эндпоинт доступен только для пользователей-репетиторов. Имеется пагинация (разбивка данных по страницам).
+      parameters:
+        - type: string
+          in: query
+          description: Номер страницы
+          name: page
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 3
+                next: null
+                previous: null
+                results:
+                  - id: 58
+                    last_name: Авобин
+                    first_name: Иван
+                    patronymic_name: Алексеевич
+                    level: ''
+                    photo: null
+                    phone: '89766787887'
+                  - id: 62
+                    last_name: Ivan
+                    first_name: Ivan
+                    patronymic_name: ''
+                    level: upper-intermediate
+                    photo: null
+                    phone: '89387225594'
+                  - id: 1
+                    last_name: Учеников
+                    first_name: Andrew
+                    patronymic_name: Ашотович
+                    level: ''
+                    photo: null
+                    phone: '89187651215'
+            properties:
+              count:
+                type: integer
+                description: Кол-во записей
+              next:
+                description: Следующая страница
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                description: Предыдущая страница
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    last_name:
+                      type: string
+                      minLength: 2
+                      maxLength: 50
+                    first_name:
+                      type: string
+                      minLength: 2
+                      maxLength: 50
+                    patronymic_name:
+                      type: string
+                      minLength: 2
+                      maxLength: 50
+                    level:
+                      type: string
+                      maxLength: 25
+                    photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+          examples:
+            Получение учеников репетитора:
+              count: 3
+              next: null
+              previous: null
+              results:
+                - id: 58
+                  last_name: string
+                  first_name: string
+                  patronymic_name: string
+                  level: string
+                  photo: 'http://example.com'
+                - id: 62
+                  last_name: string
+                  first_name: string
+                  patronymic_name: string
+                  level: upper-intermediate
+                  photo: null
+                - id: 1
+                  last_name: string
+                  first_name: string
+                  patronymic_name: string
+                  level: string
+                  photo: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение фиктивных учеников
+      tags:
+        - Репетиторы
+    post:
+      operationId: teacher_students_create
+      description: |-
+        <p>
+        Создание собственного фиктивного ученика репетитора, которого в дальнейшем можно будет привязать к реальному пользователю. Эндпоинт доступен только для пользователей-репетиторов. Для создания обязательными являются поля имени, фамилии и почты. Нельзя добавить себя в качестве ученика, также как и нельзя создать 2 учеников с одинаковой почтой.
+        </p>
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                last_name: string
+                first_name: string
+                patronymic_name: string
+                phone: string
+                email: user@example.com
+                level: string
+            properties:
+              last_name:
+                type: string
+              first_name:
+                type: string
+              patronymic_name:
+                type: string
+              phone:
+                type: string
+                x-nullable: true
+              email:
+                type: string
+              level:
+                type: string
+          x-examples:
+            Запрос на создание ученика:
+              last_name: string
+              first_name: string
+              patronymic_name: string
+              phone: string
+              email: user@example.com
+              level: string
+      responses:
+        '201':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 73
+                last_name: string
+                first_name: string
+                patronymic_name: string
+                level: string
+                photo: null
+            properties:
+              id:
+                type: integer
+              last_name:
+                type: string
+              first_name:
+                type: string
+              patronymic_name:
+                type: string
+              level:
+                type: string
+              photo:
+                type: string
+                format: uri
+                x-nullable: true
+          examples:
+            Ученик создан успешно:
+              id: 0
+              last_name: string
+              first_name: string
+              patronymic_name: string
+              photo: null
+              level: string
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Создание фиктивного ученика
+    parameters: []
+  '/teacher/students/{id}':
+    patch:
+      operationId: teacher_student_partial_update
+      description: 'Обновление данных фиктивного ученика репетитора. Вне зависимости от привязки фиктивного с пользователем из базы данных, учитель изменяет только данные самого фиктивного ученика, никак не затрагивая связанного с ним пользователя-ученика. Эндпоинт доступен только для пользователя-репетитора, который создал ученика. Нельзя обновить почту для ученика, к которому уже привязан реальный пользователь.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                last_name: string
+                first_name: string
+                patronymic_name: string
+                phone: string
+                email: user@example.com
+                level: string
+            properties:
+              last_name:
+                type: string
+              first_name:
+                type: string
+              patronymic_name:
+                type: string
+              phone:
+                type: string
+                x-nullable: true
+              email:
+                type: string
+                format: email
+              level:
+                type: string
+          x-examples:
+            Изменение данных об ученике:
+              last_name: string
+              first_name: string
+              patronymic_name: string
+              phone: string
+              email: user@example.com
+              level: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                last_name: string
+                first_name: string
+                patronymic_name: string
+                level: string
+                photo: null
+                phone: string
+                email: string
+                bind: string
+            properties:
+              id:
+                type: integer
+              last_name:
+                type: string
+              first_name:
+                type: string
+              patronymic_name:
+                type: string
+              level:
+                type: string
+              photo:
+                type: string
+                format: uri
+                x-nullable: true
+              phone:
+                type: string
+                x-nullable: true
+              email:
+                type: string
+                format: email
+              bind:
+                enum:
+                  - related
+                  - unrelated
+                  - awaiting
+                readOnly: true
+          examples:
+            Измененные данные ученика:
+              id: 0
+              last_name: string
+              first_name: string
+              patronymic_name: string
+              phone: string
+              email: user@example.com
+              photo: 'http://example.com'
+              level: string
+              bind: unrelated
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Изменение данных фиктивного ученика
+    delete:
+      operationId: teacher_student_delete
+      description: 'Удаление фиктивного ученика репетитора. Вместе с учеником удлаяются все привязанные к нему уроки, материалы и домашние задания. Эндпоинт доступен только для пользователя-репетитора, создавшего ученика.'
+      parameters: []
+      responses:
+        '204':
+          description: Ученик успешно удалён
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Удаление фиктивного ученика
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: идентификатор ученика репетитора
+    get:
+      summary: Получение фиктивного ученика
+      operationId: get-teacher-student-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 0
+                last_name: string
+                first_name: string
+                patronymic_name: string
+                phone: string
+                email: user@example.com
+                photo: 'http://example.com'
+                level: string
+                bind: unrelated
+            properties:
+              id:
+                type: integer
+              last_name:
+                type: string
+              first_name:
+                type: string
+              patronymic_name:
+                type: string
+              phone:
+                type: string
+                x-nullable: true
+              email:
+                type: string
+                format: email
+              photo:
+                type: string
+                x-nullable: true
+              level:
+                type: string
+              bind:
+                enum:
+                  - related
+                  - unrelated
+                  - awaiting
+                default: unrelated
+          examples:
+            Получение данных об ученике:
+              id: 0
+              last_name: string
+              first_name: string
+              patronymic_name: string
+              phone: string
+              email: user@example.com
+              photo: 'http://example.com'
+              level: string
+              bind: unrelated
+        '401':
+          description: Unauthorized
+          schema:
+            type: object
+            properties: {}
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Получение полной информации о конкретном фиктивном ученике репетитора. Эндпоинт доступен только для пользователя-репетитора, который создал ученика. '
+  '/relate/student/{id}':
+    post:
+      operationId: relate_student_create
+      description: |-
+        <p>
+        Отправляет запрос на добавление на почту (которую указал учитель) пользователю-ученику, если он есть в базе. Если пользователя с такой почтой нет в базе, то предлагает ему зарегистрироваться.
+        Если ученик уже привязан или у существующего пользователя нет профиля ученика, то возникнет ошибка. Если почты не существует, сообщение не будет отправлено.
+        Эндпоинт досутпен только для пользователей-репетиторов.
+        <p>
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+            x-examples:
+              Example 1:
+                success: Ваш запрос был успешно отправлен на почту пользователю!
+          examples:
+            Запрос отправлен успешно!:
+              success: Ваш запрос был успешно отправлен на почту пользователю!
+        '400':
+          description: Bad Request
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+            x-examples:
+              Example 1:
+                detail: Такой записи не существует!
+          examples:
+            У пользователя нет профиля ученика:
+              detail: 'Вы не можете добавить этого пользователя, так как он не является учеником!'
+            Ученик уже привязан:
+              detail: К данной записи ученик уже привязан!
+            Ученика создал другой репетитор:
+              detail: У вас нет прав на осуществление этого действия!
+            Записи ученика не существует:
+              detail: Такой записи не существует!
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Привязка пользователя к фиктивному ученику
+      tags:
+        - Репетиторы
+    patch:
+      operationId: relate_student_partial_update
+      description: Отвязка ученика от репетитора. Эндпоинт доступен только пользователей-репетиторов.
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+            x-examples:
+              Example 1:
+                success: Ученик был успешно отвязан от вас!
+          examples:
+            Отвязка прошла успешно:
+              success: Ученик был успешно отвязан от вас!
+        '400':
+          description: Bad Request
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+            x-examples:
+              Example 1:
+                detail: Такой записи не существует!
+          examples:
+            Ученик не привязан к псевдоученику:
+              detail: К этой записи не привязан ученик!
+            Псевдоученик не относится к репетитору:
+              detail: У вас нет прав на осуществление этого действия!
+            Записи для отвязки не существует:
+              detail: Такой записи не существует!
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Отвязка пользователя от фиктивного ученика
+      tags:
+        - Привязка ученика
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+        description: идентификатор ученика репетитора
+  '/confirm/{token}':
+    parameters:
+      - name: token
+        in: path
+        required: true
+        type: string
+        description: 'Токен, предназначен для идентификации пользователя-ученика и сохранения конфиденциальности данных.'
+    post:
+      summary: Подтверждение привязки пользователем-учеником
+      operationId: post-confirm-token
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              success:
+                type: string
+            x-examples:
+              Example 1:
+                success: Вы были успешно добавлены к репетитору!
+          examples:
+            Привязка выполнена успешно:
+              success: Вы были успешно добавлены к репетитору!
+        '400':
+          description: ''
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+            x-examples:
+              Example 1:
+                detail: Ссылка больше недействительна!
+          examples:
+            Повторный запрос с одним и тем же токеном:
+              detail: Ссылка больше недействительна!
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      description: Подтверждение учеником привязки к репетитору. При повторном запросе с одним и тем же токеном в качестве параметра эндпоинт становится недоступным для использования.
+      tags:
+        - Ученики
+  /student/teachers:
+    get:
+      operationId: student_teachers_list
+      description: Просмотр списка репетиторов ученика. Эндпоинт доступен только для пользователей-учеников. Имеется пагинация (разбивка данных по страницам).
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 1
+                next: null
+                previous: null
+                results:
+                  - id: 69c2eb05-89ef-48c6-b0d3-a2277b67b16a
+                    first_name: Novak
+                    last_name: Lacostovich
+                    patronymic_name: Сергеевич
+                    photo: null
+                    subjects:
+                      - Computer Science
+                      - История
+                      - Математика
+            properties:
+              count:
+                type: integer
+              next:
+                x-nullable: true
+              previous:
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    first_name:
+                      type: string
+                    last_name:
+                      type: string
+                    patronymic_name:
+                      type: string
+                    photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    subjects:
+                      type: array
+                      items:
+                        type: string
+          examples: {}
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Просмотр списка репетиторов
+      tags:
+        - Ученики
+    parameters: []
+  '/student/teachers/{id}':
+    get:
+      operationId: student_teachers_read
+      description: Просмотр отдельно взятого репетитора ученика. Эндпоинт доступен только для пользователей-учеников.
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/StudentTeacher'
+          examples:
+            Репетитор ученика:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              first_name: Андрей
+              last_name: Степанов
+              patronymic_name: Сергеевич
+              email: user@example.com
+              phone: '88005553535'
+              photo: 'http://example.com'
+              subjects:
+                - Computer Science
+                - История
+                - Математика
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+        '404':
+          description: Not Found
+          schema:
+            type: object
+            properties: {}
+      tags:
+        - Ученики
+      summary: Просмотр отдельного репетитора
+    parameters:
+      - name: id
+        in: path
+        required: true
+        type: string
+  /user/lessons/number:
+    get:
+      operationId: user_lesson_number_list
+      description: |-
+        <p>
+        Возвращает количество уроков для пользователя (как репетитора так и для ученика), в которых он учитывается. Эндпоинт доступен для всех авторизованных пользователей. 
+        </p>
+        <p>
+        Есть возможность фильтрации данных по датам, учителям (для учеников), по ученикам (для учителей) и предметам, по которым назначаются уроки.
+        </p>
+        <p>
+        Есть также возможность выбора типа группировки по выбранным параметрам. По умолчанию это дата, это значит, что без указания типа группировки будут выводиться 2 значения (дата и количество уроков на эту дату) но также можно группировать по предмету, статусу, учителям (для учеников) и ученикам (для учителей)
+        </p>
+      parameters:
+        - name: teacher
+          in: query
+          required: false
+          type: string
+          description: 'идентификатор пользователя-учителя, по которому необходимо осуществить фильтрацию'
+        - name: student
+          in: query
+          description: 'идентификатор фиктивного ученика, по которому необходимо осуществить фильтрацию'
+          required: false
+          type: string
+        - name: subject
+          in: query
+          description: 'идентификатор предмета, по которому нужно осуществить фильтрацию'
+          required: false
+          type: string
+        - type: string
+          in: query
+          name: group by
+          description: 'тип группировки, по умолчанию дата'
+        - type: string
+          in: query
+          name: date_before
+          description: 'дата, по которую необходимо осуществить фильтрацию '
+        - type: string
+          in: query
+          name: date_after
+          description: 'дата, с которой необходимо осуществить фильтрацию '
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                lessons:
+                  - date: '2023-04-25'
+                    count: 1
+                  - date: '2023-04-21'
+                    count: 2
+            properties:
+              lessons:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    param:
+                      type: string
+                      description: 'Параметр по которому происходила фильтрация, по умолчанию это дата, но также может быть предмет, учник или учитель'
+                    count:
+                      type: integer
+                      description: Количество уроков
+          examples:
+            Фильтрация по репетитору (?teacher=id репетитора):
+              lessons:
+                - date: '2023-04-21'
+                  count: 2
+                - date: '2023-04-25'
+                  count: 1
+            Фильтрация по студенту (?student=id студента):
+              lessons:
+                - date: '2023-04-21'
+                  count: 2
+                - date: '2023-04-25'
+                  count: 1
+            Фильтрация по предмету (?subject=id предмета):
+              lessons:
+                - date: '2023-04-21'
+                  count: 2
+                - date: '2023-04-25'
+                  count: 1
+            Фильтрация по дате(?date_after=21.04.2023&date_before=22.04.2023):
+              lessons:
+                - date: '2023-04-21'
+                  count: 2
+            Группировка по дате(?group_by=date):
+              lessons:
+                - date: '2023-04-25'
+                  count: 1
+                - date: '2023-04-21'
+                  count: 2
+            Группировка по предметам(?group_by=subject):
+              lessons:
+                - title: История
+                  count: 3
+            Группировка по ученикам (?group_by=student):
+              lessons:
+                - full_name: Фамилия имя ученика
+                  count: 3
+            Группировка по учителям (?group_by=teacher):
+              lessons:
+                - full_name: Фамилия имя учителя
+                  count: 3
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение количества уроков
+      tags:
+        - Репетиторы
+        - Ученики
+    parameters: []
+  /user/lessons/list:
+    get:
+      operationId: user_lesson_list_list
+      description: |-
+        <p>
+        Возвращает уроки для пользователя (как репетитора так и для ученика), в которых он учитывается. Эндпоинт доступен для всех авторизованных пользователей. 
+        </p>
+        <p>
+        Есть возможность фильтрации данных по датам, учителям (для учеников), по ученикам (для учителей) и предметам, по которым назначаются уроки. Также добавлена пагинация
+        </p>
+      parameters:
+        - name: teacher
+          in: query
+          required: false
+          type: string
+          description: 'идентификатор пользователя-учителя, по которому необходимо осуществить фильтрацию'
+        - name: student
+          in: query
+          description: 'идентификатор фиктивного ученика, по которому необходимо осуществить фильтрацию'
+          required: false
+          type: string
+        - name: subject
+          in: query
+          description: 'идентификатор предмета, по которому нужно осуществить фильтрацию'
+          required: false
+          type: string
+        - type: string
+          in: query
+          name: date_after
+          description: 'дата, с которой необходимо осуществить фильтрацию '
+        - type: string
+          in: query
+          name: date_before
+          description: 'дата, по которую необходимо осуществить фильтрацию '
+        - type: string
+          in: query
+          name: page
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 6
+                next: 'http://127.0.0.1:8000/user/lesson/list/?page=2'
+                previous: null
+                results:
+                  - id: 1
+                    date: '2023-07-12'
+                    start_time: '05:00:00'
+                    end_time: '07:02:00'
+                    status: planned
+                    student_full_name: Last_name First_name
+                  - id: 2
+                    date: '2023-07-14'
+                    start_time: '02:58:00'
+                    end_time: '04:58:00'
+                    status: planned
+                    student_full_name: Last_name2 First_name2
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+                    start_time:
+                      type: string
+                      format: time
+                    end_time:
+                      type: string
+                      format: time
+                    status:
+                      enum:
+                        - planned
+                        - done
+                        - canceled
+                      default: planned
+                      readOnly: true
+                    teacher or student_full_name:
+                      type: string
+                      readOnly: true
+          examples:
+            Список уроков для репетитора:
+              count: 2
+              next: null
+              previous: null
+              results:
+                - id: 1
+                  date: '2023-06-12'
+                  start_time: '05:00:00'
+                  end_time: '07:02:00'
+                  status: planned
+                  student_full_name: Last_name First_name
+                - id: 2
+                  date: '2023-06-14'
+                  start_time: '12:00:00'
+                  end_time: '14:00:00'
+                  status: planned
+                  student_full_name: Last_name2 First_name2
+            Список уроков для ученика:
+              count: 2
+              next: null
+              previous: null
+              results:
+                - id: 1
+                  date: '2023-06-12'
+                  start_time: '05:00:00'
+                  end_time: '07:02:00'
+                  status: planned
+                  teacher_full_name: Last_name First_name
+                - id: 2
+                  date: '2023-06-14'
+                  start_time: '12:00:00'
+                  end_time: '14:00:00'
+                  status: planned
+                  teacher_full_name: Last_name2 First_name2
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение списка уроков
+      tags:
+        - Ученики
+        - Репетиторы
+    post:
+      operationId: user_lesson_list_create
+      description: |-
+        <p>
+        Создание урока, доступно только для пользователей-репетиторов.
+        Урок не может создаваться на дату быть раньше сегодняшней, а также время окончание урока должно быть позже времени начала урока. Псевдоученик (ученик репетитора) и предмет выбираются только из тех, которые связанаы с текущим пользователем-репетитором. Это значит, что репетитор не может назначить урок по тем, предметом, которые он для себя не выбирал и для тех учеников, которых он не создавал.
+        </p>
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: 1
+                subject: 1
+                start_time: '12:00'
+                end_time: '14:00'
+                topic: Тема урока
+                comment: Комментарий к уроку
+                date: '2023-06-01'
+            properties:
+              student:
+                type: integer
+                description: идентификатор студента
+              subject:
+                type: integer
+                description: идентификатор предмета
+                x-nullable: true
+              date:
+                type: string
+                description: дата
+                format: date
+              start_time:
+                type: string
+                description: время начала урока
+                format: time
+              end_time:
+                type: string
+                description: время окончания урока
+                format: time
+              teacher_comment:
+                type: string
+                description: комментарий к уроку
+            required:
+              - student
+              - subject
+              - date
+              - start_time
+              - end_time
+          description: ''
+          x-examples:
+            Создание урока репетитором:
+              student: 1
+              start_time: '12:00'
+              end_time: '14:00'
+              teacher_comment: Комментарий к уроку
+              date: '2023-06-1'
+      responses:
+        '201':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 7
+                date: '2023-06-01'
+                start_time: '12:00:00'
+                end_time: '14:00:00'
+                status: planned
+                homework: null
+                student_full_name: Учеников Andrew
+            properties:
+              id:
+                type: integer
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+                format: time
+              end_time:
+                type: string
+                format: time
+              status:
+                enum:
+                  - planned
+                  - done
+                  - canceled
+                default: planned
+              student_full_name:
+                type: string
+          examples:
+            Урок создан:
+              id: 1
+              date: '2023-06-01'
+              start_time: '12:00:00'
+              end_time: '14:00:00'
+              status: planned
+              homework: null
+              student_full_name: Пупкин Вася
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Создание урока
+    parameters: []
+  '/teacher/lessons/{id}':
+    get:
+      operationId: teacher_lesson_read
+      description: 'Возвращает данные о конкретном уроке, имеется возможность чтения, обновления и удаления. Эндпоинт доступен только для пользователя-репетитора, который задействован в уроке.'
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                date: '2023-04-25'
+                start_time: '12:50:00'
+                end_time: '15:43:00'
+                status: planned
+                student_full_name: Учеников Andrew
+                subject_title: История
+                teacher_comment: ''
+            properties:
+              id:
+                type: integer
+                readOnly: true
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+                format: time
+              end_time:
+                type: string
+                format: time
+              status:
+                enum:
+                  - planned
+                  - canceled
+                  - done
+                default: planned
+              student_full_name:
+                type: string
+                readOnly: true
+              subject_title:
+                type: string
+                x-nullable: true
+                readOnly: true
+              teacher_comment:
+                type: string
+                description: Комментарий от учителя по уроку
+          examples:
+            Урок для репетитора:
+              id: 1
+              date: '2023-07-14'
+              start_time: '12:50:00'
+              end_time: '15:43:00'
+              status: planned
+              student_full_name: Last_Name Firs_Name
+              subject_title: Title
+              teacher_comment: ''
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Получение конкретного урока
+    patch:
+      operationId: teacher_lesson_partial_update
+      description: 'Изменение урока, эндпоинт досутпен только для пользователя-репетитора, который задействован в этом уроке. Время начала урока не должно быть больше времени окончания, а дата урока должна быть не раньше сегодняшней. Предмет выбираются только из тех, которые связанаы с текущим пользователем-репетитором. Это значит, что репетитор не может назначить урок по тем, предметом, которые он для себя не выбирал.'
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                date: string
+                start_time: string
+                end_time: string
+                status: string
+                subject: 1
+                teacher_comment: string
+            properties:
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+                format: time
+              end_time:
+                type: string
+                format: time
+              status:
+                enum:
+                  - planned
+                  - done
+                  - canceled
+                default: planned
+              subject:
+                type: integer
+                x-nullable: true
+              teacher_comment:
+                type: string
+          x-examples:
+            Изменение урока:
+              date: string
+              start_time: string
+              end_time: string
+              status: string
+              subject: 1
+              teacher_comment: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                date: '2023-07-14'
+                start_time: '12:50:00'
+                end_time: '15:43:00'
+                status: planned
+                student_full_name: Last_Name Firs_Name
+                subject_title: Title
+                teacher_comment: ''
+            properties:
+              id:
+                type: integer
+              date:
+                type: string
+              start_time:
+                type: string
+              end_time:
+                type: string
+              status:
+                enum:
+                  - planned
+                  - done
+                  - canceled
+                default: planned
+              student_full_name:
+                type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              teacher_comment:
+                type: string
+          examples:
+            Example 1:
+              id: 0
+              date: string
+              start_time: string
+              end_time: string
+              status: planned
+              student_full_name: string
+              subject_title: string
+              teacher_comment: string
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Изменение урока
+      tags:
+        - Репетиторы
+    delete:
+      operationId: teacher_lesson_delete
+      description: 'Удаление урока, эндпоинт досутпен только для пользователя-репетитора, который задействован в этом уроке'
+      parameters: []
+      responses:
+        '204':
+          description: ''
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Удаление урока
+      tags:
+        - Репетиторы
+    parameters:
+      - name: id
+        in: path
+        description: A unique integer value identifying this Урок.
+        required: true
+        type: integer
+  '/student/lessons/{id}':
+    get:
+      operationId: student_lessong_get
+      description: 'Возвращает данные о конкретном уроке. Эндпоинт доступен только для пользователя-ученика, который задействован в уроке.'
+      parameters: []
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                date: '2023-07-29'
+                start_time: '12:50:00'
+                end_time: '15:43:00'
+                status: string
+                teacher: string
+                subject_title: string
+                student_comment: string
+            properties:
+              id:
+                type: integer
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+                format: time
+              end_time:
+                type: string
+                format: time
+              status:
+                enum:
+                  - planned
+                  - done
+                  - canceled
+                default: planned
+              teacher:
+                type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              student_comment:
+                type: string
+          examples:
+            Урок для ученика:
+              id: 1
+              date: '2023-07-29'
+              start_time: '12:50:00'
+              end_time: '15:50:00'
+              status: planned
+              teacher: string
+              subject_title: string
+              student_comment: string
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение конкретного урока
+      tags:
+        - Ученики
+    parameters:
+      - name: id
+        in: path
+        description: A unique integer value identifying this Урок.
+        required: true
+        type: integer
+    patch:
+      summary: ''
+      operationId: patch-student-lessons-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                date: '2023-04-25'
+                start_time: '12:50:00'
+                end_time: '15:43:00'
+                status: planned
+                teacher: string
+                subject_title: string
+                student_comment: string
+            properties:
+              id:
+                type: integer
+              date:
+                type: string
+                format: date
+              start_time:
+                type: string
+                format: time
+              end_time:
+                type: string
+                format: time
+              status:
+                enum:
+                  - planend
+                  - done
+                  - canceled
+                default: planend
+              teacher:
+                type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              student_comment:
+                type: string
+      description: 'Изменение комментария ученика по уроку. Эндпоинт доступен только для пользователя-ученика, который задействован в уроке. Можно изменить только комментарий ученика.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            properties:
+              student_comment:
+                type: string
+          x-examples:
+            '':
+              student_comment: string
+  /teacher/materials:
+    get:
+      operationId: materials_list
+      description: 'Просмотр материалов репетитора. Эндпоинт доступен только для пользователей- репетиторов. Есть пагниация. Также есть фильрация по ID учеников, ID премдетов, типу материала (приватный или публичный), дате.'
+      parameters:
+        - name: teacher_student
+          in: query
+          description: ID ученика
+          required: false
+          type: string
+        - name: subject
+          in: query
+          description: ID предмета
+          required: false
+          type: string
+        - name: type
+          in: query
+          required: false
+          type: string
+          description: Тип материал (private/public)
+        - type: string
+          in: query
+          name: date
+          description: Дата
+        - type: string
+          in: query
+          name: page
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 10
+                next: 'http://127.0.0.1:8000/teacher/materials/?page=2'
+                previous: null
+                results:
+                  - id: 1
+                    student_full_name:
+                      - Last Name First Name
+                    subject_title: string
+                    file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                    file_type: image/jpeg
+                    file_size: 78
+                    text: string
+                    material_type: private
+                    date: '2023-07-29'
+                  - id: 2
+                    student_full_name:
+                      - Last Name First Name
+                    subject_title: null
+                    file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                    file_type: image/jpeg
+                    file_size: 88
+                    text: text
+                    material_type: public
+                    date: '2023-07-28'
+            properties:
+              count:
+                type: integer
+                description: Общее количество записей
+              next:
+                type: string
+                format: uri
+                description: Следующая страница
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                description: Предыдущая страница
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    student_full_name:
+                      type: array
+                      description: Ученики
+                      x-nullable: true
+                      items:
+                        type: string
+                    subject_title:
+                      type: string
+                      description: Имя предмета
+                      x-nullable: true
+                    file:
+                      type: string
+                      description: Файл
+                      format: uri
+                    file_type:
+                      type: string
+                      description: Тип файла
+                    file_size:
+                      type: integer
+                      description: Размер файла
+                    text:
+                      type: string
+                      description: Текст к файлу
+                      x-nullable: true
+                    material_type:
+                      description: Тип материала
+                      enum:
+                        - public
+                        - private
+                    date:
+                      type: string
+                      description: Дата
+                      format: date
+          headers: {}
+          examples:
+            '':
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 1
+                  student_full_name:
+                    - Last_Name First_Name
+                  subject_title: string
+                  file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                  file_type: string
+                  file_size: 0
+                  text: string
+                  material_type: public
+                  date: '2023-07-24'
+                - id: 2
+                  student_full_name:
+                    - Last_Name First_Name
+                  subject_title: null
+                  file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                  file_type: string
+                  file_size: 0
+                  text: string
+                  material_type: private
+                  date: '2023-07-24'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      summary: Получение материалов для репетитора
+    post:
+      operationId: materials_create
+      description: 'Создание материала. Эндпоинт доступен только для пользователей-репетиторов. Если пользователь определил тип материала как приватный, ему необходимо будет выбрать учеников из тех, что связаны с ним. Если же он определяет тип материала как публичный, то он не сможет выбрать ученика.    '
+      parameters:
+        - name: data
+          in: body
+          required: true
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student:
+                  - 1
+                  - 2
+                subject: 1
+                file: string
+                text: string
+                material_type: public
+            properties:
+              student:
+                type: array
+                description: id псевдоучеников
+                x-nullable: true
+                items:
+                  type: integer
+              subject:
+                type: integer
+                description: Предмет
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+                description: Файл
+              text:
+                type: string
+                description: Текст к файлу
+              material_type:
+                enum:
+                  - public
+                  - private
+                description: Тип материала (публичный/приватный)
+            required:
+              - file
+              - material_type
+          x-examples:
+            '':
+              student:
+                - 1
+                - 2
+              subject: 1
+              file: 'http://example.com'
+              text: string
+              material_type: public
+      responses:
+        '201':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 1
+                student_full_name:
+                  - Last_Name First_Name
+                subject_title: string
+                file: string
+                file_type: string
+                file_size: 88
+                text: string
+                material_type: public
+                date: '2023-07-24'
+            properties:
+              id:
+                type: integer
+              student_full_name:
+                type: array
+                x-nullable: true
+                items:
+                  type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+              file_type:
+                type: string
+              file_size:
+                type: integer
+              text:
+                type: string
+              material_type:
+                enum:
+                  - public
+                  - private
+              date:
+                type: string
+                format: date
+          examples:
+            '':
+              id: 0
+              student_full_name:
+                - string
+              subject_title: string
+              file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+              file_type: string
+              file_size: 0
+              text: string
+              material_type: public
+              date: '2023-07-29'
+        '400':
+          description: Bad Request
+          schema:
+            type: object
+            properties: {}
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+    parameters: []
+  '/teacher/materials/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение отдельного материала для репетитора
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 12
+                student_full_name:
+                  - string
+                subject_title: string
+                file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                file_type: image/jpeg
+                file_size: 88
+                text: string
+                material_type: private
+                date: '2023-06-04'
+            properties:
+              id:
+                type: integer
+              student_full_name:
+                type: array
+                x-nullable: true
+                items:
+                  type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+              file_type:
+                type: string
+              file_size:
+                type: integer
+              text:
+                type: string
+              material_type:
+                enum:
+                  - public
+                  - private
+              date:
+                type: string
+                format: date
+          examples:
+            Example 1:
+              id: 0
+              student_full_name:
+                - string
+              subject_title: string
+              file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+              file_type: string
+              file_size: 0
+              text: string
+              material_type: private
+              date: '2023-06-04'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-teacher-materials-id
+      description: 'Доступно только для пользователя, репетитора, который создал этот материал.'
+      tags:
+        - Репетиторы
+    patch:
+      summary: ''
+      operationId: patch-teacher-materials-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 12
+                student_full_name:
+                  - Учеников Andrew
+                subject_title: null
+                file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                file_type: image/jpeg
+                file_size: 88
+                text: intermediate
+                material_type: private
+                date: '2023-06-04'
+            properties:
+              id:
+                type: integer
+              student_full_name:
+                type: array
+                x-nullable: true
+                items:
+                  type: string
+              subject_title:
+                type: string
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+              file_type:
+                type: string
+              file_size:
+                type: integer
+              text:
+                type: string
+              material_type:
+                enum:
+                  - public
+                  - private
+              date:
+                type: string
+                format: date
+          examples:
+            '':
+              id: 0
+              student_full_name:
+                - string
+              subject_title: string
+              file: 'http://example.com'
+              file_type: string
+              file_size: 0
+              text: string
+              material_type: public
+              date: '2019-08-24'
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      description: 'Обновление данных материала. Доступно только для пользователя-репетитора, который является владельцем материала. Если меняется тип меняется с приватного на публичный, то ученики удалятся. А если с публичного на приватный, то обязательно нужно указывать учеников, для которых предназначен этот материал. Ученики и предметы должны быть только те, которые связаны с пользователем.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student:
+                  - 1
+                  - 2
+                subject: 1
+                file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                text: intermediate
+                material_type: private
+            properties:
+              student:
+                type: array
+                x-nullable: true
+                items:
+                  type: integer
+              subject:
+                type: integer
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+              text:
+                type: string
+              material_type:
+                enum:
+                  - public
+                  - private
+          x-examples: {}
+      tags:
+        - Репетиторы
+    delete:
+      summary: ''
+      operationId: delete-teacher-materials-id
+      responses:
+        '204':
+          description: ''
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      description: 'Удаление материалов репетитора, доступно только для пользователя репетитора'
+      tags:
+        - Репетиторы
+  /student/materials:
+    get:
+      operationId: student_materials_list
+      description: 'Просмотр материалов ученика. Эндпоинт доступен только для пользователей-учеников. Есть пагниация. Также есть фильрация по ID репетиторов, ID премдетов, типу материала (приватный или публичный), дате.'
+      parameters:
+        - name: teacher_student
+          in: query
+          description: ID ученика
+          required: false
+          type: string
+        - name: subject
+          in: query
+          description: ID предмета
+          required: false
+          type: string
+        - name: type
+          in: query
+          required: false
+          type: string
+          description: Тип материал (private/public)
+        - type: string
+          in: query
+          name: date
+          description: Дата
+        - type: string
+          in: query
+          name: page
+          description: Номер страницы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 10
+                next: 'http://127.0.0.1:8000/teacher/materials/?page=2'
+                previous: null
+                results:
+                  - id: 1
+                    student_full_name:
+                      - Last Name First Name
+                    subject_title: string
+                    file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                    file_type: image/jpeg
+                    file_size: 78
+                    text: string
+                    material_type: private
+                    date: '2023-07-29'
+                  - id: 2
+                    student_full_name:
+                      - Last Name First Name
+                    subject_title: null
+                    file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                    file_type: image/jpeg
+                    file_size: 88
+                    text: text
+                    material_type: public
+                    date: '2023-07-28'
+            properties:
+              count:
+                type: integer
+                description: Общее количество записей
+              next:
+                type: string
+                format: uri
+                description: Следующая страница
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                description: Предыдущая страница
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    teacher:
+                      type: string
+                      description: Ученики
+                      x-nullable: true
+                    subject_title:
+                      type: string
+                      description: Имя предмета
+                      x-nullable: true
+                    file:
+                      type: string
+                      description: Файл
+                      format: uri
+                    file_type:
+                      type: string
+                      description: Тип файла
+                    file_size:
+                      type: integer
+                      description: Размер файла
+                    text:
+                      type: string
+                      description: Текст к файлу
+                      x-nullable: true
+                    date:
+                      type: string
+                      description: Дата
+                      format: date
+          headers: {}
+          examples:
+            '':
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 1
+                  teacher: Last_Name First_Name
+                  subject_title: string
+                  file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                  file_type: string
+                  file_size: 0
+                  text: string
+                  date: '2023-07-24'
+                - id: 2
+                  teacher: Last_Name First_Name
+                  subject_title: null
+                  file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                  file_type: string
+                  file_size: 0
+                  text: string
+                  date: '2023-07-24'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение материалов для ученика
+      tags:
+        - Ученики
+    parameters: []
+  '/student/materials/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение отдельного материала для ученика
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 12
+                student_full_name:
+                  - string
+                subject_title: string
+                file: 'http://127.0.0.1:8000/media/materials/5.jpg'
+                file_type: image/jpeg
+                file_size: 88
+                text: string
+                material_type: private
+                date: '2023-06-04'
+            properties:
+              id:
+                type: integer
+              teacher:
+                type: string
+                x-nullable: true
+              subject_title:
+                type: string
+                x-nullable: true
+              file:
+                type: string
+                format: uri
+              file_type:
+                type: string
+              file_size:
+                type: integer
+              text:
+                type: string
+              date:
+                type: string
+                format: date
+          examples:
+            '':
+              id: 0
+              teacher: Last_Name First_Name
+              subject_title: string
+              file: 'http://example.com'
+              file_type: string
+              file_size: 0
+              text: string
+              date: '2019-08-24'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-student-materials-id
+      description: 'Доступно только для пользователя-ученика, который связан с этим материалом.'
+      tags:
+        - Ученики
+  /teacher/homeworks:
+    get:
+      summary: Получение ДЗ для репетитора
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 2
+                next: null
+                previous: null
+                results:
+                  - id: 4ead9524-0bf9-4cf3-aad9-a3f8709d83b0
+                    student_full_name: Авобин Иван
+                    student_photo: null
+                    timestamp: '2023-06-15T10:39:07.971053'
+                    subject_title: Computer Science
+                    text: ''
+                    file: 'http://127.0.0.1:8000/media/homeworks/tasks/pyhon-icon.png'
+                    reply_file: null
+                    status: sended
+                  - id: 65d762c1-c590-46b8-ab9d-1be212f977fd
+                    student_full_name: Учеников Andrew
+                    student_photo: null
+                    timestamp: '2023-06-15T10:38:30.628999'
+                    subject_title: null
+                    text: ''
+                    file: 'http://127.0.0.1:8000/media/homeworks/tasks/cropped-IMG_45592.jpg'
+                    reply_file: null
+                    status: sended
+            properties:
+              count:
+                type: integer
+                description: Общее количество записей
+              next:
+                type: string
+                format: uri
+                description: Следующая страница
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                description: Предыдущая страница
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    student_full_name:
+                      type: string
+                      description: ФИО ученика
+                    student_photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    timestamp:
+                      type: string
+                      format: date-time
+                      description: Дата и время
+                    subject_title:
+                      type: string
+                      description: Предмет
+                      x-nullable: true
+                    text:
+                      type: string
+                      description: Текст
+                    file:
+                      type: string
+                      format: uri
+                      description: Файл
+                    reply_file:
+                      description: Ответный файл от ученика
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    status:
+                      enum:
+                        - sended
+                        - done
+                        - accepted
+                      description: Статус
+          examples:
+            '':
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  student_full_name: string
+                  student_photo: 'http://example.com'
+                  timestamp: '2019-08-24T14:15:22Z'
+                  subject_title: string
+                  text: string
+                  file: 'http://example.com'
+                  reply_file: 'http://example.com'
+                  status: sended
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-teacher-homeworks
+      description: 'Эндпоинт доступен только для пользователей репетиторов. Есть пагинация. Также имеется возможность фильтрации по ученикам, предметам и статусам.'
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Страница
+        - type: string
+          in: query
+          name: subject
+          description: ID предмета
+        - type: string
+          in: query
+          name: status
+          description: Статус ДЗ
+        - type: string
+          in: query
+          name: student
+          description: ID ученика
+    post:
+      summary: Создание ДЗ
+      operationId: post-teacher-homeworks
+      responses:
+        '200':
+          description: OK
+          examples:
+            Example 1:
+              id: string
+              student_full_name: string
+              student_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              subject_title: string
+              text: string
+              file: 'http://example.com'
+              reply_file: 'http://example.com'
+              status: sended
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 4ead9524-0bf9-4cf3-aad9-a3f8709d83b0
+                student_full_name: Авобин Иван
+                student_photo: null
+                timestamp: '2023-06-15T10:39:07.971053'
+                subject_title: Computer Science
+                text: ''
+                file: 'http://127.0.0.1:8000/media/homeworks/tasks/pyhon-icon.png'
+                reply_file: 'http://127.0.0.1:8000/media/homeworks/tasks/pyhon-icon.png'
+                status: sended
+            properties:
+              id:
+                type: string
+              student_full_name:
+                type: string
+              student_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              subject_title:
+                type: string
+                x-nullable: true
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              reply_file:
+                type: string
+                format: uri
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Доступно только для репетитора. При создании репетитор выбирает ученика из списка созданных им самим, а также может выбрать предмет по которому хочет задать ДЗ, но это опционально. По умолчанию в ДЗ устанавливается статус sended (отправлено). '
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: string
+                subject_title: 0
+                text: ''
+                file: 'http://127.0.0.1:8000/media/homeworks/tasks/pyhon-icon.png'
+                status: sended
+            properties:
+              student:
+                type: integer
+                description: ID псевдоученика
+              subject:
+                type: integer
+                description: ID предметов
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+            required:
+              - student
+              - file
+          x-examples:
+            '':
+              student: 0
+              subject_title: 0
+              text: string
+              file: 'http://example.com'
+              status: sended
+          description: ''
+  '/teacher/homeworks/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение конкретного ДЗ для репетитора
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 65d762c1-c590-46b8-ab9d-1be212f977fd
+                student_full_name: Учеников Andrew
+                student_photo: null
+                timestamp: '2023-06-15T10:38:30.628999'
+                subject_title: null
+                text: ''
+                file: 'http://127.0.0.1:8000/media/homeworks/tasks/cropped-IMG_45592.jpg'
+                reply_file: null
+                status: sended
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              student_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              subject_title:
+                type: string
+                x-nullable: true
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              reply_file:
+                type: string
+                format: uri
+                x-nullable: true
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+          examples:
+            Example 1:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              student_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              subject_title: string
+              text: string
+              file: 'http://example.com'
+              reply_file: 'http://example.com'
+              status: sended
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-teacher-homeworks-id
+      description: 'Эндпоинт доступен только для пользователя-репетитора, который создал ДЗ.'
+    patch:
+      summary: Изменение ДЗ
+      operationId: patch-teacher-homeworks-id
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: string
+                student_full_name: string
+                student_photo: 'http://example.com'
+                timestamp: '2019-08-24T14:15:22Z'
+                subject_title: string
+                text: string
+                file: 'http://example.com'
+                reply_file: 'http://example.com'
+                status: sended
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              student_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              subject_title:
+                type: string
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              reply_file:
+                type: string
+                format: uri
+                x-nullable: true
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              student_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              subject_title: string
+              text: string
+              file: 'http://example.com'
+              reply_file: 'http://example.com'
+              status: done
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Доступно только для пользователя-репетитора, создателя ДЗ.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: 1
+                subject: 1
+                text: string
+                file: 'http://example.com'
+                status: accepted
+            properties:
+              student:
+                type: integer
+              subject:
+                type: integer
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              status:
+                enum:
+                  - accepted
+                  - done
+                  - sended
+          x-examples:
+            '':
+              student: 0
+              subject: 0
+              text: string
+              file: string
+              status: accepted
+    delete:
+      summary: Удаление ДЗ
+      operationId: delete-teacher-homeworks-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Эндпоинт доступен только для пользователя-репетитора, который создал ДЗ.'
+  /student/homeworks:
+    get:
+      summary: Получение ДЗ для ученика
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 2
+                next: null
+                previous: null
+                results:
+                  - id: 4ead9524-0bf9-4cf3-aad9-a3f8709d83b0
+                    student_full_name: Авобин Иван
+                    student_photo: null
+                    timestamp: '2023-06-15T10:39:07.971053'
+                    subject_title: Computer Science
+                    text: ''
+                    file: 'http://127.0.0.1:8000/media/homeworks/tasks/pyhon-icon.png'
+                    reply_file: null
+                    status: sended
+                  - id: 65d762c1-c590-46b8-ab9d-1be212f977fd
+                    student_full_name: Учеников Andrew
+                    student_photo: null
+                    timestamp: '2023-06-15T10:38:30.628999'
+                    subject_title: null
+                    text: ''
+                    file: 'http://127.0.0.1:8000/media/homeworks/tasks/cropped-IMG_45592.jpg'
+                    reply_file: null
+                    status: sended
+            properties:
+              count:
+                type: integer
+                description: Общее количество записей
+              next:
+                type: string
+                format: uri
+                description: Следующая страница
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                description: Предыдущая страница
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    teacher:
+                      type: string
+                      description: ФИО ученика
+                    teacher_photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    timestamp:
+                      type: string
+                      format: date-time
+                      description: Дата и время
+                    subject_title:
+                      type: string
+                      description: Предмет
+                      x-nullable: true
+                    text:
+                      type: string
+                      description: Текст
+                    file:
+                      type: string
+                      format: uri
+                      description: Файл
+                    reply_file:
+                      description: Ответный файл от ученика
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    status:
+                      enum:
+                        - sended
+                        - done
+                        - accepted
+                      description: Статус
+          examples:
+            '':
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  teacher: string
+                  teacher_photo: 'http://example.com'
+                  timestamp: '2019-08-24T14:15:22Z'
+                  subject_title: string
+                  text: string
+                  file: 'http://example.com'
+                  reply_file: 'http://example.com'
+                  status: sended
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-student-homeworks
+      description: 'Эндпоинт доступен только для пользователей учеников. Есть пагинация. Также имеется возможность фильтрации по ученикам, предметам и статусам.'
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Страница
+        - type: string
+          in: query
+          name: subject
+          description: ID предмета
+        - type: string
+          in: query
+          name: status
+          description: Статус ДЗ
+        - type: string
+          in: query
+          name: teacher
+          description: ID репетитора
+    parameters: []
+  '/student/homeworks/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение конкретного ДЗ для ученика
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 65d762c1-c590-46b8-ab9d-1be212f977fd
+                student_full_name: Учеников Andrew
+                student_photo: null
+                timestamp: '2023-06-15T10:38:30.628999'
+                subject_title: null
+                text: ''
+                file: 'http://127.0.0.1:8000/media/homeworks/tasks/cropped-IMG_45592.jpg'
+                reply_file: null
+                status: sended
+            properties:
+              id:
+                type: string
+                format: uuid
+              teacher:
+                type: string
+              teacher_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              subject_title:
+                type: string
+                x-nullable: true
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              reply_file:
+                type: string
+                format: uri
+                x-nullable: true
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+          examples:
+            Example 1:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              teacher: string
+              teacher_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              subject_title: string
+              text: string
+              file: 'http://example.com'
+              reply_file: 'http://example.com'
+              status: sended
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-student-homeworks-id
+      description: 'Эндпоинт доступен только для пользователя-ученика, который связан с ДЗ.'
+    patch:
+      summary: Изменение ДЗ учеником
+      operationId: patch-student-homeworks-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: string
+                student_full_name: string
+                student_photo: 'http://example.com'
+                timestamp: '2019-08-24T14:15:22Z'
+                subject_title: string
+                text: string
+                file: 'http://example.com'
+                reply_file: 'http://example.com'
+                status: sended
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              student_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              subject_title:
+                type: string
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+              reply_file:
+                type: string
+                format: uri
+                x-nullable: true
+              status:
+                enum:
+                  - sended
+                  - done
+                  - accepted
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              student_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              subject_title: string
+              text: string
+              file: 'http://example.com'
+              reply_file: 'http://example.com'
+              status: done
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Доступно только для пользователя-ученика, позволяет ему изменить статус ДЗ, чтобы подтвердить что он выполнил его и отослать ответный файл репетитору при необходимости.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: 1
+                subject: 1
+                text: string
+                file: 'http://example.com'
+                status: accepted
+            properties:
+              reply_file:
+                type: string
+                x-nullable: true
+              status:
+                enum:
+                  - accepted
+                  - done
+                  - sended
+          x-examples:
+            '':
+              reply_file: string
+              status: accepted
+  /teacher/messages:
+    get:
+      summary: Получение сообщений для репетитора
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 5
+                next: null
+                previous: null
+                results:
+                  - id: 5062f74b-df34-4d2a-9609-615b6c817a6f
+                    student_full_name: Учеников Andrew
+                    teacher: Lacostovich Novak
+                    sender: teacher
+                    sender_photo: null
+                    timestamp: '2023-06-14T17:25:10.448932'
+                    text: Dude!
+                    file: null
+                  - id: 8a89c589-6d70-49c3-93cb-3aef04b8859d
+                    student_full_name: Учеников Andrew
+                    teacher: Lacostovich Novak
+                    sender: teacher
+                    sender_photo: null
+                    timestamp: '2023-06-15T12:30:49.532076'
+                    text: Dude
+                    file: null
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    student_full_name:
+                      type: string
+                    teacher:
+                      type: string
+                    sender:
+                      enum:
+                        - teacher
+                        - sender
+                    sender_photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    timestamp:
+                      type: string
+                      format: date-time
+                    text:
+                      type: string
+                    file:
+                      type: string
+                      format: uri
+                      x-nullable: true
+          examples:
+            Example 1:
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  student_full_name: string
+                  teacher: string
+                  sender: teacher
+                  sender_photo: 'http://example.com'
+                  timestamp: '2019-08-24T14:15:22Z'
+                  text: string
+                  file: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-teacher-messages
+      description: Эндпоинт доступен только для пользователей репетиторов. Есть пагинация. Также имеется возможность фильтрации по ученикам и тексту.
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Страница
+        - type: string
+          in: query
+          name: text
+          description: Текст
+        - type: string
+          in: query
+          name: student
+          description: ID ученика
+    post:
+      summary: Создание сообщения
+      operationId: post-teacher-messages
+      responses:
+        '200':
+          description: OK
+          examples:
+            Example 1:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              teacher: string
+              sender: teacher
+              sender_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: e45b57d8-a428-435d-9eb6-57bee602cbf9
+                student_full_name: Авобин Иван
+                teacher: Lacostovich Novak
+                sender: teacher
+                sender_photo: null
+                timestamp: '2023-07-06T00:24:56.203682'
+                text: текст
+                file: null
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              teacher:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - sender
+              sender_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+                x-nullable: true
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: Доступно только для репетитора. При создании репетитор выбирает ученика из списка созданных им самим.
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: e45b57d8-a428-435d-9eb6-57bee602cbf9
+                student_full_name: Авобин Иван
+                teacher: Lacostovich Novak
+                sender: teacher
+                sender_photo: null
+                timestamp: '2023-07-06T00:24:56.203682'
+                text: текст
+                file: null
+            properties:
+              student:
+                type: integer
+                description: Id псевдоученика
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+                x-nullable: true
+            required:
+              - student
+              - text
+          x-examples:
+            Example 1:
+              student: 0
+              text: string
+              file: 'http://example.com'
+          description: ''
+    parameters: []
+  '/teacher/messages/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение конкретного сообщения для репетитора
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                student_full_name: string
+                teacher: string
+                sender: teacher
+                sender_photo: 'http://example.com'
+                timestamp: '2019-08-24T14:15:22Z'
+                text: string
+                file: 'http://example.com'
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              teacher:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - student
+              sender_photo:
+                type: string
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              teacher: string
+              sender: teacher
+              sender_photo: string
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-teacher-messages-id
+      description: 'Эндпоинт доступен только для пользователя-репетитора, который создал сообщение.'
+    patch:
+      summary: Изменение сообшения
+      operationId: patch-teacher-messages-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                student_full_name: string
+                teacher: string
+                sender: teacher
+                sender_photo: string
+                timestamp: '2019-08-24T14:15:22Z'
+                text: string
+                file: 'http://example.com'
+            properties:
+              id:
+                type: string
+                format: uuid
+              student_full_name:
+                type: string
+              teacher:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - student
+              sender_photo:
+                type: string
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              student_full_name: string
+              teacher: string
+              sender: teacher
+              sender_photo: string
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Доступно только для пользователя-репетитора, создателя сообщения.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: 0
+                text: string
+                file: 'http://example.com'
+            properties:
+              student:
+                type: integer
+              text:
+                type: string
+              file:
+                type: string
+                x-nullable: true
+          x-examples:
+            '':
+              student: 0
+              text: string
+              file: string
+    delete:
+      summary: Удаление сообщения репетитора
+      operationId: delete-teacher-messages-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Эндпоинт доступен только для пользователя-репетитора, который создал сообщение.'
+  /student/messages:
+    get:
+      summary: Получение сообщений для ученика
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                count: 5
+                next: null
+                previous: null
+                results:
+                  - id: 5062f74b-df34-4d2a-9609-615b6c817a6f
+                    student_full_name: Учеников Andrew
+                    teacher: Lacostovich Novak
+                    sender: teacher
+                    sender_photo: null
+                    timestamp: '2023-06-14T17:25:10.448932'
+                    text: Dude!
+                    file: null
+                  - id: 8a89c589-6d70-49c3-93cb-3aef04b8859d
+                    student_full_name: Учеников Andrew
+                    teacher: Lacostovich Novak
+                    sender: teacher
+                    sender_photo: null
+                    timestamp: '2023-06-15T12:30:49.532076'
+                    text: Dude
+                    file: null
+            properties:
+              count:
+                type: integer
+              next:
+                type: string
+                format: uri
+                x-nullable: true
+              previous:
+                type: string
+                format: uri
+                x-nullable: true
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    teacher_full_name:
+                      type: string
+                    student:
+                      type: string
+                    sender:
+                      enum:
+                        - teacher
+                        - sender
+                    sender_photo:
+                      type: string
+                      format: uri
+                      x-nullable: true
+                    timestamp:
+                      type: string
+                      format: date-time
+                    text:
+                      type: string
+                    file:
+                      type: string
+                      format: uri
+                      x-nullable: true
+          examples:
+            '':
+              count: 0
+              next: 'http://example.com'
+              previous: 'http://example.com'
+              results:
+                - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                  teacher_full_name: string
+                  student: string
+                  sender: teacher
+                  sender_photo: 'http://example.com'
+                  timestamp: '2019-08-24T14:15:22Z'
+                  text: string
+                  file: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-student-messages
+      description: Эндпоинт доступен только для пользователей учеников. Есть пагинация. Также имеется возможность фильтрации по репетиторам и тексту.
+      parameters:
+        - type: string
+          in: query
+          name: page
+          description: Страница
+        - type: string
+          in: query
+          name: text
+          description: Текст
+        - type: string
+          in: query
+          name: teacher
+          description: ID репетитора
+    post:
+      summary: Создание сообщения
+      operationId: post-student-messages
+      responses:
+        '200':
+          description: OK
+          examples:
+            Example 1:
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              teacher_full_name: string
+              student: string
+              sender: teacher
+              sender_photo: 'http://example.com'
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: e45b57d8-a428-435d-9eb6-57bee602cbf9
+                student_full_name: Авобин Иван
+                teacher: Lacostovich Novak
+                sender: teacher
+                sender_photo: null
+                timestamp: '2023-07-06T00:24:56.203682'
+                text: текст
+                file: null
+            properties:
+              id:
+                type: string
+                format: uuid
+              teacher_full_name:
+                type: string
+              student:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - sender
+              sender_photo:
+                type: string
+                format: uri
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+                x-nullable: true
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: Доступно только для ученика. При создании ученик выбирает репетитора из списка его репетиторов.
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: e45b57d8-a428-435d-9eb6-57bee602cbf9
+                student_full_name: Авобин Иван
+                teacher: Lacostovich Novak
+                sender: teacher
+                sender_photo: null
+                timestamp: '2023-07-06T00:24:56.203682'
+                text: текст
+                file: null
+            properties:
+              student:
+                type: integer
+                description: Id репетитора
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+                x-nullable: true
+            required:
+              - student
+              - text
+          x-examples:
+            Example 1:
+              student: 0
+              text: string
+              file: 'http://example.com'
+          description: ''
+    parameters: []
+  '/student/messages/{id}':
+    parameters:
+      - type: string
+        name: id
+        in: path
+        required: true
+    get:
+      summary: Получение конкретного сообщения для ученика
+      tags:
+        - Репетиторы
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                student_full_name: string
+                teacher: string
+                sender: teacher
+                sender_photo: 'http://example.com'
+                timestamp: '2019-08-24T14:15:22Z'
+                text: string
+                file: 'http://example.com'
+            properties:
+              id:
+                type: string
+                format: uuid
+              teacher_full_name:
+                type: string
+              student:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - student
+              sender_photo:
+                type: string
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              teacher_full_name: string
+              student: string
+              sender: teacher
+              sender_photo: string
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      operationId: get-student-messages-id
+      description: 'Эндпоинт доступен только для пользователя-ученика, который создал сообщение.'
+    patch:
+      summary: Изменение сообшения
+      operationId: patch-student-messages-id
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                student_full_name: string
+                teacher: string
+                sender: teacher
+                sender_photo: string
+                timestamp: '2019-08-24T14:15:22Z'
+                text: string
+                file: 'http://example.com'
+            properties:
+              id:
+                type: string
+                format: uuid
+              teacher_full_name:
+                type: string
+              student:
+                type: string
+              sender:
+                enum:
+                  - teacher
+                  - student
+              sender_photo:
+                type: string
+                x-nullable: true
+              timestamp:
+                type: string
+                format: date-time
+              text:
+                type: string
+              file:
+                type: string
+                format: uri
+          examples:
+            '':
+              id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+              teacher_full_name: string
+              student: string
+              sender: teacher
+              sender_photo: string
+              timestamp: '2019-08-24T14:15:22Z'
+              text: string
+              file: 'http://example.com'
+        '400':
+          $ref: '#/responses/ValidationError'
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Доступно только для пользователя-ученика, создателя сообщения.'
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                student: 0
+                text: string
+                file: 'http://example.com'
+            properties:
+              teacher:
+                type: integer
+              text:
+                type: string
+              file:
+                type: string
+                x-nullable: true
+          x-examples:
+            '':
+              student: 0
+              text: string
+              file: string
+    delete:
+      summary: Удаление сообщения репетитора
+      operationId: delete-student-messages-id
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      tags:
+        - Репетиторы
+      description: 'Эндпоинт доступен только для пользователя-ученика, который создал сообщение.'
+  /user/homeworks/number:
+    get:
+      operationId: user_homeworks_number_list
+      description: |-
+        <p>
+        Возвращает количество ДЗ для пользователя (как репетитора так и для ученика), в которых он учитывается. Эндпоинт доступен для всех авторизованных пользователей. 
+        </p>
+        <p>
+        Есть возможность фильтрации данных по статусам, учителям (для учеников), по ученикам (для учителей) и предметам, по которым назначаются уроки.
+        </p>
+        <p>
+        Отфильтрованные данные групируются по ученикам для репетиторов и по репетиторам для учеников. Таким образом, на выходе мы имеем количество дз, возможно отфильтрованные по одному из параметров, к примеру это 
+        </p>
+      parameters:
+        - name: teacher
+          in: query
+          required: false
+          type: number
+          description: 'идентификатор пользователя-учителя, по которому необходимо осуществить фильтрацию'
+        - name: student
+          in: query
+          description: 'идентификатор фиктивного ученика, по которому необходимо осуществить фильтрацию'
+          required: false
+          type: number
+        - name: status
+          in: query
+          description: 'название статуса, по которому осуществляется фильтрация'
+          required: false
+          type: string
+        - type: number
+          in: query
+          name: subject
+          description: 'идентификатор предмета, по которому нужно осуществить фильтрацию'
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            x-examples:
+              Example 1:
+                homeworks:
+                  - status: sended
+                    full_name: Авобин Иван
+                    count: 1
+                  - status: sended
+                    full_name: Учеников Andrew
+                    count: 1
+            properties:
+              homeworks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    status:
+                      enum:
+                        - sended
+                        - done
+                        - accepted
+                    full_name:
+                      type: string
+                    count:
+                      type: integer
+          examples:
+            '':
+              homeworks:
+                - status: sended
+                  full_name: string
+                  count: 0
+        '401':
+          $ref: '#/responses/AuthenticationError'
+        '403':
+          $ref: '#/responses/PermissionDenied'
+      summary: Получение количества ДЗ
+      tags:
+        - Репетиторы
+        - Ученики
+    parameters: []
+definitions:
+  TokenObtainPair:
+    type: object
+    x-examples: {}
+    properties:
+      email:
+        title: Email
+        type: string
+        minLength: 1
+        description: Почта
+        example: example@example.com
+        format: email
+      password:
+        title: Password
+        type: string
+        minLength: 1
+        description: Пароль
+        example: Fh789123!
+        format: password
+      role:
+        type: string
+    required:
+      - email
+      - password
+  Material:
+    type: object
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      teacher:
+        title: Teacher
+        type: integer
+        readOnly: true
+      teacher_student:
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+      subject:
+        title: Subject
+        type: string
+      file:
+        title: Файл материалов
+        type: string
+        format: uri
+        readOnly: true
+      text:
+        title: Текст к материалу
+        type: string
+      type:
+        title: Type
+        type: string
+        enum:
+          - public
+          - private
+        default: private
+  Profile:
+    type: object
+    x-examples: []
+    properties:
+      id:
+        title: Id
+        type: string
+        format: uuid
+        readOnly: true
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: |
+          Имя
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Отчество
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Фамилия
+      phone:
+        title: Телефон
+        type: string
+        pattern: '^((\+7|7|8)[0-9]{10})$'
+        minLength: 11
+        maxLength: 13
+        description: Телефон
+        x-nullable: true
+      email:
+        title: Электронная почта
+        format: email
+        type: string
+        minLength: 7
+        maxLength: 254
+        description: Почта
+        readOnly: true
+      photo:
+        title: Фотография
+        type: string
+        format: uri
+        description: Фото
+        x-nullable: true
+  TokenRefresh:
+    required:
+      - refresh
+    type: object
+    properties:
+      refresh:
+        title: Refresh
+        type: string
+        minLength: 1
+      access:
+        title: Access
+        type: string
+        readOnly: true
+        minLength: 1
+  Register:
+    type: object
+    x-examples: []
+    properties:
+      id:
+        title: Id
+        type: string
+        format: uuid
+        description: ID
+        readOnly: true
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: 'Имя '
+        example: Дмитрий
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Отчество
+        example: Владимирович
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Фамилия
+        example: Иванов
+      email:
+        title: Электронная почта
+        type: string
+        format: email
+        minLength: 7
+        description: Почта
+        example: example@example.com
+        maxLength: 50
+      phone:
+        title: Телефон
+        type: string
+        pattern: '^((\+7|7|8)[0-9]{10})$'
+        description: Номер телефона
+        minLength: 11
+        maxLength: 13
+        example: '81234567890'
+        x-nullable: true
+      is_teacher:
+        title: Is teacher
+        type: boolean
+        description: Тип пользователя
+      password:
+        title: Password
+        type: string
+        description: Пароль
+        format: password
+        minLength: 8
+        maxLength: 128
+        example: Fh789123!
+      password2:
+        title: Password2
+        type: string
+        description: Повторение пароля
+        format: password
+        minLength: 8
+        maxLength: 128
+        example: Fh789123!
+    required:
+      - first_name
+      - last_name
+      - email
+      - is_teacher
+      - password
+      - password2
+    description: ''
+  StudentTeacher:
+    type: object
+    properties:
+      id:
+        title: Id
+        type: string
+        format: uuid
+        description: идентификатор учителя
+        readOnly: true
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: имя
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: фамилия
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: отчество
+      email:
+        title: Электронная почта
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 7
+        description: почта
+      phone:
+        title: Телефон
+        type: string
+        pattern: '^((\+7|7|8)[0-9]{10,12})$'
+        maxLength: 13
+        minLength: 11
+        description: телефон
+        x-nullable: true
+      photo:
+        title: Фотография
+        type: string
+        format: uri
+        description: фото
+        x-nullable: true
+        readOnly: true
+      subjects:
+        type: array
+        items:
+          type: string
+  StudentDetailLesson:
+    type: object
+    x-examples: {}
+    properties:
+      id:
+        title: ID
+        type: integer
+        description: |
+          Идентификатор урока
+        readOnly: true
+      date:
+        title: Дата
+        type: string
+        format: date
+        description: Дата
+      start_time:
+        title: Начало урока
+        type: string
+        description: Время начала
+        format: time
+      end_time:
+        title: Конец урока
+        type: string
+        description: Время окончания
+        format: time
+      status:
+        title: Status
+        type: string
+        description: Статус
+        readOnly: true
+      homework:
+        title: Homework
+        type: boolean
+        description: Наличие дз
+        x-nullable: true
+        readOnly: true
+      teacher:
+        title: Teacher
+        type: string
+        description: Репетитор
+        readOnly: true
+      subject_title:
+        title: Subject title
+        type: string
+        description: Предмет
+        readOnly: true
+      topic:
+        title: Тема урока
+        type: string
+        maxLength: 40
+        description: Тема
+      comment:
+        title: Комментарий
+        type: string
+        description: Комментарий
+    required:
+      - date
+      - start_time
+      - end_time
+  Subject:
+    type: object
+    x-examples:
+      Предметы:
+        count: 3
+        next: null
+        previous: null
+        results:
+          - id: 3
+            title: Computer Science
+          - id: 1
+            title: История
+          - id: 2
+            title: Математика
+    properties:
+      count:
+        type: integer
+      next:
+        x-nullable: true
+      previous:
+        x-nullable: true
+      results:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+          required:
+            - title
+  TeacherDetailLesson:
+    type: object
+    x-examples: {}
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      student:
+        type: integer
+      date:
+        title: Дата
+        type: string
+        format: date
+      start_time:
+        title: Начало урока
+        type: string
+      end_time:
+        title: Конец урока
+        type: string
+      status:
+        title: Status
+        type: string
+        minLength: 1
+        readOnly: true
+      student_full_name:
+        title: Student full name
+        type: string
+        readOnly: true
+      subject:
+        title: Subject
+        type: integer
+        x-nullable: true
+      subject_title:
+        title: Subject title
+        type: string
+        readOnly: true
+      teacher_comment:
+        title: Комментарий
+        type: string
+    required:
+      - date
+      - start_time
+      - end_time
+  TeacherStudentDetail - copy:
+    type: object
+    x-examples:
+      '':
+        id: 0
+        last_name: string
+        first_name: string
+        patronymic_name: string
+        phone: string
+        email: user@example.com
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: |
+          Фамилия
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Имя
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Отечество
+      phone:
+        title: Телефон
+        type: string
+        pattern: '^((\+7|7|8)[0-9]{10})$'
+        minLength: 1
+        description: Телефон
+        x-nullable: true
+      email:
+        title: Электронная почта
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 7
+        description: Почта
+      level:
+        title: Comment
+        type: string
+        description: Комментарий
+      bind:
+        title: Привязка
+        type: string
+        enum:
+          - unrelated
+          - awaiting
+          - related
+        description: Привязка
+      photo:
+        type: string
+        format: uri
+        x-nullable: true
+        readOnly: true
+    required:
+      - last_name
+      - first_name
+      - email
+  TeacherStudentDetail - copy 2:
+    type: object
+    x-examples: {}
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: |
+          Фамилия
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Имя
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Отечество
+      phone:
+        title: Телефон
+        type: string
+        pattern: '^((\+7|7|8)[0-9]{10})$'
+        minLength: 1
+        description: Телефон
+        x-nullable: true
+      email:
+        title: Электронная почта
+        type: string
+        format: email
+        maxLength: 254
+        minLength: 7
+        description: Почта
+      level:
+        title: Comment
+        type: string
+        description: Комментарий
+    required:
+      - last_name
+      - first_name
+      - email
+  TeacherStudent - copy:
+    type: object
+    x-examples:
+      Example 1:
+        id: 0
+        last_name: string
+        first_name: string
+        patronymic_name: string
+        photo: 'http://example.com'
+        level: Intermediate
+    properties:
+      id:
+        title: ID
+        type: integer
+        readOnly: true
+      last_name:
+        title: Фамилия
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: |
+          Фамилия
+      first_name:
+        title: Имя
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Имя
+      patronymic_name:
+        title: Отчество
+        type: string
+        pattern: '^([А-ЯЁ]{1}[а-яё]{1,49})|([A-Z]{1}[a-z]{1,49})$'
+        maxLength: 50
+        minLength: 2
+        description: Отечество
+      level:
+        type: string
+      photo:
+        type: string
+        format: uri
+    required:
+      - last_name
+      - first_name
+  UserSubject:
+    type: object
+    properties:
+      subjects:
+        type: array
+        uniqueItems: true
+        items:
+          type: integer
+      titles:
+        type: array
+        uniqueItems: true
+        items:
+          type: string
+          readOnly: true
+        readOnly: true
+    required:
+      - subjects
+  PermissionDenied:
+    type: object
+    properties:
+      detail:
+        type: string
+    x-examples:
+      Недостаточно прав:
+        detail: У вас недостаточно прав для выполнения данного действия.
+    title: ''
+  AuthenticationError:
+    type: object
+    properties:
+      detail:
+        type: string
+    x-examples:
+      Пользователь не авторизован:
+        detail: Учетные данные не были предоставлены
+  ValidationError:
+    type: object
+    x-examples: {}
+    properties:
+      field_name:
+        type: array
+        description: |
+          Поле, в котором возникли ошибки, таких полей может быть несколько
+        items:
+          type: string
+    description: |
+      Ошибка валидации данных
+responses:
+  PermissionDenied:
+    description: Example response
+    schema:
+      $ref: '#/definitions/PermissionDenied'
+  AuthenticationError:
+    description: Example response
+    schema:
+      $ref: '#/definitions/AuthenticationError'
+  ValidationError:
+    description: Example response
+    schema:
+      $ref: '#/definitions/ValidationError'
