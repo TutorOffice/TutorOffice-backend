@@ -14,14 +14,14 @@ app_name = "lessons"
 
 router = DefaultRouter()
 router.register(
-    r"user/lesson/number", AggregateLessonsViewSet, basename="lesson_number"
+    r"user/lessons/number", AggregateLessonsViewSet, basename="lesson_number"
 )
 router.register(r"user/lesson/list", ListLessonViewSet, basename="lesson")
 router.register(
-    r"teacher/lesson", DetailTeacherLessonViewSet, basename="teacher_lesson"
+    r"teacher/lessons", DetailTeacherLessonViewSet, basename="teacher_lesson"
 )
 router.register(
-    r"student/lesson", DetailStudentLessonViewSet, basename="student_lesson"
+    r"student/lessons", DetailStudentLessonViewSet, basename="student_lesson"
 )
 
 urlpatterns = [path("", include(router.urls))]

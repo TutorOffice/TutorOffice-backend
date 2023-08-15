@@ -1,8 +1,6 @@
 from clients.pagination import LessonAggregatePagination, LessonListPagination
 from common.permissions import IsStudentOwner, IsTeacher, IsTeacherOwner
 from clients.services import get_user_type
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework.mixins import (
     CreateModelMixin,
     DestroyModelMixin,
@@ -100,10 +98,10 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
         profile = get_user_type(request)
         if profile == "teacher":
             return Lesson.objects.select_related(
-                "homework", "teacher_student"
+                "teacher_student"
             ).filter(teacher__user=request.user)
         return Lesson.objects.select_related(
-            "teacher", "homework", "teacher__user"
+            "teacher", "teacher__user"
         ).filter(teacher_student__student__user=request.user)
 
     def perform_create(self, serializer):
@@ -112,7 +110,6 @@ class ListLessonViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
         serializer.save(teacher=user.teacher_profile)
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class DetailTeacherLessonViewSet(
     RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet
 ):
@@ -128,12 +125,13 @@ class DetailTeacherLessonViewSet(
 
     def get_queryset(self):
         return Lesson.objects.select_related(
-            "homework", "subject", "teacher_student", "teacher__user"
+            "subject", "teacher_student", "teacher__user"
         ).all()
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
-class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
+class DetailStudentLessonViewSet(
+    RetrieveModelMixin, UpdateModelMixin, GenericViewSet
+):
     """
     Возвращает конкретный урок для ученика,
     имеется только возможность чтения
@@ -142,8 +140,9 @@ class DetailStudentLessonViewSet(RetrieveModelMixin, GenericViewSet):
     serializer_class = StudentDetailLessonSerializer
     permission_classes = [IsAuthenticated, IsStudentOwner]
     queryset = Lesson.objects.all()
+    http_method_names = ['get', 'patch']
 
     def get_queryset(self):
         return Lesson.objects.select_related(
-            "homework", "subject", "teacher"
+            "subject", "teacher"
         ).all()

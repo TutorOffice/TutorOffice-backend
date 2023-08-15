@@ -8,8 +8,6 @@ from django.contrib.auth.views import (
 from django.contrib.sites.shortcuts import get_current_site
 from django.db.transaction import atomic
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.mixins import (
@@ -230,7 +228,6 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
-@method_decorator(cache_page(60 * 15), name="dispatch")
 class SubjectsView(ListAPIView):
     """
     Получение всех предметов,
@@ -245,7 +242,6 @@ class SubjectsView(ListAPIView):
     # добавить пермишн для учителей
 
 
-@method_decorator(cache_page(60 * 15), name="dispatch")
 class UserSubjectViewSet(ModelViewSet):
     """
     Получение, обновление и
@@ -259,7 +255,6 @@ class UserSubjectViewSet(ModelViewSet):
         "patch",
         "post",
     )
-    # 5) добавить пермишн для учителей
 
     def get_queryset(self):
         """Получение всех предметов преподавателя"""
@@ -280,7 +275,6 @@ class UserSubjectViewSet(ModelViewSet):
         return UserSubjectSerializer
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class ProfileViewSet(
     RetrieveModelMixin, UpdateModelMixin, GenericViewSet
 ):
@@ -295,7 +289,6 @@ class ProfileViewSet(
         return self.request.user
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class TeacherStudentViewSet(ModelViewSet):
     pagination_class = UsersPagination
     http_method_names = ['post', 'patch', 'delete', 'get']
@@ -526,7 +519,6 @@ class ConfirmView(APIView):
         )
 
 
-@method_decorator(cache_page(60 * 5), name="dispatch")
 class StudentTeachersViewSet(ReadOnlyModelViewSet):
     """
     Просмотр списка репетиторов ученика

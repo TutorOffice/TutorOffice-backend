@@ -147,6 +147,7 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
 
     photo = serializers.SerializerMethodField(read_only=True, allow_null=True)
     email = serializers.EmailField(write_only=True)
+    phone = serializers.CharField(write_only=True, allow_null=True)
 
     def get_photo(self, obj):
         try:
@@ -192,7 +193,7 @@ class TeacherStudentDetailSerializer(TeacherStudentSerializer):
     обновления и удаления ученика репетитора
     """
     email = serializers.EmailField()
-    phone = serializers.CharField()
+    phone = serializers.CharField(allow_null=True)
 
     class Meta(TeacherStudentSerializer.Meta):
         fields = TeacherStudentSerializer.Meta.fields + ("bind",)

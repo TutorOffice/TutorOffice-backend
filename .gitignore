@@ -133,10 +133,12 @@ mydockerfile
 *.pyc
 *.txt
 core/core/.env
-docker/sample-docker-compose.yml
+docker/docker-compose*
 bash.exe.stackdump
 core/static/materials/*
 /core/test.yaml
 /docker/.env
 core/backend_media/
 /core/backend_static/
+/core/auto.yaml
+/core/autodoc.yaml

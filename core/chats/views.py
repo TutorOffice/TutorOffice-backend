@@ -4,8 +4,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from clients.models import TeacherStudent
-from common.permissions import IsTeacherOwner, IsStudentOwner
+from clients.pagination import (
+    HomeworkAggregatePagination,
+    HomeworkListPagination,
+    MessagePagination,
+)
 from clients.services import get_user_type
+from common.permissions import IsTeacherOwner, IsStudentOwner
+
 
 from .filters import HomeworkFilter, MessageFilter
 from .models import Homework, Message
@@ -29,10 +35,13 @@ class TeacherHomeworkViewSet(ModelViewSet):
     serializer_class = TeacherHomeworkSerializer
     permission_classes = (IsAuthenticated, IsTeacherOwner)
     filterset_class = HomeworkFilter
+    pagination_class = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher__user=user)
+        return Homework.objects.select_related(
+            "teacher_student__student__user", "subject",
+        ).filter(teacher__user=user)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
@@ -50,10 +59,14 @@ class StudentHomeworkViewSet(ModelViewSet):
     serializer_class = StudentHomeworkSerializer
     permission_classes = (IsAuthenticated, IsStudentOwner)
     filterset_class = HomeworkFilter
+    pagination_class = HomeworkListPagination
 
     def get_queryset(self):
         user = self.request.user
-        return Homework.objects.filter(teacher_student__student=user.student_profile)
+        return Homework.objects.select_related(
+            "teacher__user").filter(
+            teacher_student__student=user.student_profile
+        )
 
 
 class TeacherMessageViewSet(ModelViewSet):
@@ -64,6 +77,7 @@ class TeacherMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = TeacherMessageSerializer
     filterset_class = MessageFilter
+    pagination_class = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -72,7 +86,9 @@ class TeacherMessageViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(teacher__user=user)
+        return Message.objects.select_related(
+            "teacher__user", "teacher_student__student__user",
+        ).filter(teacher__user=user)
 
     def perform_create(self, serializer):
         teacher = self.request.user.teacher_profile
@@ -87,6 +103,7 @@ class StudentMessageViewSet(ModelViewSet):
     http_method_names = ("get", "post", "patch", "delete")
     serializer_class = StudentMessageSerializer
     filterset_class = MessageFilter
+    pagination_class = MessagePagination
 
     def get_permissions(self):
         if self.action in ("partial_update", "destroy"):
@@ -95,7 +112,9 @@ class StudentMessageViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Message.objects.filter(
+        return Message.objects.select_related(
+            "teacher_student__student__user", "teacher__user"
+        ).filter(
             teacher_student__student=user.student_profile
         )
 
@@ -113,17 +132,22 @@ class StudentMessageViewSet(ModelViewSet):
 
 class AggregateHomeworks(ListModelMixin, GenericViewSet):
     """
-    Вью для возврата количество ДЗ
+    Вьюха для возврата количества ДЗ
     для пользователя с фильтрацией
-    и группировкой по статусу
+    с группировкой по ученкам и статусам для репетитора,
+    а также репетиторам и статусам для ученика
     """
     permission_classes = [IsAuthenticated]
     http_method_names = ["get"]
     filterset_class = HomeworkFilter
-    # pagination
+    pagination = HomeworkAggregatePagination
     # optimization
 
     def get_queryset(self):
+        """
+        Получение набора записей ДЗ в
+        зависимости от типа пользователя
+        """
         request = self.request
         profile = get_user_type(request)
         if profile == "teacher":
@@ -135,6 +159,17 @@ class AggregateHomeworks(ListModelMixin, GenericViewSet):
         )
 
     def list(self, request, *args, **kwargs):
+        """
+        Набор записей ДЗ фильтруется, если был выбран фильтр,
+        а затем производится подсчёт количества ДЗ с
+        группировкой по ученикам и статусам для репетиторов,
+        а также репетиторам и статусам для учеников
+        """
         queryset = self.filter_queryset(self.get_queryset())
-        homeworks = queryset.count_by_status()
+        request = self.request
+        profile = get_user_type(request)
+        if profile == "teacher":
+            homeworks = queryset.count_by_student()
+        else:
+            homeworks = queryset.count_by_teacher()
         return Response({"homeworks": homeworks})
