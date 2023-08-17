@@ -13,8 +13,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{secrets.HOST}}
+          port: ${{secrets.HOST_PORT}}
           username: ${{secrets.HOST_USER}}
           key: ${{secrets.HOST_SSH_KEY}}
+          password: ${{secrets.HOST_PASSWORD}}
           script: |
             cd project
             git fetch
