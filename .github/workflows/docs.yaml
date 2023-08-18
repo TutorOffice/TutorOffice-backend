@@ -20,4 +20,4 @@ jobs:
           script: |
             cd project
             git fetch
-            sudo git checkout -m origin/feature/docs -- docs/
+            echo ${{ secrets.HOST_PASSWORD }} | sudo git checkout -m origin/feature/docs -- docs/
