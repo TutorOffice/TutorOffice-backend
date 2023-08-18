@@ -43,7 +43,7 @@ class UserAdmin(admin.ModelAdmin):
     def show_teacher(self, obj):
         return Teacher.objects.filter(user=obj).exists()
 
-    show_teacher.short_description = "Учитель"
+    show_teacher.short_description = "Репетитор"
 
 
 @admin.register(Student)
