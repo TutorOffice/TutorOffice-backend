@@ -20,4 +20,4 @@ jobs:
           script: |
             cd project
             git fetch
-            git checkout -m origin/feature/docs -- docs/
+            sudo git checkout -m origin/feature/docs -- docs/
