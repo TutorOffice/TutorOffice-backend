@@ -130,7 +130,7 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/Profile'
-          examples:
+          x-examples:
             Данные профиля:
               id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
               first_name: Дмитрий
