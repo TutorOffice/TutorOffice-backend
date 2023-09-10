@@ -349,7 +349,7 @@ class TeacherStudentViewSet(ModelViewSet):
         logger.info(
             "Удаление ученика и уроков" f" юзера - {request.user.email}"
         )
-        obj.lessons.all().delete()
+        # obj.lessons.all().delete()
         return super().destroy(request, *args, **kwargs)
 
 

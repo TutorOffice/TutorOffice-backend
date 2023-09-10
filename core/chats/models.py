@@ -26,13 +26,13 @@ class Homework(models.Model):
     )
     teacher = models.ForeignKey(
         Teacher,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
         related_name="t_homeworks",
     )
     teacher_student = models.ForeignKey(
         TeacherStudent,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Псевдоученик",
         related_name="ts_homeworks",
     )
@@ -43,7 +43,7 @@ class Homework(models.Model):
     subject = models.ForeignKey(
         Subject,
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Предмет",
     )
     text = models.TextField(
@@ -79,13 +79,13 @@ class Message(models.Model):
     )
     teacher = models.ForeignKey(
         Teacher,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
         related_name="t_messages",
     )
     teacher_student = models.ForeignKey(
         TeacherStudent,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Псевдоученик",
         related_name="ts_messages",
     )

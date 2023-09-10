@@ -21,13 +21,13 @@ class Lesson(models.Model):
 
     teacher = models.ForeignKey(
         Teacher,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
         related_name="t_lessons",
     )
     teacher_student = models.ForeignKey(
         TeacherStudent,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Псевдоученик",
         related_name="ts_lessons",
     )
@@ -41,7 +41,7 @@ class Lesson(models.Model):
     subject = models.ForeignKey(
         Subject,
         null=True,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Предмет",
     )
     student_comment = models.TextField(

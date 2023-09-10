@@ -200,7 +200,7 @@ class Student(models.Model):
     user = models.OneToOneField(
         User,
         related_name="student_profile",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Пользователь",
     )
 
@@ -219,7 +219,7 @@ class Teacher(models.Model):
     user = models.OneToOneField(
         User,
         related_name="teacher_profile",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Пользователь",
     )
     students = models.ManyToManyField(
@@ -254,13 +254,13 @@ class TeacherStudent(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         related_name="studentM2M",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
     )
     student = models.ForeignKey(
         Student,
         related_name="teacherM2M",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         null=True,
         verbose_name="Студент",
     )
