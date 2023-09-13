@@ -580,12 +580,3 @@ class FeedbackViewSet(CreateModelMixin, GenericViewSet):
             user = None
         if user:
             serializer.save(user=user)
-
-    # def create(self, request, *args, **kwargs):
-    #     super().create(request, *args, **kwargs)
-    #     return Response(
-    #         {
-    #             "success": "Ваша заявка успешно создана!"
-    #         },
-    #         status=status.HTTP_201_CREATED
-    #     )
