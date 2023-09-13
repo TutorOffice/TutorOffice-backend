@@ -4,7 +4,14 @@ from django.core.exceptions import ValidationError
 from django.db.transaction import atomic
 from rest_framework import serializers
 
-from .models import Student, Subject, Teacher, TeacherStudent, User
+from .models import (
+    Feedback,
+    Student,
+    Subject,
+    Teacher,
+    TeacherStudent,
+    User,
+)
 
 
 # Сериализатор для обработки формы регистрации
@@ -251,4 +258,15 @@ class StudentTeacherDetailSerializer(StudentTeacherSerializer):
             "phone",
             "photo",
             "subjects",
+        )
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Feedback
+        fields = (
+            'name',
+            'email',
+            'text',
         )
