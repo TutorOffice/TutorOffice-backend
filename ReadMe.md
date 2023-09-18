@@ -38,7 +38,6 @@
 
 ## Документация к проекту
 
- - [Описание моделей, диаграмма](https://dbdiagram.io/d/Copy-of-Tutor-office-63f27dc8296d97641d821d79)
  - [Документация к API](http://77.232.131.254/docs/redoc.html)
 
 <p align="right"><a href="#top">⬆️ Наверх</a></p>
