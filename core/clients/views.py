@@ -15,7 +15,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     UpdateModelMixin,
 )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import (
@@ -33,6 +33,7 @@ from .forms import CustomPasswordResetForm
 from .models import Student, Subject, Teacher, TeacherStudent, User
 from .pagination import SubjectsPagination, UsersPagination
 from .serializers import (
+    FeedbackSerializer,
     ProfileSerializer,
     RegisterSerializer,
     StudentTeacherSerializer,
@@ -349,7 +350,6 @@ class TeacherStudentViewSet(ModelViewSet):
         logger.info(
             "Удаление ученика и уроков" f" юзера - {request.user.email}"
         )
-        obj.lessons.all().delete()
         return super().destroy(request, *args, **kwargs)
 
 
@@ -482,7 +482,7 @@ class ConfirmView(APIView):
             )
         except (TokenError, TeacherStudent.DoesNotExist):
             obj = None
-        if obj is None or obj.student:
+        if not obj or obj.student:
             return Response(
                 {"detail": "Ссылка больше недействительна!"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -567,3 +567,16 @@ class StudentTeachersViewSet(ReadOnlyModelViewSet):
             pk=pk,
             teacher_profile__studentM2M__student=user.student_profile
         )
+
+
+class FeedbackViewSet(CreateModelMixin, GenericViewSet):
+    serializer_class = FeedbackSerializer
+
+    def perform_create(self, serializer):
+        email = serializer.validated_data.get('email')
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+        if user:
+            serializer.save(user=user)

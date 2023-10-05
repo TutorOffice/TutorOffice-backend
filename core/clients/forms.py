@@ -1,7 +1,7 @@
 from django.contrib.auth.forms import PasswordResetForm
 
-from .models import User
 from .tasks import Email
+from .models import User
 
 
 class CustomPasswordResetForm(PasswordResetForm):
@@ -27,9 +27,13 @@ class CustomPasswordResetForm(PasswordResetForm):
 
     def send_mail(self, subject_template_name, email_template_name,
                   context, from_email, to_email, html_email_template_name=None):
+        """
+        Реализация функции отправки сообщения
+        о сбросе пароля через celery.
+        """
         context['user'] = context['user'].id
 
-        Email.send_email_task.delay(
+        Email.reset_password_task.delay(
             subject_template_name=subject_template_name,
             email_template_name=email_template_name,
             context=context,

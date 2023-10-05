@@ -22,7 +22,7 @@ class Material(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         related_name="materials",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
     )
     teacher_student = models.ManyToManyField(
@@ -33,7 +33,7 @@ class Material(models.Model):
     )
     subject = models.ForeignKey(
         Subject,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Предмет",
         null=True
     )

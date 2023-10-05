@@ -6,7 +6,7 @@ RUN pip install --upgrade pip
 
 RUN apt-get update && apt-get install -y libpq-dev gcc
 
-COPY requirments.txt /project/requirments.txt
+COPY ../core/requirments.txt /project/requirments.txt
 
 RUN pip install --no-cache-dir -r /project/requirments.txt
 

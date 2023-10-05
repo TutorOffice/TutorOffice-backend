@@ -13,6 +13,7 @@ from .views import (
     ConfirmView,
     CustomPasswordResetConfirmView,
     CustomPasswordResetView,
+    FeedbackViewSet,
     LoginView,
     ProfileViewSet,
     RegisterViewSet,
@@ -33,6 +34,7 @@ router.register(
 router.register(
     "teacher/students", TeacherStudentViewSet, basename="teacher_students"
 )
+router.register("feedback", FeedbackViewSet, basename="feedback")
 
 
 urlpatterns = [

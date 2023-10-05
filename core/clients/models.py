@@ -33,6 +33,15 @@ TYPECHOICE = [
     (RELATED, "related"),
 ]
 
+WAITING = "waiting"
+COMPLETED = "completed"
+
+
+STATUSCHOICE = [
+    (WAITING, "waiting"),
+    (COMPLETED, "completed"),
+]
+
 
 class CustomUserManager(UserManager):
     def _create_user(self, email, password, **extra_fields):
@@ -200,7 +209,7 @@ class Student(models.Model):
     user = models.OneToOneField(
         User,
         related_name="student_profile",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Пользователь",
     )
 
@@ -219,7 +228,7 @@ class Teacher(models.Model):
     user = models.OneToOneField(
         User,
         related_name="teacher_profile",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Пользователь",
     )
     students = models.ManyToManyField(
@@ -254,13 +263,13 @@ class TeacherStudent(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         related_name="studentM2M",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         verbose_name="Учитель",
     )
     student = models.ForeignKey(
         Student,
         related_name="teacherM2M",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         null=True,
         verbose_name="Студент",
     )
@@ -352,3 +361,38 @@ class TeacherStudent(models.Model):
 
     def __str__(self):
         return f"{self.teacher} {self.last_name} {self.first_name}"
+
+
+class Feedback(models.Model):
+    name = models.TextField(
+        "Имя",
+        validators=[
+            MinLengthValidator(NAME_MIN_LENGTH),
+            MaxLengthValidator(NAME_MAX_LENGTH),
+        ],
+        error_messages={"invalid": "Имя указанo некорректно"},
+    )
+    email = models.EmailField(
+        "Электронная почта",
+        max_length=50,
+        validators=[
+            EmailValidator(),
+            MinLengthValidator(EMAIL_MIN_LENGTH),
+            MaxLengthValidator(EMAIL_MAX_LENGTH),
+        ],
+        error_messages={"invalid": "E-mail введен некорректно!"},
+    )
+    text = models.TextField()
+    user = models.ForeignKey(
+        User,
+        related_name="feedbacks",
+        on_delete=models.CASCADE,
+        null=True,
+        verbose_name="Пользователь",
+    )
+    status = models.CharField(
+        "Статус",
+        max_length=10,
+        choices=STATUSCHOICE,
+        default=WAITING,
+    )
