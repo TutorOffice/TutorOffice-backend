@@ -32,11 +32,13 @@ INSTALLED_APPS = [
     "django_filters",
     "rest_framework_simplejwt",
     "drf_yasg",
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -247,3 +249,12 @@ if DEBUG:
         "127.0.0.1",
         "localhost",
     ]
+
+    CORS_ORIGIN_ALLOW_ALL = True
+
+else:
+    CORS_ORIGIN_ALLOW_ALL = False
+
+    CORS_ORIGIN_WHITELIST = os.environ.get(
+        'CORS_WHITELIST', default='http://localhost'
+    ).split()
