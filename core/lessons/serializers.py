@@ -31,15 +31,25 @@ class AbstractLessonSerializer(ModelSerializer):
         (проверка время окончание урока позже времени начала урока,
          дата урока не раньше сегодня)
         """
-        if data["start_time"] > data["end_time"]:
+        if self.instance:
+            start_time = data.get('start_time', None) or self.instance.start_time
+            end_time = data.get('end_time', None) or self.instance.end_time
+        else:
+            start_time = data.get('start_time', None)
+            end_time = data.get('end_time', None)
+
+        if start_time > end_time:
             raise ValidationError(
                 "Время окончание урока должно быть позже времени начала урока!"
             )
-        if data["date"] < date.today():
+        return data
+
+    def validate_date(self, date):
+        if date < date.today():
             raise ValidationError(
                 "Урок не может быть раньше сегодняшней даты!"
             )
-        return data
+        return date
 
     class Meta:
         model = Lesson
@@ -60,7 +70,7 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
     student = TeacherStudentPrimaryKeyRelated(
         source="teacher_student", write_only=True
     )
-    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
+    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True, required=False)
     teacher_comment = CharField(
         source="comment", write_only=True, required=False
     )
@@ -95,7 +105,7 @@ class TeacherDetailLessonSerializer(AbstractLessonSerializer):
     """
 
     student_full_name = SerializerMethodField(read_only=True)
-    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True)
+    subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True, required=False)
     subject_title = StringRelatedField(source="subject", read_only=True)
     status = CharField()
 

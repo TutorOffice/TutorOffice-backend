@@ -154,7 +154,7 @@ class TeacherStudentSerializer(serializers.ModelSerializer):
 
     photo = serializers.SerializerMethodField(read_only=True, allow_null=True)
     email = serializers.EmailField(write_only=True)
-    phone = serializers.CharField(write_only=True, allow_null=True)
+    phone = serializers.CharField(write_only=True, allow_null=True, required=False)
 
     def get_photo(self, obj):
         try:
