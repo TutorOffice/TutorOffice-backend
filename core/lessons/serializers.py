@@ -71,9 +71,7 @@ class TeacherListLessonSerializer(AbstractLessonSerializer):
         source="teacher_student", write_only=True
     )
     subject = SubjectPrimaryKeyRelated(write_only=True, allow_null=True, required=False)
-    teacher_comment = CharField(
-        source="comment", write_only=True, required=False
-    )
+    teacher_comment = CharField(write_only=True)
 
     def get_student_full_name(self, obj):
         return (
