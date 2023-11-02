@@ -324,7 +324,6 @@ class TeacherStudent(models.Model):
     )
     phone = models.TextField(
         "Телефон",
-        unique=True,
         null=True,
         validators=[
             RegexValidator(
